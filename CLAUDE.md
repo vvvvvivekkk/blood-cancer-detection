@@ -23,6 +23,8 @@ Two ensemble heads over their softmax outputs — the pair is what makes it "hyb
 
 Both are evaluated on test; the better (macro-F1) is persisted to `models/ensemble_mode.txt` and used by Predict.
 
+**Single-model mode:** `config.ACTIVE_MODE` (`"ensemble"` | `"mobilenetv2"`, default `"ensemble"`) is overridden by `models/active_mode.txt` (written via `config.set_active_mode`, the sidebar switch, or `POST /api/settings`). In `mobilenetv2` mode `predict_image` loads only MobileNetV2 and returns `mode="single"`, `mode_label="MobileNetV2 (single)"`.
+
 ## Stack
 - Python 3.10–3.12, TensorFlow/Keras (2.15 on py ≤ 3.11, 2.21 on py 3.12 — pinned with markers), scikit-learn, NumPy, Pandas, Pillow, OpenCV (headless), Matplotlib, Seaborn
 - **Web UI**: FastAPI + uvicorn (`api/`), vanilla HTML/CSS/JS (`frontend/`), Chart.js from a pinned CDN, no build step, no npm

@@ -75,6 +75,8 @@ The table is written by `python -m src.evaluate --write-readme-table` (or `--tab
 | Predict | Drag and drop or pick a sample image: class, confidence ring, probability bars, per-backbone votes, Grad-CAM overlay with an opacity slider |
 | About | Paper summary, architecture diagram, paper → code mapping, dataset, limitations |
 
+**Single-model mode.** The *Settings* switch in the sidebar makes Predict use only `models/mobilenetv2.keras` instead of the ensemble. The badge then reads "MobileNetV2 (single)" and the Evaluate table highlights the MobileNetV2 row instead of the ensemble rows. The choice is saved in `models/active_mode.txt`; with no file, Predict uses `ACTIVE_MODE` from `src/config.py` (`"ensemble"`).
+
 Every view also works with nothing trained. It says what is missing and offers the button that starts the job to fix it. Long stages run as background jobs. The UI follows them over Server-Sent Events and falls back to polling once a second. The pages support light and dark themes and keyboard navigation, and work on screens down to 768 px wide (the sidebar becomes a menu on phones).
 
 | Overview | Train | Evaluate | Predict |
@@ -101,6 +103,7 @@ _These screenshots come from smoke artifacts (untrained weights). Re-capture the
 | GET | `/api/jobs/{id}` | Job state, progress, stage, log, live training history |
 | GET | `/api/jobs/{id}/stream` | Same, as Server-Sent Events |
 | GET | `/api/results` | Metrics, table rows, figure URLs, histories, notes |
+| GET / POST | `/api/settings` | Read or set `{active_mode}`: `"ensemble"` or `"mobilenetv2"` |
 | POST | `/api/predict` | Multipart image → class, confidence, probs, votes, Grad-CAM PNG (base64) |
 
 Only one job runs at a time. A second request returns `409`. Every error is JSON `{"detail": "<readable message>"}`, never a traceback. Interactive docs are at `/docs`.
