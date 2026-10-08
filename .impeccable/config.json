@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "createdAt": "2026-10-08T10:55:54.519Z",
+        "reason": "user requested 'Inter or system font stack' in the P9 brief; system stack is the fallback"
+      }
+    ]
+  }
+}

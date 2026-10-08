@@ -125,7 +125,7 @@ main { padding: var(--s3) var(--s4); max-width: 1240px; width: 100%; outline: no
 .citation { color: var(--muted); font-size: 14px; }
 .lede { max-width: 75ch; }
 .facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s2); margin: 0; }
-.facts div { border-left: 3px solid var(--accent); padding-left: 12px; }
+.facts div { background: var(--surface-2); border-radius: 8px; padding: 12px var(--s2); }
 .facts dt { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
 .facts dd { margin: 0; font-size: 22px; font-weight: 700; }
 
@@ -175,7 +175,7 @@ main { padding: var(--s3) var(--s4); max-width: 1240px; width: 100%; outline: no
 @keyframes pulse { 50% { opacity: 0.3; } }
 
 .progress { height: 8px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
-.progress .bar { height: 100%; width: 0; background: var(--accent); transition: width 0.4s ease; }
+.progress .bar { --p: 0; height: 100%; width: 100%; background: var(--accent); transform-origin: left; transform: scaleX(var(--p)); transition: transform 0.4s ease; }
 .job-stage { margin: 12px 0; font-size: 14px; }
 .log {
   margin: 0; height: 200px; overflow: auto; background: var(--surface-2); border: 1px solid var(--border);
@@ -264,7 +264,6 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .table th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; white-space: nowrap; }
 .table td.num, .table th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .table tr.ensemble td { background: var(--accent-soft); }
-.table tr.ensemble td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 .table td strong.best { color: var(--accent); }
 .tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: var(--s2); border-bottom: 1px solid var(--border); }
 .tab { font: inherit; font-size: 13px; font-weight: 500; padding: 8px 12px; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted); cursor: pointer; margin-bottom: -1px; }

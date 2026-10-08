@@ -158,7 +158,7 @@ function updateJobPanel(j) {
   const badge = $("#job-state");
   badge.textContent = j.state;
   badge.className = `badge ${j.state}`;
-  $("#job-bar").style.width = `${j.progress}%`;
+  $("#job-bar").style.setProperty("--p", j.progress / 100);
   $("#job-panel .progress").setAttribute("aria-valuenow", Math.round(j.progress));
   $("#job-stage").textContent = j.state === "failed" ? `Failed: ${j.error}` : `${j.kind} · stage: ${j.stage} · ${Math.round(j.progress)}%`;
   const log = $("#job-log");
@@ -303,7 +303,7 @@ function renderBackboneProgress(j) {
     const p = m ? m.progress : inJob ? 0 : s.models[b] ? 100 : 0;
     const text = m ? `phase ${m.phase} · epoch ${m.epoch}/${m.epochs_total}` : inJob ? "queued" : s.models[b] ? "trained" : "not trained";
     return `<div><div class="bb-row-head"><strong>${esc(dn(b))}</strong><span>${text}</span></div>
-      <div class="progress" role="progressbar" aria-label="${esc(dn(b))} progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(p)}"><div class="bar" style="width:${p}%"></div></div></div>`;
+      <div class="progress" role="progressbar" aria-label="${esc(dn(b))} progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(p)}"><div class="bar" style="--p:${p / 100}"></div></div></div>`;
   }).join("");
   const badge = $("#train-state");
   badge.textContent = live ? live.state : "idle";
@@ -484,7 +484,7 @@ function showResult(r) {
   const top = r.class;
   $("#probs").innerHTML = Object.entries(r.probs).map(([c, p]) => `
     <div class="prob ${c === top ? "top" : ""}"><div class="prob-head"><span>${esc(c)}</span><span>${pct(p)}</span></div>
-    <div class="progress" role="progressbar" aria-label="${esc(c)} probability" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(100 * p)}"><div class="bar" style="width:${100 * p}%"></div></div></div>`).join("");
+    <div class="progress" role="progressbar" aria-label="${esc(c)} probability" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(100 * p)}"><div class="bar" style="--p:${p}"></div></div></div>`).join("");
   $("#img-original").src = `data:image/png;base64,${r.original_png_base64}`;
   $("#img-cam").src = `data:image/png;base64,${r.gradcam_png_base64}`;
   $("#img-cam").style.opacity = $("#cam-opacity").value / 100;
