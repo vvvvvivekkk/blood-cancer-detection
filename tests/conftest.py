@@ -39,3 +39,11 @@ def smoke(smoke_root):
     C.set_root(smoke_root[0])
     yield smoke_root
     C.set_root(old)
+
+
+@pytest.fixture
+def single_mode(smoke):
+    """Smoke artifacts with Predict switched to MobileNetV2 alone; always switched back afterwards."""
+    C.set_active_mode(C.SINGLE_MODEL)
+    yield smoke
+    C.ACTIVE_MODE_FILE.unlink(missing_ok=True)

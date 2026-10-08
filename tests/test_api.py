@@ -138,3 +138,30 @@ def test_frontend_and_media_are_served():
     assert "ALL Hybrid Ensemble" in client.get("/").text
     assert client.get("/media/sample/../../README.md").status_code == 404
     assert client.get("/figures/..%2Fmetrics.json").status_code == 404
+
+
+def test_settings_roundtrip_and_validation(empty_root):
+    assert client.get("/api/settings").json()["active_mode"] == "ensemble"
+    r = client.post("/api/settings", json={"active_mode": "mobilenetv2"})
+    assert r.status_code == 200 and r.json()["label"] == "MobileNetV2 (single)"
+    assert C.ACTIVE_MODE_FILE.read_text() == "mobilenetv2"
+    s = client.get("/api/status").json()
+    assert s["active_mode"] == "mobilenetv2" and s["settings"]["single_model_trained"] is False
+    bad = client.post("/api/settings", json={"active_mode": "vgg16"})
+    assert bad.status_code == 400 and "Unknown mode" in bad.json()["detail"]
+
+
+def test_single_mode_predict_and_results_highlight(single_mode):
+    with open(SAMPLE, "rb") as f:
+        d = client.post("/api/predict", files={"file": (SAMPLE.name, f, "image/png")}).json()
+    assert d["mode"] == "single" and d["mode_label"] == "MobileNetV2 (single)"
+    assert list(d["per_model_probs"]) == ["mobilenetv2"]
+    r = client.get("/api/results").json()
+    assert [x["key"] for x in r["rows"] if x["highlighted"]] == ["mobilenetv2"]
+    assert [x["key"] for x in r["rows"] if x["selected"]] == ["mobilenetv2"] and r["active_key"] == "mobilenetv2"
+
+
+def test_ensemble_mode_highlights_ensemble_rows(smoke):
+    r = client.get("/api/results").json()
+    assert [x["key"] for x in r["rows"] if x["highlighted"]] == C.ENSEMBLES
+    assert [x["key"] for x in r["rows"] if x["selected"]] == [r["best_ensemble"]]

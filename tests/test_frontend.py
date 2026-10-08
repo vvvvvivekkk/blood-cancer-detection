@@ -149,3 +149,33 @@ def test_mobile_sidebar_collapses_to_menu(pw_browser, server):
         assert not errors, errors
     finally:
         context.close()
+
+
+def test_single_model_toggle_changes_predict_and_evaluate(smoke, ui):
+    page, errors = ui
+    try:
+        assert not page.is_checked("#single-mode")
+        page.click('label:has(#single-mode)')
+        page.wait_for_function("document.querySelector('#mode-label').textContent.includes('MobileNetV2 (single)')")
+        assert C.ACTIVE_MODE_FILE.read_text() == "mobilenetv2"
+
+        page.click('[data-nav="evaluate"]')
+        page.wait_for_selector("#cmp-table tbody tr")
+        hl = page.locator("#cmp-table tr.highlight")
+        assert hl.count() == 1 and "MobileNetV2" in hl.inner_text()
+        assert "MobileNetV2" in page.locator("#cmp-table tr", has=page.locator(".badge")).inner_text()
+
+        page.click('[data-nav="predict"]')
+        page.set_input_files("#file-input", str(SAMPLE))
+        page.click("#btn-analyze")
+        page.wait_for_selector("#result-body:not([hidden])", timeout=120_000)
+        assert page.inner_text("#mode-badge") == "MobileNetV2 (single)"
+        assert page.locator("#votes tbody tr").count() == 1
+
+        page.click('label:has(#single-mode)')  # back to ensemble
+        page.wait_for_function("!document.querySelector('#mode-label').textContent.includes('single')")
+        page.click('[data-nav="evaluate"]')
+        page.wait_for_function("document.querySelectorAll('#cmp-table tr.highlight').length === 2")
+        assert not errors, errors
+    finally:
+        C.ACTIVE_MODE_FILE.unlink(missing_ok=True)
