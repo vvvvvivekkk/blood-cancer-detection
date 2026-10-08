@@ -28,8 +28,7 @@ def smoke_root(tmp_path_factory):
     old = C.ROOT
     C.set_root(root)
     calls = []
-    for stage in ("splits", "train", "ensemble"):
-        pipeline.run(stage, smoke=True, progress_cb=lambda *a: calls.append(a))
+    pipeline.run("all", smoke=True, progress_cb=lambda *a: calls.append(a))
     C.set_root(old)
     return root, calls
 

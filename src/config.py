@@ -52,6 +52,12 @@ AUG_CONTRAST = 0.10
 META_C = 1.0
 META_MAX_ITER = 1000
 
+# Targets from ENDGOAL.md, checked in results/NOTES.md
+TARGET_ACCURACY = 0.96
+TARGET_MACRO_F1 = 0.95
+TARGET_MARGIN_PP = 0.5
+TARGET_CLASS_RECALL = 0.90
+
 # Smoke mode: plumbing check on data/sample, CPU, offline
 SMOKE_IMG_SIZE = 96
 SMOKE_BATCH_SIZE = 4
