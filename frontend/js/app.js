@@ -261,6 +261,7 @@ async function renderData() {
   const creds = $("#creds-badge");
   creds.textContent = s.credentials ? "credentials found" : "no credentials";
   creds.className = `badge ${s.credentials ? "done" : ""}`;
+  $("#creds-source").textContent = s.credential_source ? `Using: ${s.credential_source}` : "No credentials found yet.";
   $("#btn-download").dataset.blocked = s.credentials ? "0" : "1";
   $("#btn-download").disabled = !s.credentials || jobActive();
   const data = $("#data-badge");
@@ -601,6 +602,27 @@ function wire() {
     k.type = show ? "text" : "password";
     $("#kg-reveal").setAttribute("aria-pressed", show);
     $("#kg-reveal").setAttribute("aria-label", show ? "Hide API key" : "Show API key");
+  });
+  $("#kg-token-reveal").addEventListener("click", () => {
+    const k = $("#kg-token");
+    const show = k.type === "password";
+    k.type = show ? "text" : "password";
+    $("#kg-token-reveal").setAttribute("aria-pressed", show);
+    $("#kg-token-reveal").setAttribute("aria-label", show ? "Hide access token" : "Show access token");
+  });
+  $("#token-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = $("#token-msg");
+    const token = $("#kg-token").value.trim();
+    if (!token) return setMsg(msg, "Paste the access token first.", "error");
+    try {
+      const r = await api.saveToken(token);
+      setMsg(msg, `Saved to ${r.saved}`, "ok");
+      $("#kg-token").value = "";
+      render();
+    } catch (err) {
+      setMsg(msg, err.message, "error");
+    }
   });
   $("#creds-form").addEventListener("submit", async (e) => {
     e.preventDefault();

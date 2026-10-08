@@ -223,6 +223,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .form-msg.ok { color: var(--success); }
 .form-msg.error { color: var(--danger); }
 .form .actions { margin-top: 0; }
+.legacy { margin-top: var(--s2); border-top: 1px solid var(--border); padding-top: var(--s2); }
+.legacy summary { cursor: pointer; font-size: 14px; color: var(--muted); margin-bottom: var(--s2); }
 .inline-field select { width: auto; }
 .switch { display: flex; align-items: center; gap: 12px; font-size: 14px; cursor: pointer; margin: var(--s1) 0; }
 .switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }

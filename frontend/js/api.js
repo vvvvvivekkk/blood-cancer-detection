@@ -32,6 +32,7 @@ export const api = {
   samples: () => request("GET", "/api/data/samples"),
   about: () => request("GET", "/api/about"),
   job: (id) => request("GET", `/api/jobs/${id}`),
+  saveToken: (token) => request("POST", "/api/data/kaggle-token", { token }),
   saveCreds: (username, key) => request("POST", "/api/data/kaggle-creds", { username, key }),
   download: () => request("POST", "/api/data/download"),
   demo: () => request("POST", "/api/data/demo"),

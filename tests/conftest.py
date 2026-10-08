@@ -11,6 +11,16 @@ sys.path[:0] = [str(REPO), str(REPO / "app")]
 from src import config as C  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def no_real_kaggle_credentials(tmp_path_factory, monkeypatch):
+    """Tests never see the developer's real Kaggle token/kaggle.json, so nothing hits the network."""
+    home = tmp_path_factory.mktemp("kaggle_home")
+    monkeypatch.setattr(C, "KAGGLE_JSON", home / "kaggle.json")
+    monkeypatch.setattr(C, "KAGGLE_ACCESS_TOKEN", home / "access_token")
+    for var in ("KAGGLE_API_TOKEN", "KAGGLE_USERNAME", "KAGGLE_KEY"):
+        monkeypatch.delenv(var, raising=False)
+
+
 @pytest.fixture
 def empty_root(tmp_path):
     """Point every artifact path at an empty dir."""

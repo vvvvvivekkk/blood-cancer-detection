@@ -70,7 +70,8 @@ SMOKE_EPOCHS_PER_PHASE = 1
 
 # Data sources
 KAGGLE_DATASET = "mohammadamireshraghi/blood-cell-cancer-all-4class"
-KAGGLE_JSON = Path.home() / ".kaggle" / "kaggle.json"
+KAGGLE_JSON = Path.home() / ".kaggle" / "kaggle.json"            # legacy username + key
+KAGGLE_ACCESS_TOKEN = Path.home() / ".kaggle" / "access_token"   # new-style KGAT_ token
 DEMO_PER_CLASS = 50
 DEMO_IMG_PX = 128
 SAMPLE_PER_CLASS = 2

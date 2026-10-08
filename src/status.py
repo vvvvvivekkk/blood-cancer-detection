@@ -1,7 +1,7 @@
 """What exists on disk. Cheap: no TensorFlow import."""
 from src import config as C
 from src.data import list_images, split_meta
-from src.download import has_credentials
+from src.download import resolve_credentials
 
 
 def status():
@@ -12,7 +12,8 @@ def status():
     s = {
         "kaggle_images": kaggle,
         "demo_images": demo,
-        "credentials": has_credentials(),
+        "credentials": resolve_credentials() is not None,
+        "credential_source": resolve_credentials(),
         "splits": all((C.SPLITS_DIR / f"{n}.csv").is_file() for n in ("train", "val", "test")),
         "split_meta": meta,
         "models": models,

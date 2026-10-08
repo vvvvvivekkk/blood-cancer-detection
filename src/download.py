@@ -20,10 +20,43 @@ DEMO_STYLE = {
 }
 
 
-def has_credentials(kaggle_json=None):
+def resolve_credentials(kaggle_json=None, access_token=None):
+    """Which Kaggle credential will be used, in kagglehub's order; None if there is none.
+
+    1. KAGGLE_API_TOKEN env var  2. ~/.kaggle/access_token  3. ~/.kaggle/kaggle.json
+    (4. legacy KAGGLE_USERNAME + KAGGLE_KEY env vars). Never returns the secret itself.
+    """
+    token_file = Path(access_token or C.KAGGLE_ACCESS_TOKEN)
+    if os.environ.get("KAGGLE_API_TOKEN", "").strip():
+        return "KAGGLE_API_TOKEN env var"
+    if token_file.is_file() and token_file.read_text().strip():
+        return str(token_file)
+    if Path(kaggle_json or C.KAGGLE_JSON).is_file():
+        return str(Path(kaggle_json or C.KAGGLE_JSON))
     if os.environ.get("KAGGLE_USERNAME") and os.environ.get("KAGGLE_KEY"):
-        return True
-    return Path(kaggle_json or C.KAGGLE_JSON).is_file()
+        return "KAGGLE_USERNAME/KAGGLE_KEY env vars"
+    return None
+
+
+def has_credentials(kaggle_json=None, access_token=None):
+    return resolve_credentials(kaggle_json, access_token) is not None
+
+
+def save_access_token(token, path=None):
+    """Write a new-style Kaggle access token (KGAT_...) to ~/.kaggle/access_token, never into the repo."""
+    token = (token or "").strip()
+    if not token or any(c.isspace() for c in token):
+        raise ValueError("Paste the access token as one line, with no spaces.")
+    path = Path(path or C.KAGGLE_ACCESS_TOKEN)
+    if C.REPO.resolve() in path.resolve().parents:
+        raise ValueError("Refusing to store a Kaggle token inside the project folder.")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(token + "\n")
+    try:
+        path.chmod(0o600)
+    except OSError:
+        pass  # Windows ignores POSIX modes
+    return path
 
 
 def save_credentials(username, key, kaggle_json=None):

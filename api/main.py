@@ -23,7 +23,7 @@ from api.jobs import Busy, JobRunner, friendly
 from src import config as C
 from src import pipeline
 from src.data import data_source, list_images, load_split
-from src.download import has_credentials, save_credentials
+from src.download import has_credentials, save_access_token, save_credentials
 from src.status import status
 
 log = logging.getLogger("api")
@@ -84,6 +84,10 @@ class Creds(BaseModel):
     key: str = Field(min_length=1)
 
 
+class TokenBody(BaseModel):
+    token: str = Field(min_length=1)
+
+
 class SmokeBody(BaseModel):
     smoke: bool = False
 
@@ -118,7 +122,7 @@ def _start(kind, steps):
 @app.post("/api/data/download", status_code=202)
 def download():
     if not has_credentials():
-        raise HTTPException(400, "No Kaggle credentials. Save your username and API key first.")
+        raise HTTPException(400, "No Kaggle credentials. Paste an access token or save your username and API key first.")
     return _start("download", [_stage("download")])
 
 
@@ -247,6 +251,11 @@ def update_settings(body: SettingsBody):
 @app.post("/api/data/kaggle-creds")
 def kaggle_creds(body: Creds):
     return {"saved": str(save_credentials(body.username, body.key)), "credentials": True}
+
+
+@app.post("/api/data/kaggle-token")
+def kaggle_token(body: TokenBody):
+    return {"saved": str(save_access_token(body.token)), "credentials": True}
 
 
 def _counts():

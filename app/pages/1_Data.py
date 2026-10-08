@@ -5,7 +5,7 @@ import ui
 from src import config as C
 from src import pipeline
 from src.data import data_source, list_images
-from src.download import save_credentials
+from src.download import save_access_token, save_credentials
 
 
 def main():
@@ -16,8 +16,17 @@ def main():
     st.markdown(f"[`{C.KAGGLE_DATASET}`](https://www.kaggle.com/datasets/{C.KAGGLE_DATASET}): 3,242 images in 4 classes, "
                 "downloaded with kagglehub into `data/raw/`.")
     if s["credentials"]:
-        st.success("Kaggle credentials found (env vars or `~/.kaggle/kaggle.json`).")
-    with st.form("kaggle_creds"):
+        st.success(f"Kaggle credentials found: {s['credential_source']}.")
+    with st.form("kaggle_token"):
+        st.caption(f"Recommended. Saved to `{C.KAGGLE_ACCESS_TOKEN}`, outside the project.")
+        token = st.text_input("Paste access token (KGAT_…)", type="password")
+        if st.form_submit_button("Save access token"):
+            try:
+                st.session_state["_flash"] = ("success", f"Saved to {save_access_token(token)}")
+            except Exception as e:  # noqa: BLE001
+                st.session_state["_flash"] = ("error", ui.friendly(e))
+            st.rerun()
+    with st.expander("Or use a legacy username + API key (kaggle.json)"), st.form("kaggle_creds"):
         st.caption(f"Saved to `{C.KAGGLE_JSON}`. Create a key at kaggle.com → Settings → API → Create New Token.")
         user = st.text_input("Kaggle username")
         key = st.text_input("Kaggle API key", type="password")

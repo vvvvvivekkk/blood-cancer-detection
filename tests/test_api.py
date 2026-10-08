@@ -78,7 +78,8 @@ def test_train_rejects_bad_requests(empty_root):
     assert client.post("/api/train", json={"smoke": True}).status_code == 409  # no splits yet
     r = client.post("/api/train", json={"epochs": "many"})
     assert r.status_code == 422 and isinstance(r.json()["detail"], str)
-    assert client.post("/api/data/download").status_code in (202, 400)  # 400 without credentials
+    r = client.post("/api/data/download")
+    assert r.status_code == 400 and "access token" in r.json()["detail"]  # no credentials in tests
 
 
 def test_evaluate_job_then_results(smoke):
@@ -165,3 +166,11 @@ def test_ensemble_mode_highlights_ensemble_rows(smoke):
     r = client.get("/api/results").json()
     assert [x["key"] for x in r["rows"] if x["highlighted"]] == C.ENSEMBLES
     assert [x["key"] for x in r["rows"] if x["selected"]] == [r["best_ensemble"]]
+
+
+def test_kaggle_token_endpoint_saves_outside_repo(empty_root):
+    r = client.post("/api/data/kaggle-token", json={"token": "test-token-value"})
+    assert r.status_code == 200 and C.KAGGLE_ACCESS_TOKEN.read_text().strip() == "test-token-value"
+    s = client.get("/api/status").json()
+    assert s["credentials"] and s["credential_source"] == str(C.KAGGLE_ACCESS_TOKEN)
+    assert client.post("/api/data/kaggle-token", json={"token": "has spaces"}).status_code == 400

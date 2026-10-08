@@ -115,19 +115,30 @@
           <div class="card">
             <div class="card-head"><h3>Kaggle dataset</h3><span class="badge" id="creds-badge">no credentials</span></div>
             <p class="muted"><a id="kaggle-link" href="https://www.kaggle.com/datasets/mohammadamireshraghi/blood-cell-cancer-all-4class" target="_blank" rel="noopener">mohammadamireshraghi/blood-cell-cancer-all-4class</a>: 3,242 images, downloaded with kagglehub into <code>data/raw/</code>.</p>
+            <form id="token-form" class="form" novalidate>
+              <label class="field"><span>Paste access token (KGAT_…)</span>
+                <span class="input-group"><input id="kg-token" name="token" type="password" autocomplete="off" spellcheck="false" required>
+                  <button class="icon-btn" type="button" id="kg-token-reveal" aria-label="Show access token" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                </span></label>
+              <p class="hint">Recommended. Saved to <code>~/.kaggle/access_token</code>, outside the project. Create one at kaggle.com → Settings → API → Generate New Token.</p>
+              <p class="form-msg" id="token-msg" role="status"></p>
+              <div class="actions"><button class="btn" type="submit">Save access token</button></div>
+            </form>
+            <details class="legacy">
+              <summary>Or use a legacy username + API key (kaggle.json)</summary>
             <form id="creds-form" class="form" novalidate>
               <label class="field"><span>Kaggle username</span><input id="kg-user" name="username" autocomplete="username" required></label>
               <label class="field"><span>API key</span>
                 <span class="input-group"><input id="kg-key" name="key" type="password" autocomplete="off" required>
                   <button class="icon-btn" type="button" id="kg-reveal" aria-label="Show API key" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
                 </span></label>
-              <p class="hint">Saved to <code>~/.kaggle/kaggle.json</code>. Create one at kaggle.com → Settings → API → Create New Token.</p>
+              <p class="hint">Saved to <code>~/.kaggle/kaggle.json</code>. Used only when no access token is set.</p>
               <p class="form-msg" id="creds-msg" role="status"></p>
-              <div class="actions">
-                <button class="btn" type="submit">Save credentials</button>
-                <button class="btn btn-primary" type="button" id="btn-download">Download dataset</button>
-              </div>
+              <div class="actions"><button class="btn" type="submit">Save credentials</button></div>
             </form>
+            </details>
+            <p class="hint" id="creds-source"></p>
+            <div class="actions"><button class="btn btn-primary" type="button" id="btn-download">Download dataset</button></div>
           </div>
           <div class="card">
             <div class="card-head"><h3>Prepare data</h3><span class="badge" id="data-badge">no data</span></div>
