@@ -35,6 +35,8 @@ Headless stages: `python run.py --cli {download,demo-data,splits,train,ensemble,
 
 ## Architecture
 
+![architecture](docs/architecture.png)
+
 ```mermaid
 flowchart LR
     A[PBS image 224×224] --> B1[MobileNetV2]
@@ -59,7 +61,41 @@ Each backbone is ImageNet-pretrained and fine-tuned in two phases. Phase 1 train
 _Not generated yet. Run `python -m src.evaluate --write-readme-table`._
 <!-- RESULTS:END -->
 
-Figures land in `results/figures/`: confusion matrices, training curves, one-vs-rest ROC, a model comparison bar chart and a Grad-CAM grid.
+The table is written by `python -m src.evaluate --write-readme-table` (or `--table-only` to reuse an existing `results/metrics.json` without touching the test split again). Each run also writes `results/NOTES.md`, which states whether the ENDGOAL targets are met, and the figures in `results/figures/`: confusion matrices, training curves, one-vs-rest ROC, a model comparison bar chart and a Grad-CAM grid.
+
+## The app
+
+| Page | What you can do |
+|---|---|
+| Home | Pipeline status badges, one-click **Run full pipeline** (smoke or full) |
+| Data | Save Kaggle credentials, download, **Use demo data**, make splits, class counts and examples |
+| Train | Pick backbones, live progress bars and loss/accuracy charts, training history |
+| Evaluate | Fit the ensemble, run the test evaluation, comparison table, per-class metrics, confusion matrices, ROC, Grad-CAM grid |
+| Predict | Upload an image (jpg/png/bmp/tif, ≤ 10 MB) or pick a sample: class, confidence, per-model votes, Grad-CAM overlay |
+| About | Paper, method, disclaimer |
+
+Every page renders with no data and no models. It tells you what is missing and shows the button that fixes it.
+
+| Home | Train | Evaluate | Predict |
+|---|---|---|---|
+| ![home](docs/screenshots/home.png) | ![train](docs/screenshots/train.png) | ![evaluate](docs/screenshots/evaluate.png) | ![predict](docs/screenshots/predict.png) |
+
+_These are placeholders. Replace them with real screenshots after a run._
+
+## Project structure
+
+```
+run.py      single entry point: UI, or --cli stages
+src/        config · status · download · data · models · train · ensemble · predict · evaluate · gradcam · pipeline
+app/        Home.py, pages/ (Data, Train, Evaluate, Predict, About), ui.py
+models/     <backbone>.keras, ensemble_weights.json, meta_clf.pkl, ensemble_mode.txt
+results/    metrics.json, comparison_table.md, NOTES.md, split_counts.csv, history/, figures/
+notebooks/  train_colab.ipynb (thin wrapper around run.py)
+docs/       paper_mapping.md, architecture.png, screenshots/, make_assets.py
+tests/      pytest suite: no network, data/sample + untrained models, about 2 minutes on CPU
+```
+
+Run the tests with `pytest -q`. `CLAUDE.md` has the engineering rules and `ENDGOAL.md` has the definition of done.
 
 ## Limitations
 
