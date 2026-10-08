@@ -5,6 +5,7 @@ import io
 import json
 import logging
 import re
+import secrets
 from pathlib import Path
 from typing import List
 from urllib.parse import quote
@@ -37,7 +38,8 @@ CPU_SEC_PER_IMAGE_EPOCH = {"mobilenetv2": 0.05, "efficientnetb0": 0.08, "densene
 SMOKE_SEC_PER_BACKBONE = 15
 STEP_OF_STAGE = {"download": "data", "demo-data": "data", "splits": "data", "ensemble": "ensemble",
                  "evaluate": "evaluate", **{b: "train" for b in C.BACKBONES}}
-MEDIA_DIRS = {"sample": lambda: C.SAMPLE_DIR, "demo": lambda: C.DEMO_DIR, "kaggle": lambda: C.RAW_DIR}
+MEDIA_DIRS = {"sample": lambda: C.SAMPLE_DIR, "demo": lambda: C.DEMO_DIR, "kaggle": lambda: C.RAW_DIR,
+              "test": lambda: C.TEST_IMAGES_DIR}
 
 app = FastAPI(title="ALL Hybrid Ensemble API", version="1.0")
 jobs = JobRunner()
@@ -82,6 +84,11 @@ async def _crash(_, exc):
 class Creds(BaseModel):
     username: str = Field(min_length=1)
     key: str = Field(min_length=1)
+
+
+class LoginBody(BaseModel):
+    username: str = ""
+    password: str = ""
 
 
 class TokenBody(BaseModel):
@@ -222,6 +229,15 @@ def api_status():
             "max_upload_mb": C.MAX_UPLOAD_MB, "upload_exts": C.UPLOAD_EXTS, "settings": _settings()}
 
 
+@app.post("/api/login")
+def login(body: LoginBody):
+    """Static demo login for the walkthrough (no database, no sessions). Not an access control on /api/*."""
+    ok = secrets.compare_digest(body.username, C.DEMO_USERNAME) & secrets.compare_digest(body.password, C.DEMO_PASSWORD)
+    if not ok:
+        raise HTTPException(401, "Invalid username or password.")
+    return {"ok": True, "user": body.username}
+
+
 @app.get("/api/health")
 def health():
     s = status()
@@ -289,6 +305,23 @@ def samples():
         for p in [p for p, lab in items if lab == name][:SAMPLES_PER_CLASS]:
             out.append({"url": _media_url(source, p), "label": name, "label_idx": i, "name": Path(p).name})
     return {"source": source, "samples": out, "counts": _counts()}
+
+
+@app.get("/api/data/test-images")
+def test_images():
+    """Images exported to test_images/ by `python run.py --cli export-test-images`."""
+    root = C.TEST_IMAGES_DIR
+    items = list_images(root) if root.is_dir() else []
+    return {"images": [{"url": _media_url("test", p), "label": lab, "name": Path(p).name} for p, lab in items]}
+
+
+@app.post("/api/data/export-test-images")
+def export_tests():
+    if jobs.active_id():
+        raise Busy("A job is running. Export the test images after it finishes.")
+    from scripts.export_test_images import export_test_images
+    dest, n = export_test_images()
+    return {"count": n, "dest": str(dest)}
 
 
 @app.get("/media/{source}/{rel:path}")

@@ -15,3 +15,4 @@ access_token
 access_token.txt
 kaggle.json
 .env
+test_images/

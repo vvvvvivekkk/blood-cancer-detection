@@ -88,6 +88,16 @@ A reproducible pipeline that trains three CNN backbones on the 4-class ALL blood
 - [x] `tests/test_api.py`, `tests/test_frontend.py` (Playwright), `tests/test_static_assets.py` green
 - [x] `docs/ui_walkthrough.md`; screenshots of every view in `docs/screenshots/` (smoke artifacts, re-capture after a real run)
 
+### P10 — Examiner walkthrough parity
+- [x] Static login (admin / admin, no database), *Login successful* toast, Logout in the sidebar, flag in `sessionStorage`
+- [x] Sidebar order Home, Preview, Performance Analysis, Chart, About, Logout; Data and Train under a Pipeline submenu
+- [x] Performance Analysis: Accuracy / Precision / Recall / F-measure tiles for the selected ensemble, confusion matrix directly below
+- [x] Chart view: Model Loss and Model Accuracy, train vs val, backbone selector, from `results/history/*.csv`
+- [x] Preview flow: Choose image → preview → Submit → result; *Try a test image* dropdown
+- [x] `python run.py --cli export-test-images` → `test_images/<class>/` (10 per class, test split, gitignored)
+- [x] `python app.py` starts the web app
+- [x] API + Playwright tests for login, renamed views, Chart, test-image export
+
 ## Explicitly out of scope
 - Cell segmentation (dataset is pre-cropped); mobile app; C-NMC binary task; any clinical claim
 

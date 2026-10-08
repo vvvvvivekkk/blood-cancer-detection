@@ -62,5 +62,6 @@ def test_every_view_has_a_nav_link_and_footer_disclaimer():
     html = (FRONT / "index.html").read_text(encoding="utf-8")
     views = re.findall(r'data-view="(\w+)"', html)
     navs = re.findall(r'data-nav="(\w+)"', html)
-    assert views == navs == ["overview", "data", "train", "evaluate", "predict", "about"]
+    assert navs == ["home", "preview", "performance", "chart", "about", "data", "train"]  # walkthrough order
+    assert sorted(views) == sorted(navs)
     assert "Not for clinical use" in html

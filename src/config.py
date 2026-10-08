@@ -34,6 +34,11 @@ IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"}
 UPLOAD_EXTS = ["jpg", "jpeg", "png", "bmp", "tif", "tiff"]
 MAX_UPLOAD_MB = 10
 
+# Web UI demo login (a gate for the walkthrough, NOT security: the API itself stays open)
+DEMO_USERNAME = "admin"
+DEMO_PASSWORD = "admin"
+EXPORT_PER_CLASS = 10  # test images copied to test_images/<class>/ for the Preview demo
+
 # Training
 BATCH_SIZE = 32
 EPOCHS = 15            # total, both phases
@@ -84,7 +89,7 @@ GRADCAM_ALPHA = 0.4
 def set_root(root):
     """Point every artifact path at `root` (tests use a tmp dir)."""
     global ROOT, DATA_DIR, RAW_DIR, DEMO_DIR, SPLITS_DIR, MODELS_DIR, RESULTS_DIR
-    global HISTORY_DIR, FIGURES_DIR, WEIGHTS_JSON, META_CLF, MODE_FILE, METRICS_JSON, ACTIVE_MODE_FILE
+    global HISTORY_DIR, FIGURES_DIR, WEIGHTS_JSON, META_CLF, MODE_FILE, METRICS_JSON, ACTIVE_MODE_FILE, TEST_IMAGES_DIR
     ROOT = Path(root)
     DATA_DIR = ROOT / "data"
     RAW_DIR = DATA_DIR / "raw"
@@ -98,6 +103,7 @@ def set_root(root):
     META_CLF = MODELS_DIR / "meta_clf.pkl"
     MODE_FILE = MODELS_DIR / "ensemble_mode.txt"
     ACTIVE_MODE_FILE = MODELS_DIR / "active_mode.txt"
+    TEST_IMAGES_DIR = ROOT / "test_images"
     METRICS_JSON = RESULTS_DIR / "metrics.json"
 
 

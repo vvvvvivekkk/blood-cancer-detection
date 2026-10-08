@@ -174,3 +174,38 @@ def test_kaggle_token_endpoint_saves_outside_repo(empty_root):
     s = client.get("/api/status").json()
     assert s["credentials"] and s["credential_source"] == str(C.KAGGLE_ACCESS_TOKEN)
     assert client.post("/api/data/kaggle-token", json={"token": "has spaces"}).status_code == 400
+
+
+def test_demo_login_accepts_only_configured_credentials():
+    ok = client.post("/api/login", json={"username": C.DEMO_USERNAME, "password": C.DEMO_PASSWORD})
+    assert ok.status_code == 200 and ok.json()["ok"] is True
+    for user, pw in (("admin", "wrong"), ("root", "admin"), ("", "")):
+        r = client.post("/api/login", json={"username": user, "password": pw})
+        assert r.status_code == 401 and r.json()["detail"] == "Invalid username or password."
+
+
+def test_export_test_images_from_test_split(smoke):
+    import shutil
+    try:
+        assert client.get("/api/data/test-images").json()["images"] == []
+        r = client.post("/api/data/export-test-images")
+        assert r.status_code == 200 and r.json()["count"] == 4  # smoke test split: 1 image per class
+        imgs = client.get("/api/data/test-images").json()["images"]
+        assert {i["label"] for i in imgs} == set(C.CLASS_NAMES)
+        test_paths = {p.rsplit("/", 1)[-1] for p in __import__("pandas").read_csv(C.SPLITS_DIR / "test.csv")["path"]}
+        assert {i["name"] for i in imgs} <= test_paths  # only test-split images
+        assert client.get(imgs[0]["url"]).status_code == 200
+    finally:
+        shutil.rmtree(C.TEST_IMAGES_DIR, ignore_errors=True)
+
+
+def test_export_test_images_needs_splits(empty_root):
+    r = client.post("/api/data/export-test-images")
+    assert r.status_code == 409 and "splits" in r.json()["detail"]
+
+
+def test_app_py_is_the_same_entry_point():
+    import subprocess
+    import sys
+    out = subprocess.run([sys.executable, str(C.REPO / "app.py"), "--help"], capture_output=True, text=True, timeout=60)
+    assert out.returncode == 0 and "--streamlit" in out.stdout and "export-test-images" in out.stdout

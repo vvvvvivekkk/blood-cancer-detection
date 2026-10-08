@@ -93,8 +93,16 @@ img { max-width: 100%; }
   display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px;
   color: var(--text); text-decoration: none; font-weight: 500;
 }
-.nav a:hover { background: var(--surface-2); }
+.nav a:hover, .nav-toggle:hover, .nav-btn:hover { background: var(--surface-2); }
 .nav a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
+.nav-toggle, .nav-btn {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border-radius: 8px; border: 0;
+  background: none; color: var(--text); font: inherit; font-weight: 500; cursor: pointer; text-align: left;
+}
+.nav-toggle .chev { margin-left: auto; width: 16px; height: 16px; transition: transform 0.2s ease; }
+.nav-toggle[aria-expanded="true"] .chev { transform: rotate(90deg); }
+.subnav { list-style: none; margin: 4px 0 0; padding: 0 0 0 20px; display: grid; gap: 4px; }
+.nav-btn { color: var(--danger); }
 .nav svg, .icon-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 .sidebar-foot { margin-top: auto; display: grid; gap: var(--s2); }
 .settings { border-top: 1px solid var(--border); padding: var(--s2) var(--s1) 0; }
@@ -315,6 +323,21 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .compare-stack .cam { position: absolute; inset: 0; height: 100%; }
 .list { padding-left: 20px; margin: 0; }
 .list li { margin-bottom: var(--s1); }
+
+/* login */
+.login-screen { min-height: 100vh; display: grid; place-items: center; padding: var(--s3) var(--s2); background: var(--bg); }
+.login-card { width: 100%; max-width: 400px; display: grid; gap: var(--s2); padding: var(--s4); }
+.login-card .brand { padding: 0; margin-bottom: var(--s1); }
+.login-card h2 { font-size: 22px; margin: 0; }
+.login-card p { margin: 0; }
+.login-submit { width: 100%; }
+
+/* performance analysis hero tiles + preview steps */
+.kpis-hero .kpi { padding: var(--s3); }
+.kpis-hero .kpi-value { font-size: 34px; color: var(--accent); }
+.choose-row { margin: 0 0 var(--s2); align-items: center; }
+.choose-row select { width: auto; max-width: 100%; }
+.step-head { margin: var(--s2) 0 0; }
 
 .toast {
   position: fixed; right: var(--s3); bottom: var(--s3); z-index: 60; max-width: 420px; padding: 12px var(--s2);

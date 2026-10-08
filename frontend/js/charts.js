@@ -50,6 +50,30 @@ function draw(canvas, config) {
   charts.set(canvas.id, new window.Chart(canvas, config));
 }
 
+/** Train vs val curves for one backbone. rows: [{epoch, loss, val_loss, accuracy, val_accuracy}]. */
+export function trainValChart(canvas, rows, metric) {
+  if (!rows?.length) {
+    charts.get(canvas.id)?.destroy();
+    charts.delete(canvas.id);
+    missing(canvas, "No history for this backbone yet.");
+    return;
+  }
+  const [train, val] = palette();
+  const labels = rows.map((r) => r.epoch);
+  draw(canvas, {
+    type: "line",
+    xTitle: "epoch",
+    yMax: metric === "accuracy" ? 1 : undefined,
+    data: {
+      labels,
+      datasets: [
+        { label: "train", data: rows.map((r) => r[metric]), borderColor: train, backgroundColor: train, tension: 0.25, pointRadius: 3 },
+        { label: "val", data: rows.map((r) => r[`val_${metric}`]), borderColor: val, backgroundColor: val, tension: 0.25, pointRadius: 3 },
+      ],
+    },
+  });
+}
+
 export function barChart(canvas, labels, series, yMax) {
   const colours = palette();
   draw(canvas, {

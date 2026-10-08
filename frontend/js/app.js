@@ -1,14 +1,17 @@
 import { api, followJob } from "./api.js";
-import { barChart, historyChart } from "./charts.js";
+import { barChart, historyChart, trainValChart } from "./charts.js";
 
 const $ = (sel, el = document) => el.querySelector(sel);
 const $$ = (sel, el = document) => [...el.querySelectorAll(sel)];
-const VIEWS = { overview: "Overview", data: "Data", train: "Train", evaluate: "Evaluate", predict: "Predict", about: "About" };
+const VIEWS = { home: "Home", preview: "Preview", performance: "Performance Analysis", chart: "Chart", about: "About", data: "Data", train: "Train" };
+const ALIASES = { overview: "home", predict: "preview", evaluate: "performance" };  // old links keep working
+const PIPELINE_VIEWS = ["data", "train"];
+const AUTH_KEY = "bce_auth";
 const RING_C = 2 * Math.PI * 52;
 
 const state = {
   view: "overview", status: null, job: null, followingId: null, stopFollow: null, lastStage: null,
-  results: null, file: null, aboutLoaded: false, backbonesBuilt: false, cmKey: null,
+  results: null, file: null, aboutLoaded: false, backbonesBuilt: false, cmKey: null, chartKey: null, started: false,
 };
 
 // ---------- helpers ----------
@@ -59,8 +62,10 @@ function md(text) {
 
 // ---------- routing ----------
 function route() {
-  const v = location.hash.replace(/^#\/?/, "") || "overview";
-  show(VIEWS[v] ? v : "overview");
+  if (!isAuthed()) return showLogin();
+  const raw = location.hash.replace(/^#\/?/, "") || "home";
+  const v = ALIASES[raw] || raw;
+  show(VIEWS[v] ? v : "home");
 }
 
 function show(view) {
@@ -71,6 +76,7 @@ function show(view) {
     else a.removeAttribute("aria-current");
   });
   $("#view-title").textContent = VIEWS[view];
+  if (PIPELINE_VIEWS.includes(view)) setPipelineOpen(true);
   document.title = `${VIEWS[view]} · ALL Hybrid Ensemble`;
   closeMenu();
   render(view);
@@ -78,7 +84,7 @@ function show(view) {
 
 async function render(view = state.view) {
   try {
-    await ({ overview: renderOverview, data: renderData, train: renderTrain, evaluate: renderEvaluate, predict: renderPredict, about: renderAbout })[view]();
+    await ({ home: renderOverview, data: renderData, train: renderTrain, performance: renderEvaluate, preview: renderPredict, chart: renderChart, about: renderAbout })[view]();
   } catch (e) {
     toast(e.message, "error");
   }
@@ -206,7 +212,7 @@ function firstMissing(s, need) {
     const ready = isSingle() ? s.models.mobilenetv2 : anyModel;
     return ready ? null : !s.has_data && !s.splits ? "data" : !s.splits ? "splits" : isSingle() ? "single" : "models";
   }
-  const chain = { train: ["data", "splits"], evaluate: ["data", "splits", "models", "ensemble", "metrics"], all: ["data", "splits", "models", "ensemble", "metrics"] }[need];
+  const chain = { train: ["data", "splits"], chart: ["data", "splits", "models"], evaluate: ["data", "splits", "models", "ensemble", "metrics"], all: ["data", "splits", "models", "ensemble", "metrics"] }[need];
   const ok = { data: s.has_data || s.splits, splits: s.splits, models: anyModel, ensemble: s.voting && s.stacking, metrics: s.metrics };
   return chain.find((k) => !ok[k]) || null;
 }
@@ -418,11 +424,18 @@ async function renderEvaluate() {
     ? `single-model mode: Predict uses ${active?.name ?? "MobileNetV2"}` : `Predict uses ${active?.name}`;
   $("#eval-meta").textContent = `Test split: ${r.meta.n_test} images · source: ${r.meta.source}${r.meta.smoke ? " (smoke)" : ""} · generated ${r.meta.generated_at}`;
   const gain = r.gain_pp;
+  $("#perf-tiles").innerHTML = [
+    ["Accuracy", pct(best.accuracy, 2), best.name],
+    ["Precision", pct(best.macro_precision, 2), "macro average"],
+    ["Recall", pct(best.macro_recall, 2), "macro average"],
+    ["F-measure", pct(best.macro_f1, 2), "macro F1"],
+  ].map(([l, v, sub]) => `<div class="kpi"><div class="kpi-label">${l}</div><div class="kpi-value">${v}</div><div class="kpi-sub">${esc(sub)}</div></div>`).join("");
+  $("#cm-note").textContent = `test split, ${r.meta.n_test} images`;
   $("#kpis").innerHTML = [
-    ["Ensemble accuracy", pct(best.accuracy), best.name],
-    ["Ensemble macro-F1", num(best.macro_f1, 3), "unweighted mean over 4 classes"],
     ["Cohen's kappa", num(best.kappa, 3), "agreement beyond chance"],
+    ["ROC-AUC", num(best.roc_auc_ovr, 3), "one vs rest, macro"],
     ["Gain over best single", `${gain >= 0 ? "+" : ""}${gain.toFixed(2)} pp`, `vs ${dn(r.best_backbone)} accuracy`, gain > 0 ? "pos" : gain < 0 ? "neg" : ""],
+    ["Test images", String(r.meta.n_test), `source: ${r.meta.source}`],
   ].map(([l, v, sub, cls = ""]) => `<div class="kpi"><div class="kpi-label">${l}</div><div class="kpi-value ${cls}">${v}</div><div class="kpi-sub">${esc(sub)}</div></div>`).join("");
 
   const cols = [["accuracy", "Accuracy"], ["macro_precision", "Macro P"], ["macro_recall", "Macro R"], ["macro_f1", "Macro F1"], ["weighted_f1", "Weighted F1"], ["kappa", "Kappa"], ["roc_auc_ovr", "ROC-AUC"]];
@@ -472,12 +485,12 @@ function selectFile(file) {
   const ext = (file.name.split(".").pop() || "").toLowerCase();
   if (!s.upload_exts.includes(ext)) {
     state.file = null;
-    $("#btn-analyze").disabled = true;
+    $("#btn-submit").disabled = true;
     return predictError(`Unsupported file type ".${ext}". Use ${s.upload_exts.join(", ")}.`);
   }
   if (file.size > s.max_upload_mb * 1024 * 1024) {
     state.file = null;
-    $("#btn-analyze").disabled = true;
+    $("#btn-submit").disabled = true;
     return predictError(`File is larger than ${s.max_upload_mb} MB.`);
   }
   state.file = file;
@@ -485,14 +498,14 @@ function selectFile(file) {
   prev.src = URL.createObjectURL(file);
   prev.hidden = false;
   $("#dz-text").hidden = true;
-  $("#btn-analyze").disabled = false;
+  $("#btn-submit").disabled = false;
 }
 
 async function analyze() {
   if (!state.file) return;
-  const btn = $("#btn-analyze");
+  const btn = $("#btn-submit");
   btn.disabled = true;
-  btn.textContent = "Analyzing…";
+  btn.textContent = "Submitting…";
   predictError("");
   try {
     showResult(await api.predict(state.file));
@@ -500,7 +513,7 @@ async function analyze() {
     predictError(e.message);
   } finally {
     btn.disabled = false;
-    btn.textContent = "Analyze";
+    btn.textContent = "Submit";
   }
 }
 
@@ -530,6 +543,7 @@ async function renderPredict() {
   const missing = emptyState($("#predict-empty"), "predict");
   $("#predict-body").hidden = missing;
   if (missing) return;
+  await loadTestImages();
   const strip = $("#sample-strip");
   if (strip.childElementCount) return;
   const { samples } = await api.samples();
@@ -539,9 +553,84 @@ async function renderPredict() {
     if (!b) return;
     const x = samples[Number(b.dataset.i)];
     $$("button", strip).forEach((o) => o.setAttribute("aria-pressed", o === b));
-    const blob = await (await fetch(x.url)).blob();
-    selectFile(new File([blob], x.name, { type: blob.type }));
+    await useImageUrl(x.url, x.name);
   });
+}
+
+async function useImageUrl(url, name) {
+  const blob = await (await fetch(url)).blob();
+  selectFile(new File([blob], name, { type: blob.type }));
+}
+
+async function loadTestImages() {
+  const { images } = await api.testImages();
+  const sel = $("#test-image-select");
+  const keep = sel.value;
+  sel.innerHTML = images.length
+    ? `<option value="">Try a test image… (${images.length})</option>` + state.status.class_names.map((c) => {
+      const opts = images.filter((x) => x.label === c);
+      return opts.length ? `<optgroup label="${esc(c)}">${opts.map((x) => `<option value="${esc(x.url)}" data-name="${esc(x.name)}">${esc(x.name)}</option>`).join("")}</optgroup>` : "";
+    }).join("")
+    : '<option value="">No test images exported yet</option>';
+  sel.disabled = !images.length;
+  sel.value = keep;
+  $("#btn-export-tests").hidden = images.length > 0 || !state.status.splits;
+}
+
+// ---------- chart ----------
+async function renderChart() {
+  await refreshStatus();
+  const r = await getResults();
+  const names = state.status.backbones.filter((b) => r.histories[b]?.length);
+  $("#chart-body").hidden = !names.length;
+  if (!names.length) {
+    // Prerequisite missing -> card with the fixing button; otherwise models exist without history CSVs.
+    if (!emptyState($("#chart-empty"), "chart")) {
+      $("#chart-empty").innerHTML = '<div class="empty"><div><h3>No training history yet</h3><p>Curves appear here after the backbones are trained.</p></div></div>';
+    }
+    return;
+  }
+  $("#chart-empty").innerHTML = "";
+  if (!names.includes(state.chartKey)) state.chartKey = names[0];
+  $("#chart-tabs").innerHTML = names.map((n) => `<button class="tab" role="tab" type="button" data-key="${n}" aria-selected="${n === state.chartKey}" tabindex="${n === state.chartKey ? 0 : -1}">${esc(dn(n))}</button>`).join("");
+  const rows = r.histories[state.chartKey];
+  const bestRow = rows.reduce((a, b) => (b.val_loss < a.val_loss ? b : a));
+  $("#chart-meta").textContent = `${rows.length} epochs · best val loss ${num(bestRow.val_loss, 4)} at epoch ${bestRow.epoch} (val acc ${pct(bestRow.val_accuracy)})`;
+  trainValChart($("#chart-model-loss"), rows, "loss");
+  trainValChart($("#chart-model-acc"), rows, "accuracy");
+  const phase2 = rows.findIndex((x, i) => i > 0 && x.learning_rate < rows[0].learning_rate);
+  $("#chart-phase-note").textContent = phase2 > 0
+    ? `Phase 1 (frozen base) ran epochs 1–${phase2}; phase 2 (top 30 % unfrozen, lower learning rate) from epoch ${phase2 + 1}.` : "";
+}
+
+// ---------- login ----------
+function isAuthed() {
+  try { return sessionStorage.getItem(AUTH_KEY) === "1"; } catch { return false; }
+}
+
+function showLogin() {
+  state.stopFollow?.();
+  state.followingId = null;
+  $("#app").hidden = true;
+  $("#login-screen").hidden = false;
+  $("#login-pass").value = "";
+  $("#login-user").focus();
+}
+
+function startApp() {
+  $("#login-screen").hidden = true;
+  $("#app").hidden = false;
+  if (!state.started) {
+    state.started = true;
+    refreshStatus().then(route).catch((e) => { toast(e.message, "error"); route(); });
+  } else {
+    refreshStatus().then(route).catch((e) => toast(e.message, "error"));
+  }
+}
+
+function setPipelineOpen(open) {
+  $("#pipeline-toggle").setAttribute("aria-expanded", open);
+  $("#pipeline-sub").hidden = !open;
 }
 
 // ---------- about ----------
@@ -578,6 +667,47 @@ function closeMenu() {
 
 function wire() {
   window.addEventListener("hashchange", route);
+  $("#login-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const err = $("#login-error");
+    err.textContent = "";
+    try {
+      await api.login($("#login-user").value.trim(), $("#login-pass").value);
+      try { sessionStorage.setItem(AUTH_KEY, "1"); } catch { /* storage blocked: session lasts this page only */ }
+      toast("Login successful");
+      if (location.hash !== "#/home") history.replaceState(null, "", "#/home");
+      startApp();
+    } catch (ex) {
+      err.textContent = ex.message;
+      $("#login-pass").select();
+    }
+  });
+  $("#logout").addEventListener("click", () => {
+    try { sessionStorage.removeItem(AUTH_KEY); } catch { /* ignore */ }
+    closeMenu();
+    toast("Logged out.");
+    showLogin();
+  });
+  $("#pipeline-toggle").addEventListener("click", () =>
+    setPipelineOpen($("#pipeline-toggle").getAttribute("aria-expanded") !== "true"));
+  $("#chart-tabs").addEventListener("click", (e) => {
+    const t = e.target.closest(".tab");
+    if (t) { state.chartKey = t.dataset.key; renderChart(); }
+  });
+  $("#btn-choose").addEventListener("click", () => $("#file-input").click());
+  $("#test-image-select").addEventListener("change", (e) => {
+    const opt = e.target.selectedOptions[0];
+    if (opt?.value) useImageUrl(opt.value, opt.dataset.name);
+  });
+  $("#btn-export-tests").addEventListener("click", async () => {
+    try {
+      const r = await api.exportTestImages();
+      toast(`Exported ${r.count} test images to test_images/.`);
+      await loadTestImages();
+    } catch (ex) {
+      toast(ex.message, "error");
+    }
+  });
   $("#single-mode").addEventListener("change", changeActiveMode);
   $("#theme-toggle").addEventListener("click", () => {
     setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
@@ -674,7 +804,7 @@ function wire() {
     dz.classList.remove("drag");
     if (e.dataTransfer.files[0]) selectFile(e.dataTransfer.files[0]);
   });
-  $("#btn-analyze").addEventListener("click", analyze);
+  $("#btn-submit").addEventListener("click", analyze);
   $("#cam-opacity").addEventListener("input", (e) => {
     $("#img-cam").style.opacity = e.target.value / 100;
     $("#cam-out").textContent = `${e.target.value}%`;
@@ -682,4 +812,5 @@ function wire() {
 }
 
 wire();
-refreshStatus().then(route).catch((e) => { toast(e.message, "error"); route(); });
+if (isAuthed()) startApp();
+else showLogin();

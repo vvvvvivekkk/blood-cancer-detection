@@ -9,9 +9,10 @@ Three transfer-learning CNNs (MobileNetV2, EfficientNetB0, DenseNet121) are comb
 ## Quick start
 
 ```bash
-pip install -r requirements.txt && python run.py     # opens http://localhost:8000
+pip install -r requirements.txt
+python app.py                        # same as `python run.py`: opens http://localhost:8000
 ```
-Then work through the views in the sidebar: **Data** (paste your Kaggle key and download, or press *Use demo data*) → **Train** → **Evaluate** → **Predict**. Or press **Run full pipeline** on Overview.
+Log in with **admin / admin**. This is a fixed demo login for the walkthrough, not security, and the API itself stays open. The sidebar then reads **Home · Preview · Performance Analysis · Chart · About · Pipeline (Data, Train) · Logout**. Get data under **Pipeline → Data** (paste a Kaggle access token and download, or press *Use demo data*), train under **Pipeline → Train**, or press **Run full pipeline** on Home. Then try **Preview**, **Performance Analysis** and **Chart**. For the viva, `python run.py --cli export-test-images` copies 10 test-split images per class to `test_images/`, and Preview lists them under *Try a test image*. `docs/ui_walkthrough.md` is the step-by-step demo script.
 
 `python run.py --streamlit` starts the older Streamlit UI (http://localhost:8501), which does the same things. Use `--port` and `--no-browser` to change the server's port or stop it opening a browser tab.
 
@@ -68,20 +69,22 @@ The table is written by `python -m src.evaluate --write-readme-table` (or `--tab
 
 | View | What you can do |
 |---|---|
-| Overview | Paper and citation, pipeline stepper (Data → Train → Ensemble → Evaluate → Predict), **Run full pipeline** with a smoke toggle, live job panel with progress and log |
-| Data | Save Kaggle credentials (masked key), download, **Use demo data**, make splits, class counts per split, example images |
-| Train | Choose backbones, epochs and smoke mode, see a CPU time estimate, per-backbone progress bars, live loss and accuracy curves |
-| Evaluate | Fit the ensemble, run the evaluation, KPI tiles, comparison table (ensembles highlighted, selected one badged), metric chart, 5 confusion-matrix tabs, ROC, per-class metrics, Grad-CAM grid, downloads |
-| Predict | Drag and drop or pick a sample image: class, confidence ring, probability bars, per-backbone votes, Grad-CAM overlay with an opacity slider |
+| Login | Static demo login (admin / admin), *Login successful* toast; **Logout** in the sidebar returns here |
+| Home | Paper and citation, pipeline stepper (Data → Train → Ensemble → Evaluate → Predict), **Run full pipeline** with a smoke toggle, live job panel with progress and log |
+| Pipeline → Data | Save Kaggle credentials (masked key), download, **Use demo data**, make splits, class counts per split, example images |
+| Pipeline → Train | Choose backbones, epochs and smoke mode, see a CPU time estimate, per-backbone progress bars, live loss and accuracy curves |
+| Performance Analysis | Large Accuracy / Precision / Recall / F-measure tiles for the selected ensemble with its confusion matrix directly below, then fit / run evaluation, kappa, ROC-AUC and gain tiles, comparison table (ensembles highlighted, selected one badged), metric chart, 5 confusion-matrix tabs, ROC, per-class metrics, Grad-CAM grid, downloads |
+| Chart | *Model Loss* and *Model Accuracy* per epoch, train vs validation, one backbone at a time (tabs) |
+| Preview | **Choose image** (or *Try a test image* from `test_images/`, or a sample), the preview appears, **Submit**; then class, confidence ring, probability bars, per-backbone votes, Grad-CAM overlay with an opacity slider |
 | About | Paper summary, architecture diagram, paper → code mapping, dataset, limitations |
 
 **Single-model mode.** The *Settings* switch in the sidebar makes Predict use only `models/mobilenetv2.keras` instead of the ensemble. The badge then reads "MobileNetV2 (single)" and the Evaluate table highlights the MobileNetV2 row instead of the ensemble rows. The choice is saved in `models/active_mode.txt`; with no file, Predict uses `ACTIVE_MODE` from `src/config.py` (`"ensemble"`).
 
 Every view also works with nothing trained. It says what is missing and offers the button that starts the job to fix it. Long stages run as background jobs. The UI follows them over Server-Sent Events and falls back to polling once a second. The pages support light and dark themes and keyboard navigation, and work on screens down to 768 px wide (the sidebar becomes a menu on phones).
 
-| Overview | Train | Evaluate | Predict |
+| Login | Preview | Performance Analysis | Chart |
 |---|---|---|---|
-| ![overview](docs/screenshots/overview.png) | ![train](docs/screenshots/train.png) | ![evaluate](docs/screenshots/evaluate.png) | ![predict](docs/screenshots/predict.png) |
+| ![login](docs/screenshots/login.png) | ![preview](docs/screenshots/preview.png) | ![performance](docs/screenshots/performance.png) | ![chart](docs/screenshots/chart.png) |
 
 _These screenshots come from smoke artifacts (untrained weights). Re-capture them after a real run with `python docs/capture_screenshots.py` while the app is running. Dark variants are the `*_dark.png` files._
 
@@ -104,6 +107,9 @@ _These screenshots come from smoke artifacts (untrained weights). Re-capture the
 | GET | `/api/jobs/{id}/stream` | Same, as Server-Sent Events |
 | GET | `/api/results` | Metrics, table rows, figure URLs, histories, notes |
 | GET / POST | `/api/settings` | Read or set `{active_mode}`: `"ensemble"` or `"mobilenetv2"` |
+| POST | `/api/login` | Demo login check (`{username, password}`), 401 on wrong credentials |
+| GET | `/api/data/test-images` | Images exported to `test_images/` |
+| POST | `/api/data/export-test-images` | Copy 10 test-split images per class to `test_images/` |
 | POST | `/api/predict` | Multipart image → class, confidence, probs, votes, Grad-CAM PNG (base64) |
 
 Only one job runs at a time. A second request returns `409`. Every error is JSON `{"detail": "<readable message>"}`, never a traceback. Interactive docs are at `/docs`.

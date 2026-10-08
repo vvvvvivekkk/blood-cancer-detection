@@ -74,7 +74,7 @@ Smoke mode: `data/sample/` (8 images), 1 epoch per phase, batch 4, 96 px, `weigh
 
 ## Rules for working in this repo
 1. Pipeline must run end-to-end in `--smoke` mode on CPU before you claim anything works. Real training is done on Colab via `notebooks/train_colab.ipynb`.
-2. Never read `data/splits/test.csv` outside `evaluate.py` (`data.load_split("test")` raises). Ensemble weights/meta-clf are fit on **val** only.
+2. Never read `data/splits/test.csv` outside `evaluate.py` (`data.load_split("test")` raises). Ensemble weights/meta-clf are fit on **val** only. One sanctioned exception: `scripts/export_test_images.py` copies 10 test images per class to `test_images/` (gitignored) for the live Preview demo. Nothing is trained, fitted or tuned on them.
 3. Every metric in `results/` comes from a script run. `results/metrics.json` is the single source of truth; the README table is generated from it.
 4. Fixed seeds (`SEED=42`) for numpy, tf, random, sklearn.
 5. Save models as `.keras`. Load with `compile=False` for inference.
@@ -89,6 +89,7 @@ Smoke mode: `data/sample/` (8 images), 1 epoch per phase, batch 4, 96 px, `weigh
 14. Research/educational project: UI and README carry a "not for clinical use" notice.
 15. API errors are always JSON `{detail: "<readable message>"}` with a proper 4xx/5xx; the frontend shows `detail` inline. No tracebacks reach the browser.
 16. Frontend: CSS variables for every colour (light + dark), no unused variables, only pinned CDN assets, keyboard-navigable, visible focus rings, contrast ≥ 4.5:1. `tests/test_static_assets.py` enforces the mechanical parts.
+17. Web UI walkthrough (matches the examiner's reference video): static login admin/admin (`config.DEMO_USERNAME/PASSWORD`, checked by `POST /api/login`, session flag in `sessionStorage`; a demo gate, not security). Sidebar: Home, Preview, Performance Analysis, Chart, About, Pipeline (Data, Train), Logout. `python app.py` == `python run.py`.
 
 ## Reference repos (ideas, not copy-paste)
 - https://github.com/MAmirEshraghi/Lightweight-Deep-CNN-Based-Mobile-App-in-the-Screening-of-ALL — dataset author

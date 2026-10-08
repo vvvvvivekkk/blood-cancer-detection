@@ -18,7 +18,23 @@
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
-<div class="app">
+<div class="login-screen" id="login-screen" hidden>
+  <form class="card login-card" id="login-form" novalidate aria-labelledby="login-title">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="13" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="16" cy="16" r="5.5" fill="currentColor"/></svg>
+      <div><div class="brand-name">ALL Ensemble</div><div class="brand-sub">Hybrid deep learning</div></div>
+    </div>
+    <h2 id="login-title">Sign in</h2>
+    <p class="muted">Blood cancer identification using a hybrid ensemble of deep CNNs.</p>
+    <label class="field"><span>Username</span><input id="login-user" name="username" autocomplete="username" required></label>
+    <label class="field"><span>Password</span><input id="login-pass" name="password" type="password" autocomplete="current-password" required></label>
+    <p class="form-msg error" id="login-error" role="alert"></p>
+    <button class="btn btn-primary login-submit" type="submit">Login</button>
+    <p class="hint">Demo login, not security: the credentials are fixed in <code>src/config.py</code>.</p>
+    <p class="hint"><strong>Not for clinical use.</strong> Research / educational project.</p>
+  </form>
+</div>
+<div class="app" id="app" hidden>
   <aside class="sidebar" id="sidebar" aria-label="Sidebar">
    <div class="sidebar-inner">
     <div class="brand">
@@ -30,12 +46,19 @@
     </div>
     <nav aria-label="Main">
       <ul class="nav">
-        <li><a href="#/overview" data-nav="overview"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Overview</a></li>
-        <li><a href="#/data" data-nav="data"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>Data</a></li>
-        <li><a href="#/train" data-nav="train"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Train</a></li>
-        <li><a href="#/evaluate" data-nav="evaluate"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Evaluate</a></li>
-        <li><a href="#/predict" data-nav="predict"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.5-4.5M11 8v6M8 11h6"/></svg>Predict</a></li>
+        <li><a href="#/home" data-nav="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>Home</a></li>
+        <li><a href="#/preview" data-nav="preview"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.5-4.5M11 8v6M8 11h6"/></svg>Preview</a></li>
+        <li><a href="#/performance" data-nav="performance"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Performance Analysis</a></li>
+        <li><a href="#/chart" data-nav="chart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>Chart</a></li>
         <li><a href="#/about" data-nav="about"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg>About</a></li>
+        <li class="nav-group">
+          <button class="nav-toggle" type="button" id="pipeline-toggle" aria-expanded="false" aria-controls="pipeline-sub"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><path d="M7 6h10M6 8l5 8M18 8l-5 8"/></svg>Pipeline<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+          <ul class="subnav" id="pipeline-sub" hidden>
+            <li><a href="#/data" data-nav="data"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>Data</a></li>
+            <li><a href="#/train" data-nav="train"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Train</a></li>
+          </ul>
+        </li>
+        <li><button class="nav-btn" type="button" id="logout"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>Logout</button></li>
       </ul>
     </nav>
     <div class="sidebar-foot">
@@ -59,8 +82,8 @@
       <button class="icon-btn menu-btn" id="menu-btn" type="button" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
       </button>
-      <h1 class="view-title" id="view-title">Overview</h1>
-      <a class="job-chip" id="job-chip" href="#/overview" aria-live="polite"><span class="dot"></span><span id="job-chip-text">Idle</span></a>
+      <h1 class="view-title" id="view-title">Home</h1>
+      <a class="job-chip" id="job-chip" href="#/home" aria-live="polite"><span class="dot"></span><span id="job-chip-text">Idle</span></a>
     </header>
 
     <div class="banner banner-warn" id="demo-banner" role="status" hidden>
@@ -71,8 +94,8 @@
     </div>
 
     <main id="main" tabindex="-1">
-      <!-- OVERVIEW -->
-      <section class="view" data-view="overview" aria-labelledby="view-title">
+      <!-- HOME -->
+      <section class="view" data-view="home" aria-labelledby="view-title">
         <div class="card hero">
           <p class="eyebrow">IEEE ICEARS 2023 · Replication</p>
           <h2 class="hero-title">Blood Cancer Identification using Hybrid Ensemble Deep Learning Technique</h2>
@@ -189,8 +212,8 @@
         </div>
       </section>
 
-      <!-- EVALUATE -->
-      <section class="view" data-view="evaluate" hidden>
+      <!-- PERFORMANCE ANALYSIS -->
+      <section class="view" data-view="performance" hidden>
         <div id="eval-empty"></div>
         <div class="card toolbar" id="eval-toolbar">
           <div class="actions">
@@ -204,6 +227,12 @@
         </div>
         <div id="eval-body" class="stack" hidden>
           <p class="muted" id="eval-meta"></p>
+          <div class="kpis kpis-hero" id="perf-tiles" aria-label="Selected ensemble on the test split"></div>
+          <div class="card">
+            <div class="card-head"><h3>Confusion matrix</h3><span class="muted" id="cm-note"></span></div>
+            <div class="tabs" role="tablist" aria-label="Confusion matrix model" id="cm-tabs"></div>
+            <div id="cm-panel" role="tabpanel"></div>
+          </div>
           <div class="kpis" id="kpis"></div>
           <div class="card">
             <div class="card-head"><h3>Model comparison</h3><span class="muted" id="cmp-note">test split</span></div>
@@ -211,31 +240,48 @@
           </div>
           <div class="grid-2">
             <div class="card"><div class="card-head"><h3>Accuracy and macro-F1</h3></div><div class="chart-box"><canvas id="chart-metrics" role="img" aria-label="Accuracy and macro-F1 per model"></canvas></div></div>
-            <div class="card">
-              <div class="card-head"><h3>Confusion matrix</h3></div>
-              <div class="tabs" role="tablist" aria-label="Confusion matrix model" id="cm-tabs"></div>
-              <div id="cm-panel" role="tabpanel"></div>
-            </div>
+            <div class="card"><div class="card-head"><h3>ROC, one vs rest</h3><span class="muted" id="roc-model"></span></div><img class="figure" id="roc-img" hidden alt="One-vs-rest ROC curves of the selected ensemble"></div>
           </div>
           <div class="grid-2">
-            <div class="card"><div class="card-head"><h3>ROC, one vs rest</h3><span class="muted" id="roc-model"></span></div><img class="figure" id="roc-img" hidden alt="One-vs-rest ROC curves of the selected ensemble"></div>
             <div class="card">
               <div class="card-head"><h3>Per-class metrics</h3>
                 <label class="inline-field"><span class="sr-only">Model</span><select id="pc-model" aria-label="Model for per-class metrics"></select></label></div>
               <div class="table-wrap"><table class="table" id="pc-table"></table></div>
             </div>
+            <div class="card"><div class="card-head"><h3>Target check</h3><span class="muted">from results/NOTES.md</span></div><div class="md" id="notes"></div></div>
           </div>
           <div class="card"><div class="card-head"><h3>Grad-CAM examples</h3><span class="muted">row 1 correct · row 2 misclassified</span></div><img class="figure" id="gradcam-img" hidden alt="Grad-CAM example grid"></div>
-          <div class="card"><div class="card-head"><h3>Target check</h3><span class="muted">from results/NOTES.md</span></div><div class="md" id="notes"></div></div>
         </div>
       </section>
 
-      <!-- PREDICT -->
-      <section class="view" data-view="predict" hidden>
+      <!-- CHART -->
+      <section class="view" data-view="chart" hidden>
+        <div id="chart-empty"></div>
+        <div id="chart-body" class="stack">
+          <div class="card toolbar">
+            <div class="tabs" role="tablist" aria-label="Backbone" id="chart-tabs"></div>
+            <span class="muted" id="chart-meta"></span>
+          </div>
+          <div class="grid-2">
+            <div class="card"><div class="card-head"><h3>Model Loss</h3><span class="muted">train vs val</span></div><div class="chart-box"><canvas id="chart-model-loss" role="img" aria-label="Model loss per epoch, train and validation"></canvas></div></div>
+            <div class="card"><div class="card-head"><h3>Model Accuracy</h3><span class="muted">train vs val</span></div><div class="chart-box"><canvas id="chart-model-acc" role="img" aria-label="Model accuracy per epoch, train and validation"></canvas></div></div>
+          </div>
+          <p class="hint" id="chart-phase-note"></p>
+        </div>
+      </section>
+
+      <!-- PREVIEW -->
+      <section class="view" data-view="preview" hidden>
         <div id="predict-empty"></div>
         <div class="grid-predict" id="predict-body">
           <div class="card">
-            <div class="card-head"><h3>Image</h3></div>
+            <div class="card-head"><h3>1 · Choose image</h3></div>
+            <div class="actions choose-row">
+              <button class="btn" type="button" id="btn-choose">Choose image</button>
+              <label class="inline-field"><span class="sr-only">Try a test image</span>
+                <select id="test-image-select" aria-label="Try a test image"><option value="">Try a test image…</option></select></label>
+              <button class="btn btn-ghost" type="button" id="btn-export-tests" hidden>Export test images</button>
+            </div>
             <label class="dropzone" id="dropzone" for="file-input">
               <input type="file" id="file-input" class="sr-only" accept=".jpg,.jpeg,.png,.bmp,.tif,.tiff">
               <img id="preview" alt="Selected image preview" hidden>
@@ -244,7 +290,8 @@
             <p class="form-msg error" id="predict-error" role="alert"></p>
             <p class="muted small">Or try a sample image</p>
             <div class="sample-strip" id="sample-strip"></div>
-            <div class="actions"><button class="btn btn-primary" type="button" id="btn-analyze" disabled>Analyze</button></div>
+            <div class="card-head step-head"><h3>2 · Submit</h3></div>
+            <div class="actions"><button class="btn btn-primary" type="button" id="btn-submit" disabled>Submit</button></div>
           </div>
           <div class="card result" id="result" aria-live="polite">
             <div class="result-empty" id="result-empty">The prediction, confidence, per-backbone votes and Grad-CAM appear here.</div>

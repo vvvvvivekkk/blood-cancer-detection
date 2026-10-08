@@ -27,6 +27,9 @@ async function request(method, url, body) {
 }
 
 export const api = {
+  login: (username, password) => request("POST", "/api/login", { username, password }),
+  testImages: () => request("GET", "/api/data/test-images"),
+  exportTestImages: () => request("POST", "/api/data/export-test-images"),
   status: () => request("GET", "/api/status"),
   results: () => request("GET", "/api/results"),
   samples: () => request("GET", "/api/data/samples"),
