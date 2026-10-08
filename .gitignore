@@ -1,0 +1,10 @@
+data/raw/
+data/demo/
+data/splits/
+models/*.keras
+models/*.pkl
+__pycache__/
+.pytest_cache/
+.ipynb_checkpoints/
+.venv/
+*.zip

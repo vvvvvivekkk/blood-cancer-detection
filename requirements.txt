@@ -1,0 +1,14 @@
+# TF 2.15 has no Python 3.12 wheels (Colab is 3.12), so the pin depends on the interpreter.
+tensorflow==2.15.1 ; python_version < "3.12"
+tensorflow==2.21.0 ; python_version >= "3.12"
+keras==3.14.0 ; python_version >= "3.12"
+streamlit==1.50.0
+kagglehub==0.3.13
+scikit-learn==1.7.2
+numpy==1.26.4
+pandas==2.2.2
+pillow==11.3.0
+opencv-python-headless==4.10.0.84
+matplotlib==3.10.7
+seaborn==0.13.2
+pytest==9.0.3
