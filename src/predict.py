@@ -1,4 +1,4 @@
-"""Single-image inference with the chosen ensemble (used by the Predict page)."""
+"""Single-image inference with the chosen ensemble, or MobileNetV2 alone in single-model mode."""
 import numpy as np
 
 from src import config as C
@@ -12,6 +12,13 @@ def ensemble_mode():
     return mode if mode in C.ENSEMBLES else C.DEFAULT_ENSEMBLE_MODE
 
 
+def mode_label(mode):
+    """Badge text: 'MobileNetV2 (single)', 'Ensemble-Voting', 'Ensemble-Stacking' or 'Mean of backbones'."""
+    if mode == "single":
+        return f"{C.DISPLAY_NAMES[C.SINGLE_MODEL]} (single)"
+    return C.DISPLAY_NAMES.get(mode, "Mean of backbones")
+
+
 def _as_dict(p):
     return {c: float(v) for c, v in zip(C.CLASS_NAMES, p)}
 
@@ -19,10 +26,16 @@ def _as_dict(p):
 def predict_image(img, with_gradcam=False):
     """img: path, PIL image or uint8 array.
 
-    Returns {class, class_idx, confidence, probs, per_model_probs, votes, mode, gradcam_model[, gradcam]}.
-    mode is 'stacking' / 'voting' (from models/ensemble_mode.txt) or 'mean' when no ensemble is fitted.
+    Returns {class, class_idx, confidence, probs, per_model_probs, votes, mode, mode_label, active_mode,
+    gradcam_model[, gradcam]}. mode is 'single' when models/active_mode.txt selects MobileNetV2 alone, else
+    'stacking' / 'voting' (from models/ensemble_mode.txt) or 'mean' when no ensemble is fitted.
     """
-    models = load_models()
+    active = C.get_active_mode()
+    single = active == C.SINGLE_MODEL
+    models = load_models([C.SINGLE_MODEL] if single else None)
+    if single and not models:
+        raise FileNotFoundError(f"Single-model mode needs models/{C.SINGLE_MODEL}.keras. Train "
+                                f"{C.DISPLAY_NAMES[C.SINGLE_MODEL]} first, or switch back to ensemble mode.")
     if not models:
         raise FileNotFoundError("No trained models found. Train the backbones first (Train page).")
     arrays, per = {}, {}
@@ -34,7 +47,9 @@ def predict_image(img, with_gradcam=False):
     voting, stacking = load_voting(), load_stacking()
     weights = voting["weights"] if voting else {n: 1.0 for n in models}
     mode = ensemble_mode()
-    if mode == "stacking" and stacking and all(n in per for n in stacking["models"]):
+    if single:
+        mode, p = "single", per[C.SINGLE_MODEL][0]
+    elif mode == "stacking" and stacking and all(n in per for n in stacking["models"]):
         p = stacking_probs(stacking, per)[0]
     elif voting and any(n in per for n in weights):
         mode, p = "voting", voting_probs(per, weights)[0]
@@ -51,6 +66,8 @@ def predict_image(img, with_gradcam=False):
         "per_model_probs": {n: _as_dict(v[0]) for n, v in per.items()},
         "votes": {n: C.CLASS_NAMES[int(np.argmax(v[0]))] for n, v in per.items()},
         "mode": mode,
+        "mode_label": mode_label(mode),
+        "active_mode": active,
         "gradcam_model": cam_model,
     }
     if with_gradcam:

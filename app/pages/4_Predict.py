@@ -52,7 +52,7 @@ def main():
              width="stretch")
     with c3:
         st.metric("Confidence", f"{r['confidence']:.1%}")
-        st.caption(f"Ensemble mode: **{r['mode']}**")
+        st.caption(f"Model: **{r['mode_label']}**")
         st.bar_chart(pd.Series(r["probs"], name="probability"), horizontal=True)
 
     st.subheader("Per-model votes")

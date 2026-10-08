@@ -39,6 +39,7 @@ export const api = {
   train: (backbones, epochs, smoke) => request("POST", "/api/train", { backbones, epochs, smoke }),
   ensemble: () => request("POST", "/api/ensemble"),
   evaluate: () => request("POST", "/api/evaluate"),
+  setActiveMode: (active_mode) => request("POST", "/api/settings", { active_mode }),
   pipelineAll: (smoke) => request("POST", "/api/pipeline/all", { smoke }),
   predict: (file) => {
     const fd = new FormData();

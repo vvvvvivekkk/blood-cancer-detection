@@ -20,6 +20,7 @@ def status():
         "stacking": C.META_CLF.is_file(),
         "metrics": C.METRICS_JSON.is_file(),
         "ensemble_mode": C.MODE_FILE.read_text().strip() if C.MODE_FILE.is_file() else None,
+        "active_mode": C.get_active_mode(),
     }
     source = meta["source"] if meta else ("kaggle" if kaggle else "demo" if demo else None)
     s["source"] = source

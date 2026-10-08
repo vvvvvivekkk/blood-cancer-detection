@@ -96,7 +96,10 @@ img { max-width: 100%; }
 .nav a:hover { background: var(--surface-2); }
 .nav a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
 .nav svg, .icon-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-.sidebar-foot { margin-top: auto; }
+.sidebar-foot { margin-top: auto; display: grid; gap: var(--s2); }
+.settings { border-top: 1px solid var(--border); padding: var(--s2) var(--s1) 0; }
+.settings-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: var(--s1); }
+.settings .hint { margin: 0; }
 
 .main-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .topbar {
@@ -263,7 +266,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .table th, .table td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
 .table th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; white-space: nowrap; }
 .table td.num, .table th.num { text-align: right; font-variant-numeric: tabular-nums; }
-.table tr.ensemble td { background: var(--accent-soft); }
+.table tr.highlight td { background: var(--accent-soft); }
 .table td strong.best { color: var(--accent); }
 .tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: var(--s2); border-bottom: 1px solid var(--border); }
 .tab { font: inherit; font-size: 13px; font-weight: 500; padding: 8px 12px; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted); cursor: pointer; margin-bottom: -1px; }

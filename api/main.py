@@ -88,6 +88,10 @@ class SmokeBody(BaseModel):
     smoke: bool = False
 
 
+class SettingsBody(BaseModel):
+    active_mode: str
+
+
 class TrainBody(BaseModel):
     backbones: List[str] = Field(default_factory=lambda: list(C.BACKBONES), min_length=1)
     epochs: int = Field(default=C.EPOCHS, ge=2, le=200)
@@ -211,13 +215,33 @@ def api_status():
             "display_names": C.DISPLAY_NAMES, "default_epochs": C.EPOCHS,
             "estimate": {"cpu_sec_per_image_epoch": CPU_SEC_PER_IMAGE_EPOCH,
                          "smoke_sec_per_backbone": SMOKE_SEC_PER_BACKBONE},
-            "max_upload_mb": C.MAX_UPLOAD_MB, "upload_exts": C.UPLOAD_EXTS}
+            "max_upload_mb": C.MAX_UPLOAD_MB, "upload_exts": C.UPLOAD_EXTS, "settings": _settings()}
 
 
 @app.get("/api/health")
 def health():
+    s = status()
     return {"status": "ok", "models_loaded": [m for m in C.BACKBONES if C.model_path(m).is_file()],
-            "ensemble_mode": status()["ensemble_mode"], "active_job": jobs.active_id()}
+            "ensemble_mode": s["ensemble_mode"], "active_mode": s["active_mode"], "active_job": jobs.active_id()}
+
+
+def _settings():
+    from src.predict import ensemble_mode, mode_label
+    active = C.get_active_mode()
+    return {"active_mode": active, "options": C.ACTIVE_MODES,
+            "label": mode_label("single" if active == C.SINGLE_MODEL else ensemble_mode()),
+            "single_model_trained": C.model_path(C.SINGLE_MODEL).is_file()}
+
+
+@app.get("/api/settings")
+def get_settings():
+    return _settings()
+
+
+@app.post("/api/settings")
+def update_settings(body: SettingsBody):
+    C.set_active_mode(body.active_mode)  # ValueError -> 400
+    return _settings()
 
 
 @app.post("/api/data/kaggle-creds")
@@ -287,7 +311,10 @@ def results():
         return {"available": False, "histories": histories}
     m = json.loads(C.METRICS_JSON.read_text())
     best = m["best_ensemble"]
-    rows = [{"key": k, "name": C.DISPLAY_NAMES[k], "is_ensemble": k in C.ENSEMBLES, "selected": k == best,
+    single = C.get_active_mode() == C.SINGLE_MODEL
+    active_key = C.SINGLE_MODEL if single else best  # the row Predict uses
+    rows = [{"key": k, "name": C.DISPLAY_NAMES[k], "is_ensemble": k in C.ENSEMBLES, "selected": k == active_key,
+             "highlighted": k == C.SINGLE_MODEL if single else k in C.ENSEMBLES,
              **{f: v[f] for f in ("accuracy", "macro_precision", "macro_recall", "macro_f1", "weighted_f1",
                                   "kappa", "roc_auc_ovr")}} for k, v in m["models"].items()]
     backbones = [r for r in rows if not r["is_ensemble"]]
@@ -295,6 +322,7 @@ def results():
     figs = {p.name: f"/figures/{p.name}?v={int(p.stat().st_mtime)}" for p in sorted(C.FIGURES_DIR.glob("*.png"))}
     notes = C.RESULTS_DIR / "NOTES.md"
     return {"available": True, "meta": m["meta"], "best_ensemble": best, "ensemble_mode": status()["ensemble_mode"],
+            "active_mode": C.get_active_mode(), "active_key": active_key,
             "rows": rows, "per_class": {k: v["per_class"] for k, v in m["models"].items()},
             "confusion": {k: v["confusion_matrix"] for k, v in m["models"].items()},
             "best_backbone": top["key"] if top else None,

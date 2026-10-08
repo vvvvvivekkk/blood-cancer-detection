@@ -94,7 +94,30 @@ async function refreshStatus() {
   if (!state.job || !jobActive()) setChip(null);
   $$("[data-job-button]").forEach((b) => { b.disabled = jobActive() || b.dataset.blocked === "1"; });
   renderStepper();
+  renderSettings();
   return s;
+}
+
+const isSingle = () => state.status?.settings?.active_mode === "mobilenetv2";
+
+function renderSettings() {
+  const st = state.status.settings;
+  $("#single-mode").checked = st.active_mode === "mobilenetv2";
+  $("#mode-label").textContent = `Predict uses: ${st.label}`;
+}
+
+async function changeActiveMode() {
+  const box = $("#single-mode");
+  try {
+    const st = await api.setActiveMode(box.checked ? "mobilenetv2" : "ensemble");
+    toast(`Predict now uses ${st.label}.`);
+    state.results = null;
+    await refreshStatus();
+    render();
+  } catch (e) {
+    box.checked = !box.checked;
+    toast(e.message, "error");
+  }
 }
 
 function renderStepper() {
@@ -173,12 +196,16 @@ const FIXES = {
   splits: { title: "Dataset not split yet", text: "Create the stratified 70 / 15 / 15 train, validation and test splits.", label: "Make splits", run: () => makeSplits(false) },
   models: { title: "No trained backbones", text: "Train MobileNetV2, EfficientNetB0 and DenseNet121. Smoke mode takes about a minute on CPU.", label: "Train all backbones (smoke)", run: () => startJob(() => api.train(state.status.backbones, 2, true), "Training") },
   ensemble: { title: "Ensemble not fitted", text: "Fit weighted soft voting and the stacked meta-classifier on the validation split.", label: "Fit ensemble", run: () => startJob(api.ensemble, "Ensemble") },
+  single: { title: "MobileNetV2 is not trained", text: "Single-model mode predicts with MobileNetV2 alone. Train it, or switch the sidebar setting back to the ensemble.", label: "Train MobileNetV2 (smoke)", run: () => startJob(() => api.train(["mobilenetv2"], 2, true), "Training") },
   metrics: { title: "No evaluation results", text: "Run the three backbones and both ensembles once on the test split.", label: "Run evaluation", run: () => startJob(api.evaluate, "Evaluation") },
 };
 
 function firstMissing(s, need) {
   const anyModel = Object.values(s.models).some(Boolean);
-  if (need === "predict") return anyModel ? null : !s.has_data && !s.splits ? "data" : !s.splits ? "splits" : "models";
+  if (need === "predict") {
+    const ready = isSingle() ? s.models.mobilenetv2 : anyModel;
+    return ready ? null : !s.has_data && !s.splits ? "data" : !s.splits ? "splits" : isSingle() ? "single" : "models";
+  }
   const chain = { train: ["data", "splits"], evaluate: ["data", "splits", "models", "ensemble", "metrics"], all: ["data", "splits", "models", "ensemble", "metrics"] }[need];
   const ok = { data: s.has_data || s.splits, splits: s.splits, models: anyModel, ensemble: s.voting && s.stacking, metrics: s.metrics };
   return chain.find((k) => !ok[k]) || null;
@@ -384,7 +411,10 @@ async function renderEvaluate() {
   $("#eval-body").hidden = !r.available || (missing && !s.metrics);
   if (!r.available) return;
 
-  const best = r.rows.find((x) => x.selected);
+  const best = r.rows.find((x) => x.key === r.best_ensemble);
+  const active = r.rows.find((x) => x.selected);
+  $("#cmp-note").textContent = r.active_mode === "mobilenetv2"
+    ? `single-model mode: Predict uses ${active?.name ?? "MobileNetV2"}` : `Predict uses ${active?.name}`;
   $("#eval-meta").textContent = `Test split: ${r.meta.n_test} images · source: ${r.meta.source}${r.meta.smoke ? " (smoke)" : ""} · generated ${r.meta.generated_at}`;
   const gain = r.gain_pp;
   $("#kpis").innerHTML = [
@@ -401,7 +431,7 @@ async function renderEvaluate() {
     return [k, new Set(vals).size > 1 ? Math.max(...vals) : null];
   }));
   $("#cmp-table").innerHTML = `<thead><tr><th scope="col">Model</th>${cols.map(([, l]) => `<th scope="col" class="num">${l}</th>`).join("")}</tr></thead>
-    <tbody>${r.rows.map((x) => `<tr class="${x.is_ensemble ? "ensemble" : ""}"><td>${esc(x.name)} ${x.selected ? '<span class="badge badge-accent">selected</span>' : ""}</td>
+    <tbody>${r.rows.map((x) => `<tr class="${x.highlighted ? "highlight" : ""}"><td>${esc(x.name)} ${x.selected ? '<span class="badge badge-accent">selected</span>' : ""}</td>
       ${cols.map(([k]) => `<td class="num">${x[k] === maxOf[k] && x[k] !== null ? `<strong class="best">${num(x[k])}</strong>` : num(x[k])}</td>`).join("")}</tr>`).join("")}</tbody>`;
 
   barChart($("#chart-metrics"), r.rows.map((x) => x.name), [
@@ -480,7 +510,7 @@ function showResult(r) {
   $("#ring-fg").style.strokeDasharray = RING_C;
   $("#ring-fg").style.strokeDashoffset = RING_C * (1 - r.confidence);
   $("#ring-label").textContent = `${Math.round(100 * r.confidence)}%`;
-  $("#mode-badge").textContent = `ensemble: ${r.mode}`;
+  $("#mode-badge").textContent = r.mode_label;
   const top = r.class;
   $("#probs").innerHTML = Object.entries(r.probs).map(([c, p]) => `
     <div class="prob ${c === top ? "top" : ""}"><div class="prob-head"><span>${esc(c)}</span><span>${pct(p)}</span></div>
@@ -488,7 +518,7 @@ function showResult(r) {
   $("#img-original").src = `data:image/png;base64,${r.original_png_base64}`;
   $("#img-cam").src = `data:image/png;base64,${r.gradcam_png_base64}`;
   $("#img-cam").style.opacity = $("#cam-opacity").value / 100;
-  $("#cam-model").textContent = `Grad-CAM from ${r.display_names[r.gradcam_model]} (highest ensemble weight). Slide to compare with the input.`;
+  $("#cam-model").textContent = `Grad-CAM from ${r.display_names[r.gradcam_model]}${r.mode === "single" ? "" : " (highest ensemble weight)"}. Slide to compare with the input.`;
   $("#votes").innerHTML = `<thead><tr><th scope="col">Backbone</th><th scope="col">Vote</th><th scope="col" class="num">Confidence</th><th scope="col" class="num">Voting weight</th></tr></thead>
     <tbody>${Object.entries(r.per_model_probs).map(([n, p]) => `<tr><td>${esc(r.display_names[n])}</td><td>${esc(r.votes[n])}</td>
       <td class="num">${pct(Math.max(...Object.values(p)))}</td><td class="num">${r.voting_weights[n] === undefined ? "–" : num(r.voting_weights[n], 3)}</td></tr>`).join("")}</tbody>`;
@@ -547,6 +577,7 @@ function closeMenu() {
 
 function wire() {
   window.addEventListener("hashchange", route);
+  $("#single-mode").addEventListener("change", changeActiveMode);
   $("#theme-toggle").addEventListener("click", () => {
     setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
     render();

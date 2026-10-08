@@ -22,6 +22,11 @@ DISPLAY_NAMES = {
 ENSEMBLES = ["voting", "stacking"]
 DEFAULT_ENSEMBLE_MODE = "voting"
 
+# What Predict uses: the hybrid ensemble, or MobileNetV2 alone. Default when models/active_mode.txt is absent.
+ACTIVE_MODES = ["ensemble", "mobilenetv2"]
+ACTIVE_MODE = "ensemble"
+SINGLE_MODEL = "mobilenetv2"
+
 SEED = 42
 IMG_SIZE = 224
 SPLIT_FRACTIONS = {"train": 0.70, "val": 0.15, "test": 0.15}
@@ -78,7 +83,7 @@ GRADCAM_ALPHA = 0.4
 def set_root(root):
     """Point every artifact path at `root` (tests use a tmp dir)."""
     global ROOT, DATA_DIR, RAW_DIR, DEMO_DIR, SPLITS_DIR, MODELS_DIR, RESULTS_DIR
-    global HISTORY_DIR, FIGURES_DIR, WEIGHTS_JSON, META_CLF, MODE_FILE, METRICS_JSON
+    global HISTORY_DIR, FIGURES_DIR, WEIGHTS_JSON, META_CLF, MODE_FILE, METRICS_JSON, ACTIVE_MODE_FILE
     ROOT = Path(root)
     DATA_DIR = ROOT / "data"
     RAW_DIR = DATA_DIR / "raw"
@@ -91,10 +96,28 @@ def set_root(root):
     WEIGHTS_JSON = MODELS_DIR / "ensemble_weights.json"
     META_CLF = MODELS_DIR / "meta_clf.pkl"
     MODE_FILE = MODELS_DIR / "ensemble_mode.txt"
+    ACTIVE_MODE_FILE = MODELS_DIR / "active_mode.txt"
     METRICS_JSON = RESULTS_DIR / "metrics.json"
 
 
 set_root(os.environ.get("BCE_ROOT", REPO))
+
+
+def get_active_mode():
+    """'ensemble' or 'mobilenetv2': models/active_mode.txt if valid, else ACTIVE_MODE."""
+    if ACTIVE_MODE_FILE.is_file():
+        mode = ACTIVE_MODE_FILE.read_text().strip()
+        if mode in ACTIVE_MODES:
+            return mode
+    return ACTIVE_MODE
+
+
+def set_active_mode(mode):
+    if mode not in ACTIVE_MODES:
+        raise ValueError(f"Unknown mode {mode!r}. Choose one of: {', '.join(ACTIVE_MODES)}.")
+    ACTIVE_MODE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    ACTIVE_MODE_FILE.write_text(mode)
+    return mode
 
 
 def model_path(name):
