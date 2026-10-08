@@ -3,7 +3,7 @@
 The project is finished when every box below is checked and `pytest -q` is green.
 
 ## The one-sentence goal
-A reproducible pipeline that trains three CNN backbones on the 4-class ALL blood-smear dataset, combines them with a hybrid ensemble (weighted soft-voting + stacked meta-classifier) that **outperforms each single backbone on the held-out test set**, all driven from a **Streamlit app** where a user can download data, train, evaluate, and upload a smear image to get the class, confidence, per-model votes and a Grad-CAM overlay.
+A reproducible pipeline that trains three CNN backbones on the 4-class ALL blood-smear dataset, combines them with a hybrid ensemble (weighted soft-voting + stacked meta-classifier) that **outperforms each single backbone on the held-out test set**, all driven from a **web dashboard** (FastAPI + HTML/CSS/JS, Streamlit fallback) where a user can download data, train, evaluate, and upload a smear image to get the class, confidence, per-model votes and a Grad-CAM overlay.
 
 ## Target numbers (test set, 15 % stratified hold-out, real Kaggle data)
 | Metric | Minimum | Paper claim |
@@ -71,12 +71,25 @@ A reproducible pipeline that trains three CNN backbones on the 4-class ALL blood
 - [x] Final `pytest -q` green (< 3 min), `python run.py --cli all --smoke` green
 - [ ] Real-data results (from Colab) committed in `results/` — **requires GPU run by the user**
 
+### P9 — Web UI (FastAPI + HTML/CSS/JS)
+- [x] `python run.py` serves the app at http://localhost:8000 and opens the browser; `--streamlit` keeps the old UI; `--cli` unchanged
+- [x] `api/main.py`: every endpoint in the README API table; frontend served at `/`, figures/samples/architecture served as images
+- [x] `api/jobs.py`: background thread, id/state/progress/stage/log/error, fed by `progress_cb`; second job → 409
+- [x] `/api/jobs/{id}/stream` Server-Sent Events, UI falls back to 1 s polling
+- [x] Errors are `{detail}` with proper 4xx/5xx (400 bad upload, 404 unknown job, 409 busy / missing prerequisite, 422 invalid body)
+- [x] Overview: hero + citation, stepper, Run full pipeline (smoke toggle), live job panel, DEMO banner, footer on every view
+- [x] Data: credential form (masked key), Download / Use demo data / Make splits, class counts chart, sample grid (4 per class)
+- [x] Train: backbone checkboxes, epochs slider, smoke toggle, CPU estimate, per-backbone progress, live loss/accuracy charts, history on load
+- [x] Evaluate: KPI tiles, comparison table (ensembles highlighted, selected badged), metric chart, 5 confusion-matrix tabs, ROC, per-class table, Grad-CAM grid, downloads
+- [x] Predict: drag-and-drop + sample strip, inline errors, class, confidence ring, probability bars, vote table, Grad-CAM with opacity slider, mode badge
+- [x] About: paper summary, architecture diagram, mapping table from `docs/paper_mapping.md`, dataset, limitations
+- [x] Every view renders with nothing trained and offers the fixing job
+- [x] Light/dark themes (CSS variables, prefers-color-scheme default), responsive to 768 px, sidebar → menu on phones, keyboard + focus rings + aria-labels
+- [x] `tests/test_api.py`, `tests/test_frontend.py` (Playwright), `tests/test_static_assets.py` green
+- [x] `docs/ui_walkthrough.md`; screenshots of every view in `docs/screenshots/` (smoke artifacts, re-capture after a real run)
+
 ## Explicitly out of scope
 - Cell segmentation (dataset is pre-cropped); mobile app; C-NMC binary task; any clinical claim
 
 ## How to demo
-1. `python run.py` → http://localhost:8501
-2. Home shows pipeline status; Data → download (or demo data) → splits
-3. Evaluate shows comparison table with ensemble rows, confusion matrices, ROC, Grad-CAM grid
-4. Predict: upload a test image per class → class, confidence, votes, heatmap
-5. `docs/paper_mapping.md` for paper → code traceability
+See `docs/ui_walkthrough.md` (10-step viva script for the web UI).

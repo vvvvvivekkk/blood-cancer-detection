@@ -2,7 +2,7 @@
 
 ## What this project is
 Replication of the IEEE paper **"Blood Cancer Identification using Hybrid Ensemble Deep Learning Technique"** (J. Jayachitra, N. Umarkathaf, ICEARS 2023, IEEE Xplore doc 10084996).
-Goal: classify peripheral blood smear (PBS) images into 4 classes of Acute Lymphoblastic Leukemia (ALL) using a **hybrid ensemble of transfer-learning CNNs**, beating every single backbone, and drive the whole pipeline from a **multipage Streamlit app**.
+Goal: classify peripheral blood smear (PBS) images into 4 classes of Acute Lymphoblastic Leukemia (ALL) using a **hybrid ensemble of transfer-learning CNNs**, beating every single backbone, and drive the whole pipeline from a **web dashboard** (FastAPI backend + vanilla HTML/CSS/JS frontend). A Streamlit app remains as a fallback.
 
 Read `ENDGOAL.md` before starting any task. It is the definition of done.
 
@@ -25,7 +25,9 @@ Both are evaluated on test; the better (macro-F1) is persisted to `models/ensemb
 
 ## Stack
 - Python 3.10–3.12, TensorFlow/Keras (2.15 on py ≤ 3.11, 2.21 on py 3.12 — pinned with markers), scikit-learn, NumPy, Pandas, Pillow, OpenCV (headless), Matplotlib, Seaborn
-- **Streamlit** multipage UI (`app/Home.py` + `app/pages/`), kagglehub for download
+- **Web UI**: FastAPI + uvicorn (`api/`), vanilla HTML/CSS/JS (`frontend/`), Chart.js from a pinned CDN, no build step, no npm
+- Fallback **Streamlit** UI (`app/`), kagglehub for download
+- Dev: Playwright for browser tests and screenshots (`requirements-dev.txt`)
 - Grad-CAM hand-rolled in `src/gradcam.py` (no extra deps)
 - Config in `src/config.py`; no magic numbers in scripts
 
@@ -47,20 +49,24 @@ Both are evaluated on test; the better (macro-F1) is persisted to `models/ensemb
 │   ├── evaluate.py    test metrics, figures, comparison table, README injection
 │   ├── gradcam.py     make_heatmap, overlay
 │   └── pipeline.py    stage orchestration shared by run.py and the UI
-├── app/   Home.py  ui.py  pages/{1_Data,2_Train,3_Evaluate,4_Predict,5_About}.py
+├── api/       main.py (routes, /api/*), jobs.py (one background job at a time)
+├── frontend/  index.html  css/styles.css  js/{app,api,charts}.js  img/
+├── app/   fallback Streamlit: Home.py  ui.py  pages/{1_Data,2_Train,3_Evaluate,4_Predict,5_About}.py
 ├── models/  results/  notebooks/train_colab.ipynb  docs/  tests/
 ```
 
 ## Commands
 ```bash
 pip install -r requirements.txt
-python run.py                                   # Streamlit UI → http://localhost:8501
+python run.py                                   # web UI → http://localhost:8000
+python run.py --streamlit                       # fallback Streamlit UI → http://localhost:8501
+python docs/capture_screenshots.py              # Playwright screenshots of every view (app must be running)
 python run.py --cli download                    # kagglehub → data/raw/
 python run.py --cli demo-data                   # 200 synthetic images → data/demo/
 python run.py --cli splits|train|ensemble|evaluate [--smoke]
 python run.py --cli all --smoke                 # whole pipeline on data/sample, CPU, ~1-2 min
 python -m src.evaluate --write-readme-table     # refresh README results table
-pytest -q                                       # must pass before any commit
+python -m pytest -q                             # must pass before any commit
 ```
 Smoke mode: `data/sample/` (8 images), 1 epoch per phase, batch 4, 96 px, `weights=None` (offline). Plumbing check only.
 
@@ -70,7 +76,7 @@ Smoke mode: `data/sample/` (8 images), 1 epoch per phase, batch 4, 96 px, `weigh
 3. Every metric in `results/` comes from a script run. `results/metrics.json` is the single source of truth; the README table is generated from it.
 4. Fixed seeds (`SEED=42`) for numpy, tf, random, sklearn.
 5. Save models as `.keras`. Load with `compile=False` for inference.
-6. `src/` never imports streamlit. Long stages accept `progress_cb(stage, epoch, logs)`; the UI consumes it.
+6. `src/` never imports streamlit or fastapi. Long stages accept `progress_cb(stage, epoch, logs)`; `api/jobs.py` and the Streamlit pages consume it. UI changes must not change logic in `src/`.
 7. Every page renders with no data and no models: show what's missing and the button that fixes it. No tracebacks reach the UI.
 8. Uploads: extension jpg/jpeg/png/bmp/tif/tiff, max 10 MB, decoded in memory to RGB, resized to model input. Nothing written to disk.
 9. Grad-CAM target layer lives in `models.GRADCAM_LAYER`; it is verified by iterating `model.layers` (test). Don't guess layer names.
@@ -79,6 +85,8 @@ Smoke mode: `data/sample/` (8 images), 1 epoch per phase, batch 4, 96 px, `weigh
 12. No notebooks with real logic. Notebooks only call `run.py`.
 13. Conventional commits (`feat:`, `fix:`, `docs:`, `test:`).
 14. Research/educational project: UI and README carry a "not for clinical use" notice.
+15. API errors are always JSON `{detail: "<readable message>"}` with a proper 4xx/5xx; the frontend shows `detail` inline. No tracebacks reach the browser.
+16. Frontend: CSS variables for every colour (light + dark), no unused variables, only pinned CDN assets, keyboard-navigable, visible focus rings, contrast ≥ 4.5:1. `tests/test_static_assets.py` enforces the mechanical parts.
 
 ## Reference repos (ideas, not copy-paste)
 - https://github.com/MAmirEshraghi/Lightweight-Deep-CNN-Based-Mobile-App-in-the-Screening-of-ALL — dataset author
@@ -87,4 +95,4 @@ Smoke mode: `data/sample/` (8 images), 1 epoch per phase, batch 4, 96 px, `weigh
 - https://arxiv.org/abs/2105.03995 — Mondal et al., weighted CNN ensemble for ALL
 
 ## Build order
-P0 scaffold → P1 data → P2 models+train → P3 ensemble+predict → P4 evaluate → P5 gradcam → P6 Streamlit app → P7 Colab → P8 docs.
+P0 scaffold → P1 data → P2 models+train → P3 ensemble+predict → P4 evaluate → P5 gradcam → P6 Streamlit app → P7 Colab → P8 docs → P9 web UI (FastAPI + HTML/CSS/JS).

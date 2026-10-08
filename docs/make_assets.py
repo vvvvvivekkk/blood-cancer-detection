@@ -1,4 +1,4 @@
-"""Regenerate docs/architecture.png and docs/screenshots/ placeholders: python docs/make_assets.py"""
+"""Regenerate docs/architecture.png: python docs/make_assets.py (screenshots: docs/capture_screenshots.py)"""
 from pathlib import Path
 
 import matplotlib
@@ -43,18 +43,5 @@ def architecture():
     plt.close(fig)
 
 
-def placeholders():
-    out = DOCS / "screenshots"
-    out.mkdir(exist_ok=True)
-    for name in ("home", "data", "train", "evaluate", "predict"):
-        fig, ax = plt.subplots(figsize=(8, 4.5))
-        ax.axis("off")
-        ax.text(0.5, 0.5, f"Screenshot placeholder: {name} page\n\nRun `python run.py`, open the page,\n"
-                f"and save a screenshot as docs/screenshots/{name}.png", ha="center", va="center", fontsize=12)
-        fig.savefig(out / f"{name}.png", dpi=80)
-        plt.close(fig)
-
-
 if __name__ == "__main__":
     architecture()
-    placeholders()

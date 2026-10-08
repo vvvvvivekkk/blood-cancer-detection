@@ -2,17 +2,18 @@
 
 Replication of the IEEE paper **"Blood Cancer Identification using Hybrid Ensemble Deep Learning Technique"**, J. Jayachitra and N. Umarkathaf, *ICEARS 2023* ([IEEE Xplore 10084996](https://ieeexplore.ieee.org/document/10084996)).
 
-Three transfer-learning CNNs (MobileNetV2, EfficientNetB0, DenseNet121) are combined by a **hybrid ensemble** (weighted soft voting + a stacked logistic-regression meta-classifier) to classify peripheral blood smear images into four Acute Lymphoblastic Leukemia (ALL) classes. The whole pipeline (download → splits → training → evaluation → prediction with Grad-CAM) runs from a Streamlit app.
+Three transfer-learning CNNs (MobileNetV2, EfficientNetB0, DenseNet121) are combined by a **hybrid ensemble** (weighted soft voting + a stacked logistic-regression meta-classifier) to classify peripheral blood smear images into four Acute Lymphoblastic Leukemia (ALL) classes. The whole pipeline (download → splits → training → evaluation → prediction with Grad-CAM) runs from a web dashboard (FastAPI + plain HTML/CSS/JS).
 
 > ⚠️ **Research / educational project. Not a medical device. Not for clinical use.**
 
 ## Quick start
 
 ```bash
-pip install -r requirements.txt     # 1. install (Python 3.10–3.12)
-python run.py                       # 2. opens the Streamlit app at http://localhost:8501
+pip install -r requirements.txt && python run.py     # opens http://localhost:8000
 ```
-3. Click through the pages: **Data** (paste your Kaggle key and download, or press *Use demo data*) → **Train** → **Evaluate** → **Predict**.
+Then work through the views in the sidebar: **Data** (paste your Kaggle key and download, or press *Use demo data*) → **Train** → **Evaluate** → **Predict**. Or press **Run full pipeline** on Overview.
+
+`python run.py --streamlit` starts the older Streamlit UI (http://localhost:8501), which does the same things. Use `--port` and `--no-browser` to change the server's port or stop it opening a browser tab.
 
 **No Kaggle account?** *Use demo data* creates 200 synthetic 4-class images in `data/demo/` so the whole pipeline still runs. Every page then shows a **DEMO DATA** banner. The numbers you get from it say nothing about leukemia.
 
@@ -63,39 +64,63 @@ _Not generated yet. Run `python -m src.evaluate --write-readme-table`._
 
 The table is written by `python -m src.evaluate --write-readme-table` (or `--table-only` to reuse an existing `results/metrics.json` without touching the test split again). Each run also writes `results/NOTES.md`, which states whether the ENDGOAL targets are met, and the figures in `results/figures/`: confusion matrices, training curves, one-vs-rest ROC, a model comparison bar chart and a Grad-CAM grid.
 
-## The app
+## The web app
 
-| Page | What you can do |
+| View | What you can do |
 |---|---|
-| Home | Pipeline status badges, one-click **Run full pipeline** (smoke or full) |
-| Data | Save Kaggle credentials, download, **Use demo data**, make splits, class counts and examples |
-| Train | Pick backbones, live progress bars and loss/accuracy charts, training history |
-| Evaluate | Fit the ensemble, run the test evaluation, comparison table, per-class metrics, confusion matrices, ROC, Grad-CAM grid |
-| Predict | Upload an image (jpg/png/bmp/tif, ≤ 10 MB) or pick a sample: class, confidence, per-model votes, Grad-CAM overlay |
-| About | Paper, method, disclaimer |
+| Overview | Paper and citation, pipeline stepper (Data → Train → Ensemble → Evaluate → Predict), **Run full pipeline** with a smoke toggle, live job panel with progress and log |
+| Data | Save Kaggle credentials (masked key), download, **Use demo data**, make splits, class counts per split, example images |
+| Train | Choose backbones, epochs and smoke mode, see a CPU time estimate, per-backbone progress bars, live loss and accuracy curves |
+| Evaluate | Fit the ensemble, run the evaluation, KPI tiles, comparison table (ensembles highlighted, selected one badged), metric chart, 5 confusion-matrix tabs, ROC, per-class metrics, Grad-CAM grid, downloads |
+| Predict | Drag and drop or pick a sample image: class, confidence ring, probability bars, per-backbone votes, Grad-CAM overlay with an opacity slider |
+| About | Paper summary, architecture diagram, paper → code mapping, dataset, limitations |
 
-Every page renders with no data and no models. It tells you what is missing and shows the button that fixes it.
+Every view also works with nothing trained. It says what is missing and offers the button that starts the job to fix it. Long stages run as background jobs. The UI follows them over Server-Sent Events and falls back to polling once a second. The pages support light and dark themes and keyboard navigation, and work on screens down to 768 px wide (the sidebar becomes a menu on phones).
 
-| Home | Train | Evaluate | Predict |
+| Overview | Train | Evaluate | Predict |
 |---|---|---|---|
-| ![home](docs/screenshots/home.png) | ![train](docs/screenshots/train.png) | ![evaluate](docs/screenshots/evaluate.png) | ![predict](docs/screenshots/predict.png) |
+| ![overview](docs/screenshots/overview.png) | ![train](docs/screenshots/train.png) | ![evaluate](docs/screenshots/evaluate.png) | ![predict](docs/screenshots/predict.png) |
 
-_These are placeholders. Replace them with real screenshots after a run._
+_These screenshots come from smoke artifacts (untrained weights). Re-capture them after a real run with `python docs/capture_screenshots.py` while the app is running. Dark variants are the `*_dark.png` files._
+
+### API
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/api/health` | Liveness, models on disk, ensemble mode |
+| GET | `/api/status` | Pipeline status, stepper states, demo flag, active job id |
+| POST | `/api/data/kaggle-creds` | Save `~/.kaggle/kaggle.json` (`{username, key}`) |
+| POST | `/api/data/download` | Job: kagglehub download |
+| POST | `/api/data/demo` | Job: 200 synthetic demo images |
+| POST | `/api/data/splits` | Make splits (`{smoke}`), returns class counts per split |
+| GET | `/api/data/samples` | Up to 4 example images per class from the active data source |
+| POST | `/api/train` | Job: `{backbones, epochs, smoke}` |
+| POST | `/api/ensemble` | Job: fit voting + stacking on val |
+| POST | `/api/evaluate` | Job: test-set evaluation and figures |
+| POST | `/api/pipeline/all` | Job: every stage (`{smoke}`) |
+| GET | `/api/jobs/{id}` | Job state, progress, stage, log, live training history |
+| GET | `/api/jobs/{id}/stream` | Same, as Server-Sent Events |
+| GET | `/api/results` | Metrics, table rows, figure URLs, histories, notes |
+| POST | `/api/predict` | Multipart image → class, confidence, probs, votes, Grad-CAM PNG (base64) |
+
+Only one job runs at a time. A second request returns `409`. Every error is JSON `{"detail": "<readable message>"}`, never a traceback. Interactive docs are at `/docs`.
 
 ## Project structure
 
 ```
 run.py      single entry point: UI, or --cli stages
 src/        config · status · download · data · models · train · ensemble · predict · evaluate · gradcam · pipeline
-app/        Home.py, pages/ (Data, Train, Evaluate, Predict, About), ui.py
+api/        main.py (FastAPI routes), jobs.py (background job runner)
+frontend/   index.html, css/styles.css, js/{app,api,charts}.js (no build step; Chart.js from a pinned CDN)
+app/        fallback Streamlit UI (python run.py --streamlit)
 models/     <backbone>.keras, ensemble_weights.json, meta_clf.pkl, ensemble_mode.txt
 results/    metrics.json, comparison_table.md, NOTES.md, split_counts.csv, history/, figures/
 notebooks/  train_colab.ipynb (thin wrapper around run.py)
-docs/       paper_mapping.md, architecture.png, screenshots/, make_assets.py
-tests/      pytest suite: no network, data/sample + untrained models, about 2 minutes on CPU
+docs/       paper_mapping.md, ui_walkthrough.md, architecture.png, screenshots/, make_assets.py, capture_screenshots.py
+tests/      pytest suite: no network, data/sample + untrained models, API + browser tests
 ```
 
-Run the tests with `pytest -q`. `CLAUDE.md` has the engineering rules and `ENDGOAL.md` has the definition of done.
+Run the tests with `python -m pytest -q`. The browser tests need `pip install -r requirements-dev.txt && playwright install chromium`, and are skipped with a reason if Playwright is missing. `CLAUDE.md` has the engineering rules and `ENDGOAL.md` has the definition of done.
 
 ## Limitations
 

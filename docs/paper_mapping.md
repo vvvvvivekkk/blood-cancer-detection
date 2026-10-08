@@ -19,5 +19,5 @@ The left column follows the usual structure of the paper. The right column names
 | **Results: tables and figures** | Comparison table, confusion matrices, training curves, ROC, comparison bar chart | `src/evaluate.py::comparison_table`, `plot_*` → `results/` |
 | **Results: model selection** | Ensemble with higher test macro-F1 is persisted and used for prediction | `src/evaluate.py::run` → `models/ensemble_mode.txt`, `src/predict.py::ensemble_mode` |
 | **Explainability** (extension) | Grad-CAM on the highest-weight backbone | `src/gradcam.py::make_heatmap`, `overlay`; `results/figures/gradcam_examples.png` |
-| **Application / deployment** | Streamlit app: data, training with live charts, evaluation, single-image prediction | `app/Home.py`, `app/pages/*.py`, `src/predict.py::predict_image` |
+| **Application / deployment** | Web app (FastAPI + HTML/CSS/JS): data, training with live progress, evaluation, single-image prediction; Streamlit fallback | `api/main.py`, `api/jobs.py`, `frontend/`, `app/` (fallback), `src/predict.py::predict_image` |
 | **Conclusion** | Whether the ensemble beats every backbone, stated from the numbers | `results/NOTES.md` (generated), README results table (`python -m src.evaluate --table-only`) |
