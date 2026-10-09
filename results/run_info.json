@@ -1,0 +1,45 @@
+{
+  "generated_at": "2026-10-09 13:48 UTC",
+  "data_source": "kaggle",
+  "smoke": false,
+  "split_counts": {
+    "train": 2269,
+    "val": 486,
+    "test": 487
+  },
+  "backbones": {
+    "mobilenetv2": {
+      "epochs": 15,
+      "final_val_accuracy": 0.977366268634796,
+      "val_macro_f1": 0.9793219953950054,
+      "test_accuracy": 0.9691991786447639,
+      "test_macro_f1": 0.9662238432973428
+    },
+    "efficientnetb0": {
+      "epochs": 15,
+      "final_val_accuracy": 0.8991769552230835,
+      "val_macro_f1": 0.8920376432932144,
+      "test_accuracy": 0.9137577002053389,
+      "test_macro_f1": 0.9114169687482836
+    },
+    "densenet121": {
+      "epochs": 15,
+      "final_val_accuracy": 0.9938271641731262,
+      "val_macro_f1": 0.9936966922949152,
+      "test_accuracy": 0.9897330595482546,
+      "test_macro_f1": 0.9890003646234372
+    }
+  },
+  "voting_weights": {
+    "mobilenetv2": 0.3418159652934133,
+    "efficientnetb0": 0.31135082184827917,
+    "densenet121": 0.3468332128583075
+  },
+  "selected_ensemble": "stacking",
+  "selected_test_accuracy": 0.9897330595482546,
+  "selected_test_macro_f1": 0.9882956587096985,
+  "versions": {
+    "tensorflow": "2.21.0",
+    "keras": "3.14.0"
+  }
+}

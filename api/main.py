@@ -121,6 +121,14 @@ def _train_steps(backbones, smoke, epochs=None):
                                                                 models=[b], epochs=epochs)) for b in backbones]
 
 
+def _guard_smoke(smoke):
+    """A smoke run writes splits/models into the same root: never let it overwrite real-data artifacts."""
+    s = status()
+    if smoke and not (s["split_meta"] or {}).get("smoke", True) and any(s["models"].values()):
+        raise HTTPException(409, "Models trained on the real dataset exist and a smoke run would overwrite them. "
+                                 "Untick Smoke, or run `python run.py --cli all --smoke` (it uses .smoke/).")
+
+
 def _start(kind, steps):
     job = jobs.start(kind, steps)
     return {"job_id": job.id, "job": job.to_dict()}
@@ -143,6 +151,7 @@ def train(body: TrainBody):
     unknown = [b for b in body.backbones if b not in C.BACKBONES]
     if unknown:
         raise HTTPException(400, f"Unknown backbone(s): {', '.join(unknown)}. Choose from {', '.join(C.BACKBONES)}.")
+    _guard_smoke(body.smoke)
     if not status()["splits"]:
         raise HTTPException(409, "No train/val/test splits yet. Make the splits on the Data view first.")
     return _start("train", _train_steps(body.backbones, body.smoke, body.epochs))
@@ -160,6 +169,7 @@ def evaluate():
 
 @app.post("/api/pipeline/all", status_code=202)
 def pipeline_all(body: SmokeBody = SmokeBody()):
+    _guard_smoke(body.smoke)
     steps = []
     if not body.smoke and data_source() is None:
         steps.append(_stage("download" if has_credentials() else "demo-data"))
@@ -286,6 +296,7 @@ def _counts():
 def splits(body: SmokeBody = SmokeBody()):
     if jobs.active_id():
         raise Busy("A job is running. Make the splits after it finishes.")
+    _guard_smoke(body.smoke)
     pipeline.run("splits", smoke=body.smoke)
     return {"counts": _counts(), "source": status()["source"]}
 

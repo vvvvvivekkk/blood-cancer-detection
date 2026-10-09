@@ -3,6 +3,8 @@ data/demo/
 data/splits/
 models/*.keras
 models/*.pkl
+results/*.npy
+results/*.npz
 __pycache__/
 .pytest_cache/
 .ipynb_checkpoints/
@@ -16,3 +18,4 @@ access_token.txt
 kaggle.json
 .env
 test_images/
+.smoke/

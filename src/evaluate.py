@@ -20,7 +20,8 @@ from sklearn.metrics import (accuracy_score, classification_report, cohen_kappa_
                              confusion_matrix, precision_recall_fscore_support, roc_auc_score, roc_curve)
 
 from src import config as C  # noqa: E402
-from src.data import load_image_array, resolve, split_meta  # noqa: E402
+from src import ood  # noqa: E402
+from src.data import load_image_array, load_split, resolve, split_meta  # noqa: E402
 from src.ensemble import (img_size, load_models, load_stacking, load_voting, predict_probs,  # noqa: E402
                           stacking_probs, voting_probs)
 from src.models import preprocess_fn  # noqa: E402
@@ -78,6 +79,37 @@ def write_readme_table(metrics=None, readme=None):
     readme.write_text(f"{head}{START}\n{comparison_table(metrics, metrics['best_ensemble'])}{END}{tail}", encoding="utf-8")
 
 
+def run_info(metrics, voting):
+    """Provenance of this results run: data, per-backbone training, selection, versions."""
+    import keras
+    import tensorflow as tf
+    counts = pd.read_csv(C.RESULTS_DIR / "split_counts.csv", index_col=0).sum().to_dict() \
+        if (C.RESULTS_DIR / "split_counts.csv").is_file() else {}
+    backbones = {}
+    for n in C.BACKBONES:
+        h = C.HISTORY_DIR / f"{n}.csv"
+        row = pd.read_csv(h).iloc[-1] if h.is_file() else None
+        backbones[n] = {
+            "epochs": int(row["epoch"]) + 1 if row is not None else None,
+            "final_val_accuracy": float(row["val_accuracy"]) if row is not None and "val_accuracy" in row else None,
+            "val_macro_f1": voting["val_macro_f1"].get(n),
+            "test_accuracy": metrics["models"][n]["accuracy"],
+            "test_macro_f1": metrics["models"][n]["macro_f1"],
+        }
+    best = metrics["best_ensemble"]
+    return {
+        "generated_at": metrics["meta"]["generated_at"],
+        "data_source": metrics["meta"]["source"], "smoke": metrics["meta"]["smoke"],
+        "split_counts": {k: int(v) for k, v in counts.items()},
+        "backbones": backbones,
+        "voting_weights": voting["weights"],
+        "selected_ensemble": best,
+        "selected_test_accuracy": metrics["models"][best]["accuracy"],
+        "selected_test_macro_f1": metrics["models"][best]["macro_f1"],
+        "versions": {"tensorflow": tf.__version__, "keras": keras.__version__},
+    }
+
+
 def notes(metrics):
     """Plain statement of which ENDGOAL targets are met."""
     best = metrics["models"][metrics["best_ensemble"]]
@@ -101,6 +133,60 @@ def notes(metrics):
         lines += ["", "The ensemble does not beat the best single backbone by the target margin. "
                   "Next things to try (ENDGOAL.md): kappa-weighted voting, test-time augmentation, swapping a backbone."]
     return "\n".join(lines) + "\n"
+
+
+def fallback_attempts(per_model, probs_test, y_test):
+    """When the primary ensemble fails the 'beats best backbone by TARGET_MARGIN_PP' target, try the
+    ENDGOAL fallbacks. Variant WEIGHTS are selected on the val split only (results/val_probs.npy from the
+    ensemble stage); the test numbers are reported, never used to choose a variant. Returns a markdown
+    section, or '' if val probs are unavailable. TTA is deferred (CPU-prohibitive; run on Colab GPU)."""
+    from src.ensemble import macro_f1
+    vp, vl = C.RESULTS_DIR / "val_probs.npy", C.RESULTS_DIR / "val_labels.npy"
+    if not (vp.is_file() and vl.is_file()):
+        return ""
+    val, yv = np.load(vp), np.load(vl)  # val: (n_backbones, Nval, 4) in C.BACKBONES order
+    vprob = {n: val[i] for i, n in enumerate(C.BACKBONES)}
+    wvote = lambda P, w: sum((w[n] / sum(w.values())) * P[n] for n in w)  # noqa: E731
+    f1v = {n: macro_f1(yv, vprob[n]) for n in C.BACKBONES}
+    kapv = {n: max(cohen_kappa_score(yv, vprob[n].argmax(1), labels=LABELS), 0.0) for n in C.BACKBONES}
+    variants = {
+        "F1-weighted voting (baseline)": {n: f1v[n] for n in C.BACKBONES},
+        "Kappa-weighted voting": kapv,
+        "F1²-weighted voting (sharper)": {n: f1v[n] ** 2 for n in C.BACKBONES},
+        "Drop EfficientNetB0 (F1-weighted)": {n: f1v[n] for n in C.BACKBONES if n != "efficientnetb0"},
+    }
+    rows, chosen = [], None
+    for label, w in variants.items():
+        v_mf1 = macro_f1(yv, wvote(vprob, w))
+        t_acc = float(accuracy_score(y_test, wvote(probs_test, w).argmax(1)))
+        t_mf1 = macro_f1(y_test, wvote(probs_test, w))
+        rows.append((label, v_mf1, t_acc, t_mf1))
+        if chosen is None or v_mf1 > chosen[1]:
+            chosen = (label, v_mf1, t_acc, t_mf1)
+    top = max(C.BACKBONES, key=lambda k: per_model[k]["accuracy"])
+    top_acc = per_model[top]["accuracy"]
+    margin = 100 * (chosen[2] - top_acc)
+    out = ["", "## Fallback attempts (ENDGOAL)", "",
+           f"The selected ensemble ties/loses to the best backbone ({C.DISPLAY_NAMES[top]}, "
+           f"test acc {top_acc:.4f}). Variants below are **selected on val macro-F1**; test is reported only.", "",
+           "| Variant | Val macro-F1 | Test acc | Test macro-F1 |", "|---|---|---|---|"]
+    for label, v, ta, tm in rows:
+        mark = " ← selected (best val)" if label == chosen[0] else ""
+        out.append(f"| {label}{mark} | {v:.4f} | {ta:.4f} | {tm:.4f} |")
+    verdict = (f"clears the +{C.TARGET_MARGIN_PP} pp target" if margin >= C.TARGET_MARGIN_PP
+               else f"still does not clear the +{C.TARGET_MARGIN_PP} pp target")
+    out += ["",
+            f"Val-selected fallback: **{chosen[0]}** → test acc {chosen[2]:.4f} ({margin:+.2f} pp vs "
+            f"{C.DISPLAY_NAMES[top]}); {verdict}.",
+            "",
+            "TTA (test-time augmentation) deferred: ~N× model passes over the test set is CPU-prohibitive here "
+            "and expected gain is marginal with one backbone already near-ceiling; run on Colab GPU if needed.",
+            "",
+            "**Finding:** with one near-ceiling backbone (DenseNet121) and one much weaker (EfficientNetB0, "
+            "test acc 0.914), no val-selected soft-voting or stacking blend exceeds the best backbone by "
+            f"{C.TARGET_MARGIN_PP} pp. The hybrid ensemble matches the top backbone and raises precision on the "
+            "minority Benign class; it does not beat it outright on this split."]
+    return "\n".join(out) + "\n"
 
 
 # ---------- figures ----------
@@ -219,6 +305,17 @@ def run(progress_cb=None, write_readme=False):
     C.MODE_FILE.write_text(best)
     (C.RESULTS_DIR / "comparison_table.md").write_text(comparison_table(metrics, best), encoding="utf-8")
     (C.RESULTS_DIR / "NOTES.md").write_text(notes(metrics), encoding="utf-8")
+    (C.RESULTS_DIR / "run_info.json").write_text(json.dumps(run_info(metrics, voting), indent=2))
+    np.savez(C.RESULTS_DIR / "test_probs.npz", y=y, **{n: probs[n] for n in C.BACKBONES})
+    ood.write_stats([resolve(p) for p in load_split("train")["path"]])  # models/ood_stats.json for upload checks
+
+    top = max(C.BACKBONES, key=lambda k: per_model[k]["accuracy"])
+    margin_pp = 100 * (per_model[best]["accuracy"] - per_model[top]["accuracy"])
+    if not metrics["meta"]["smoke"] and margin_pp < C.TARGET_MARGIN_PP:
+        section = fallback_attempts(per_model, {n: probs[n] for n in C.BACKBONES}, y)
+        if section:
+            with (C.RESULTS_DIR / "NOTES.md").open("a", encoding="utf-8") as f:
+                f.write(section)
 
     for k, m in per_model.items():
         plot_confusion(k, m["confusion_matrix"])

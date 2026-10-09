@@ -1,0 +1,5 @@
+class,train,val,test
+Benign,358,77,77
+[Malignant] early Pre-B,685,147,147
+[Malignant] Pre-B,669,143,143
+[Malignant] Pro-B,557,119,120

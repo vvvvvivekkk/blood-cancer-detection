@@ -1,0 +1,17 @@
+{
+  "models": [
+    "mobilenetv2",
+    "efficientnetb0",
+    "densenet121"
+  ],
+  "weights": {
+    "mobilenetv2": 0.3418159652934133,
+    "efficientnetb0": 0.31135082184827917,
+    "densenet121": 0.3468332128583075
+  },
+  "val_macro_f1": {
+    "mobilenetv2": 0.9793219953950054,
+    "efficientnetb0": 0.8920376432932144,
+    "densenet121": 0.9936966922949152
+  }
+}

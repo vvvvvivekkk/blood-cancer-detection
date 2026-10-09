@@ -62,6 +62,11 @@ AUG_CONTRAST = 0.10
 META_C = 1.0
 META_MAX_ITER = 1000
 
+# Out-of-distribution upload check (src/ood.py): HSV colour heuristic vs the training split
+OOD_PX = 64
+OOD_BINS = 36
+OOD_PERCENTILE = 99.0  # training range = [100-p, p] percentile of saturation / hist distance
+
 # Targets from ENDGOAL.md, checked in results/NOTES.md
 TARGET_ACCURACY = 0.96
 TARGET_MACRO_F1 = 0.95
@@ -90,6 +95,7 @@ def set_root(root):
     """Point every artifact path at `root` (tests use a tmp dir)."""
     global ROOT, DATA_DIR, RAW_DIR, DEMO_DIR, SPLITS_DIR, MODELS_DIR, RESULTS_DIR
     global HISTORY_DIR, FIGURES_DIR, WEIGHTS_JSON, META_CLF, MODE_FILE, METRICS_JSON, ACTIVE_MODE_FILE, TEST_IMAGES_DIR
+    global OOD_STATS
     ROOT = Path(root)
     DATA_DIR = ROOT / "data"
     RAW_DIR = DATA_DIR / "raw"
@@ -105,6 +111,7 @@ def set_root(root):
     ACTIVE_MODE_FILE = MODELS_DIR / "active_mode.txt"
     TEST_IMAGES_DIR = ROOT / "test_images"
     METRICS_JSON = RESULTS_DIR / "metrics.json"
+    OOD_STATS = MODELS_DIR / "ood_stats.json"
 
 
 set_root(os.environ.get("BCE_ROOT", REPO))

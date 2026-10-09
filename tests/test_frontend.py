@@ -183,6 +183,8 @@ def test_preview_choose_submit_shows_class(smoke, ui):
     assert page.get_attribute("#img-cam", "src").startswith("data:image/png;base64,")
     page.fill("#cam-opacity", "30")
     assert page.inner_text("#cam-out") == "30%"
+    page.set_input_files("#file-input", str(next((C.SAMPLE_DIR / C.CLASS_NAMES[1]).iterdir())))
+    assert page.is_hidden("#result-body")  # a new image never sits next to the old prediction
     page.set_input_files("#file-input", {"name": "notes.txt", "mimeType": "text/plain", "buffer": b"hi"})
     assert "Unsupported" in page.inner_text("#predict-error")
     assert not errors, errors
@@ -198,6 +200,7 @@ def test_preview_try_a_test_image(smoke, ui):
         value = page.locator('#test-image-select option[value^="/media/test/"]').first.get_attribute("value")
         page.select_option("#test-image-select", value)
         page.wait_for_selector("#preview:not([hidden])")
+        page.wait_for_selector("#btn-submit:not([disabled])")  # enabled only once the picked image is loaded
         page.click("#btn-submit")
         page.wait_for_selector("#result-body:not([hidden])", timeout=120_000)
         assert page.inner_text("#result-class") in C.CLASS_NAMES
@@ -238,6 +241,10 @@ def test_mobile_sidebar_collapses_to_menu(pw_browser, server):
         assert page.is_visible('[data-nav="chart"]')
         assert page.get_attribute("#menu-btn", "aria-expanded") == "true"
         page.click('[data-nav="chart"]')
+        page.wait_for_selector("#sidebar", state="hidden")
+        page.click("#menu-btn")
+        page.wait_for_selector("#sidebar.open")
+        page.click('[data-nav="chart"]')  # the current page: no hashchange, drawer must still close
         page.wait_for_selector("#sidebar", state="hidden")
         page.locator('[data-view="chart"]').wait_for(state="visible")
         assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"), "horizontal scroll"

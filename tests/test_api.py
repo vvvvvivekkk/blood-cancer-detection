@@ -209,3 +209,15 @@ def test_app_py_is_the_same_entry_point():
     import sys
     out = subprocess.run([sys.executable, str(C.REPO / "app.py"), "--help"], capture_output=True, text=True, timeout=60)
     assert out.returncode == 0 and "--streamlit" in out.stdout and "export-test-images" in out.stdout
+
+
+def test_smoke_run_refuses_to_overwrite_real_models(empty_root):
+    (C.SPLITS_DIR).mkdir(parents=True)
+    (C.SPLITS_DIR / "meta.json").write_text('{"source": "kaggle", "smoke": false, "n_images": 3242}')
+    C.MODELS_DIR.mkdir()
+    C.model_path("mobilenetv2").write_bytes(b"real")
+    for url, body in (("/api/pipeline/all", {"smoke": True}), ("/api/data/splits", {"smoke": True}),
+                      ("/api/train", {"backbones": ["mobilenetv2"], "smoke": True})):
+        r = client.post(url, json=body)
+        assert r.status_code == 409 and "overwrite" in r.json()["detail"], (url, r.text)
+    assert C.model_path("mobilenetv2").read_bytes() == b"real"

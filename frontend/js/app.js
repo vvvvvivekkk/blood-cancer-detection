@@ -481,6 +481,9 @@ function predictError(text) {
 
 function selectFile(file) {
   predictError("");
+  // A new image invalidates the previous result; never show one image's prediction next to another.
+  $("#result-body").hidden = true;
+  $("#result-empty").hidden = false;
   const s = state.status;
   const ext = (file.name.split(".").pop() || "").toLowerCase();
   if (!s.upload_exts.includes(ext)) {
@@ -558,6 +561,10 @@ async function renderPredict() {
 }
 
 async function useImageUrl(url, name) {
+  // Until the fetch lands, Submit must not send the previously selected image.
+  state.file = null;
+  $("#btn-submit").disabled = true;
+  $("#preview").hidden = true;
   const blob = await (await fetch(url)).blob();
   selectFile(new File([blob], name, { type: blob.type }));
 }
@@ -716,6 +723,8 @@ function wire() {
   setTheme(document.documentElement.dataset.theme || "light");
   $("#menu-btn").addEventListener("click", () => ($("#sidebar").classList.contains("open") ? closeMenu() : openMenu()));
   $("#scrim").addEventListener("click", closeMenu);
+  // Tapping the current page's link fires no hashchange, so close the drawer here too.
+  $$("[data-nav]").forEach((a) => a.addEventListener("click", closeMenu));
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenu(); });
 
   // overview

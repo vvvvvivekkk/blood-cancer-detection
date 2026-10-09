@@ -6,6 +6,7 @@
     python run.py --cli export-test-images          -> 10 test images per class into test_images/
 """
 import argparse
+import json
 import os
 import subprocess
 import sys
@@ -14,6 +15,12 @@ import webbrowser
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
+
+
+def _has_real_artifacts():
+    meta = ROOT / "data" / "splits" / "meta.json"
+    return (meta.is_file() and not json.loads(meta.read_text()).get("smoke", True)
+            and any((ROOT / "models").glob("*.keras")))
 
 
 def main():
@@ -50,6 +57,9 @@ def main():
         print("exported %d test images to %s" % export_test_images()[::-1])
         return 0
 
+    if a.smoke and "BCE_ROOT" not in os.environ and _has_real_artifacts():
+        os.environ["BCE_ROOT"] = str(ROOT / ".smoke")
+        print(f"Real-data models exist: smoke run writes to {ROOT / '.smoke'} instead.", flush=True)
     from src import pipeline
 
     def log(stage, epoch, logs):

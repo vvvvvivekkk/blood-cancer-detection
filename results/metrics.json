@@ -1,0 +1,331 @@
+{
+  "meta": {
+    "source": "kaggle",
+    "smoke": false,
+    "n_test": 487,
+    "generated_at": "2026-10-09 13:48 UTC",
+    "voting_weights": {
+      "mobilenetv2": 0.3418159652934133,
+      "efficientnetb0": 0.31135082184827917,
+      "densenet121": 0.3468332128583075
+    }
+  },
+  "models": {
+    "mobilenetv2": {
+      "accuracy": 0.9691991786447639,
+      "macro_precision": 0.9625865261761899,
+      "macro_recall": 0.9710646496360782,
+      "macro_f1": 0.9662238432973428,
+      "weighted_precision": 0.9706858683520891,
+      "weighted_recall": 0.9691991786447639,
+      "weighted_f1": 0.9694756061035925,
+      "kappa": 0.958321684705399,
+      "roc_auc_ovr": 0.9980738154790929,
+      "per_class": {
+        "Benign": {
+          "precision": 0.8928571428571429,
+          "recall": 0.974025974025974,
+          "f1-score": 0.9316770186335404,
+          "support": 77.0
+        },
+        "[Malignant] early Pre-B": {
+          "precision": 0.9657534246575342,
+          "recall": 0.9591836734693877,
+          "f1-score": 0.962457337883959,
+          "support": 147.0
+        },
+        "[Malignant] Pre-B": {
+          "precision": 1.0,
+          "recall": 0.951048951048951,
+          "f1-score": 0.974910394265233,
+          "support": 143.0
+        },
+        "[Malignant] Pro-B": {
+          "precision": 0.9917355371900827,
+          "recall": 1.0,
+          "f1-score": 0.995850622406639,
+          "support": 120.0
+        }
+      },
+      "confusion_matrix": [
+        [
+          75,
+          2,
+          0,
+          0
+        ],
+        [
+          6,
+          141,
+          0,
+          0
+        ],
+        [
+          3,
+          3,
+          136,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          120
+        ]
+      ]
+    },
+    "efficientnetb0": {
+      "accuracy": 0.9137577002053389,
+      "macro_precision": 0.9240052249614245,
+      "macro_recall": 0.9124060463346177,
+      "macro_f1": 0.9114169687482836,
+      "weighted_precision": 0.9252630557324546,
+      "weighted_recall": 0.9137577002053389,
+      "weighted_f1": 0.9125543558003786,
+      "kappa": 0.8827904737891673,
+      "roc_auc_ovr": 0.9972603814668843,
+      "per_class": {
+        "Benign": {
+          "precision": 0.891566265060241,
+          "recall": 0.961038961038961,
+          "f1-score": 0.925,
+          "support": 77.0
+        },
+        "[Malignant] early Pre-B": {
+          "precision": 0.9788732394366197,
+          "recall": 0.9455782312925171,
+          "f1-score": 0.9619377162629758,
+          "support": 147.0
+        },
+        "[Malignant] Pre-B": {
+          "precision": 0.8255813953488372,
+          "recall": 0.993006993006993,
+          "f1-score": 0.9015873015873016,
+          "support": 143.0
+        },
+        "[Malignant] Pro-B": {
+          "precision": 1.0,
+          "recall": 0.75,
+          "f1-score": 0.8571428571428571,
+          "support": 120.0
+        }
+      },
+      "confusion_matrix": [
+        [
+          74,
+          2,
+          1,
+          0
+        ],
+        [
+          8,
+          139,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          142,
+          0
+        ],
+        [
+          0,
+          1,
+          29,
+          90
+        ]
+      ]
+    },
+    "densenet121": {
+      "accuracy": 0.9897330595482546,
+      "macro_precision": 0.9868347463664862,
+      "macro_recall": 0.99140145568717,
+      "macro_f1": 0.9890003646234372,
+      "weighted_precision": 0.9899527132635763,
+      "weighted_recall": 0.9897330595482546,
+      "weighted_f1": 0.9897535856786875,
+      "kappa": 0.986086588842987,
+      "roc_auc_ovr": 0.9994146920475446,
+      "per_class": {
+        "Benign": {
+          "precision": 0.9625,
+          "recall": 1.0,
+          "f1-score": 0.9808917197452229,
+          "support": 77.0
+        },
+        "[Malignant] early Pre-B": {
+          "precision": 0.993103448275862,
+          "recall": 0.9795918367346939,
+          "f1-score": 0.9863013698630136,
+          "support": 147.0
+        },
+        "[Malignant] Pre-B": {
+          "precision": 1.0,
+          "recall": 0.986013986013986,
+          "f1-score": 0.9929577464788732,
+          "support": 143.0
+        },
+        "[Malignant] Pro-B": {
+          "precision": 0.9917355371900827,
+          "recall": 1.0,
+          "f1-score": 0.995850622406639,
+          "support": 120.0
+        }
+      },
+      "confusion_matrix": [
+        [
+          77,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          144,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          141,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          120
+        ]
+      ]
+    },
+    "voting": {
+      "accuracy": 0.9835728952772074,
+      "macro_precision": 0.9788606084354516,
+      "macro_recall": 0.9832072689215546,
+      "macro_f1": 0.9809186091047215,
+      "weighted_precision": 0.9839182305049555,
+      "weighted_recall": 0.9835728952772074,
+      "weighted_f1": 0.983657830535856,
+      "kappa": 0.9777385421487792,
+      "roc_auc_ovr": 0.9995061079300844,
+      "per_class": {
+        "Benign": {
+          "precision": 0.9375,
+          "recall": 0.974025974025974,
+          "f1-score": 0.9554140127388535,
+          "support": 77.0
+        },
+        "[Malignant] early Pre-B": {
+          "precision": 0.9862068965517241,
+          "recall": 0.9727891156462585,
+          "f1-score": 0.9794520547945206,
+          "support": 147.0
+        },
+        "[Malignant] Pre-B": {
+          "precision": 1.0,
+          "recall": 0.986013986013986,
+          "f1-score": 0.9929577464788732,
+          "support": 143.0
+        },
+        "[Malignant] Pro-B": {
+          "precision": 0.9917355371900827,
+          "recall": 1.0,
+          "f1-score": 0.995850622406639,
+          "support": 120.0
+        }
+      },
+      "confusion_matrix": [
+        [
+          75,
+          2,
+          0,
+          0
+        ],
+        [
+          4,
+          143,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          141,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          120
+        ]
+      ]
+    },
+    "stacking": {
+      "accuracy": 0.9897330595482546,
+      "macro_precision": 0.985588205285175,
+      "macro_recall": 0.99140145568717,
+      "macro_f1": 0.9882956587096985,
+      "weighted_precision": 0.9901556372217811,
+      "weighted_recall": 0.9897330595482546,
+      "weighted_f1": 0.9897950748031666,
+      "kappa": 0.9860921516326728,
+      "roc_auc_ovr": 0.9996923935871466,
+      "per_class": {
+        "Benign": {
+          "precision": 0.9506172839506173,
+          "recall": 1.0,
+          "f1-score": 0.9746835443037974,
+          "support": 77.0
+        },
+        "[Malignant] early Pre-B": {
+          "precision": 1.0,
+          "recall": 0.9795918367346939,
+          "f1-score": 0.9896907216494846,
+          "support": 147.0
+        },
+        "[Malignant] Pre-B": {
+          "precision": 1.0,
+          "recall": 0.986013986013986,
+          "f1-score": 0.9929577464788732,
+          "support": 143.0
+        },
+        "[Malignant] Pro-B": {
+          "precision": 0.9917355371900827,
+          "recall": 1.0,
+          "f1-score": 0.995850622406639,
+          "support": 120.0
+        }
+      },
+      "confusion_matrix": [
+        [
+          77,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          144,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          141,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          120
+        ]
+      ]
+    }
+  },
+  "best_ensemble": "stacking"
+}
