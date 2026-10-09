@@ -47,17 +47,22 @@
     margin-bottom: 4pt;
   }
   .abstract {
-    margin: 0 0.35in 10pt 0.35in;
+    margin: 0 0 6pt 0;
     font-size: 9pt;
+    font-weight: bold;
     text-align: justify;
     line-height: 1.25;
+    text-indent: 0;
   }
+  .abstract .lbl { font-style: italic; }
   .keywords {
-    margin: 0 0.35in 18pt 0.35in;
+    margin: 0 0 10pt 0;
     font-size: 9pt;
+    font-weight: bold;
     line-height: 1.25;
+    text-indent: 0;
   }
-  .keywords em { font-style: italic; font-weight: bold; }
+  .keywords .lbl { font-style: italic; }
 
   .two-column {
     column-count: 2;
@@ -70,7 +75,6 @@
     text-transform: uppercase;
     text-align: center;
     margin: 12pt 0 5pt 0;
-    column-span: all;
   }
   h3 {
     font-size: 10pt;
@@ -198,15 +202,12 @@
   </div>
 </div>
 
-<!-- ===== ABSTRACT ===== -->
-<div class="abstract-heading">Abstract</div>
-<div class="abstract">
-Acute Lymphoblastic Leukemia (ALL) is the most common blood cancer in children, and picking out the right subtype early from a peripheral blood smear gives clinicians a head start on treatment. This paper describes a hybrid ensemble classifier built from three pretrained CNN backbones, MobileNetV2, EfficientNetB0 and DenseNet121, combined in two ways: weighted soft voting and a stacked logistic-regression meta-classifier. We fine-tuned each backbone on the Blood Cells Cancer (ALL) dataset (3,242 images across four classes) using a two-phase transfer-learning schedule. On the held-out test split the weighted voting ensemble reached 96.50% accuracy and a 0.9648 macro-F1. What we add on top is an uncertainty layer. Monte Carlo (MC) Dropout runs 30 stochastic forward passes per image, and the spread across those passes becomes two numbers, predictive entropy and mutual information, that tell apart the predictions the model is sure of from the ones it is not. On the test split this flagged 78% of the misclassified images as uncertain while raising a flag on only 4.3% of the correct ones. Grad-CAM overlays show the network looking at nuclear morphology, the same feature a hematologist examines. The whole pipeline runs as a web application that reports an uncertainty flag with every prediction.
-</div>
-<div class="keywords"><em>Keywords</em>: acute lymphoblastic leukemia, blood cancer, ensemble learning, transfer learning, MC Dropout, uncertainty quantification, Grad-CAM, MobileNetV2, EfficientNetB0, DenseNet121</div>
-
 <!-- ===== BODY ===== -->
 <div class="two-column">
+
+<p class="abstract"><span class="lbl">Abstract</span>&mdash;Acute Lymphoblastic Leukemia (ALL) is the most common blood cancer in children, and picking out the right subtype early from a peripheral blood smear gives clinicians a head start on treatment. This paper describes a hybrid ensemble classifier built from three pretrained CNN backbones, MobileNetV2, EfficientNetB0 and DenseNet121, combined in two ways: weighted soft voting and a stacked logistic-regression meta-classifier. We fine-tuned each backbone on the Blood Cells Cancer (ALL) dataset (3,242 images across four classes) using a two-phase transfer-learning schedule. On the held-out test split the weighted voting ensemble reached 96.50% accuracy and a 0.9648 macro-F1. What we add on top is an uncertainty layer. Monte Carlo (MC) Dropout runs 30 stochastic forward passes per image, and the spread across those passes becomes two numbers, predictive entropy and mutual information, that tell apart the predictions the model is sure of from the ones it is not. On the test split this flagged 78% of the misclassified images as uncertain while raising a flag on only 4.3% of the correct ones. Grad-CAM overlays show the network looking at nuclear morphology, the same feature a hematologist examines. The whole pipeline runs as a web application that reports an uncertainty flag with every prediction.</p>
+
+<p class="keywords"><span class="lbl">Index Terms</span>&mdash;Acute lymphoblastic leukemia, blood cancer, ensemble learning, transfer learning, MC Dropout, uncertainty quantification, Grad-CAM, MobileNetV2, EfficientNetB0, DenseNet121.</p>
 
 <h2>I. Introduction</h2>
 <p class="no-indent">Blood cancer, or hematological malignancy, happens when the bone marrow stops making blood cells the way it should. Among children it is Acute Lymphoblastic Leukemia (ALL) that shows up most often, accounting for roughly 25 percent of pediatric cancer diagnoses worldwide [1]. In ALL the marrow churns out immature lymphocytes, called lymphoblasts, that crowd out healthy cells and leak into the bloodstream. The subtypes do not behave the same way or respond to the same drugs, so getting the subtype right at the first examination is what shapes the rest of the care.</p>
