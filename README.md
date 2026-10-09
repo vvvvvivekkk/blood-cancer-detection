@@ -9,16 +9,21 @@ Three transfer-learning CNNs (MobileNetV2, EfficientNetB0, DenseNet121) are comb
 ## Quick start
 
 ```bash
+git clone https://github.com/vvvvvivekkk/blood-cancer-detection.git
+cd blood-cancer-detection
 pip install -r requirements.txt
+python run.py --fetch-models https://github.com/vvvvvivekkk/blood-cancer-detection/releases/download/v1.0.0/models.zip
 python app.py                        # same as `python run.py`: opens http://localhost:8000
 ```
+`--fetch-models` downloads the trained models (~105 MB) from the **v1.0.0** release, verifies their SHA-256 against `models/MODELS_SHA256.txt`, and unpacks them into `models/`; `python run.py --check` re-verifies at any time. Skip that line to run without pretrained weights (train first, or press *Use demo data*). Full steps in [`INSTALL.md`](INSTALL.md).
+
 Log in with **admin / admin**. This is a fixed demo login for the walkthrough, not security, and the API itself stays open. The sidebar then reads **Home · Preview · Performance Analysis · Chart · About · Pipeline (Data, Train) · Logout**. Get data under **Pipeline → Data** (paste a Kaggle access token and download, or press *Use demo data*), train under **Pipeline → Train**, or press **Run full pipeline** on Home. Then try **Preview**, **Performance Analysis** and **Chart**. For the viva, `python run.py --cli export-test-images` copies 10 test-split images per class to `test_images/`, and Preview lists them under *Try a test image*. `docs/ui_walkthrough.md` is the step-by-step demo script.
 
 `python run.py --streamlit` starts the older Streamlit UI (http://localhost:8501), which does the same things. Use `--port` and `--no-browser` to change the server's port or stop it opening a browser tab.
 
 **No Kaggle account?** *Use demo data* creates 200 synthetic 4-class images in `data/demo/` so the whole pipeline still runs. Every page then shows a **DEMO DATA** banner. The numbers you get from it say nothing about leukemia.
 
-**No GPU?** `python run.py --cli all --smoke` runs every stage on the 8 bundled sample images on CPU in about two minutes. That only checks the plumbing. Real training belongs on Colab: [`notebooks/train_colab.ipynb`](notebooks/train_colab.ipynb) ([open in Colab](https://colab.research.google.com/github/<your-github-user>/blood-cancer-ensemble/blob/main/notebooks/train_colab.ipynb)).
+**No GPU?** `python run.py --cli all --smoke` runs every stage on the 8 bundled sample images on CPU in about two minutes. That only checks the plumbing. Real training belongs on Colab: [`notebooks/train_colab.ipynb`](notebooks/train_colab.ipynb) ([open in Colab](https://colab.research.google.com/github/vvvvvivekkk/blood-cancer-detection/blob/master/notebooks/train_colab.ipynb)).
 
 Headless stages: `python run.py --cli {download,demo-data,splits,train,ensemble,evaluate,all} [--smoke]`.
 
