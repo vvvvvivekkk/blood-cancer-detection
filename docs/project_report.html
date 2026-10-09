@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Blood Cancer Identification — Project Report</title>
+<style>
+  @page { size: A4; margin: 1in 0.9in; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.5;
+         color: #000; margin: 0; }
+  p { text-align: justify; margin: 0 0 9pt; }
+  .ph { background: #fff2a8; padding: 0 3px; border-radius: 2px; }
+  .center { text-align: center; }
+  .page { page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+
+  /* Title page */
+  .title-page { text-align: center; height: 100%; }
+  .title-page .rpt { font-size: 13pt; margin-top: 10pt; }
+  .title-page .ptitle { font-size: 17pt; font-weight: bold; margin: 14pt 30pt; line-height: 1.35; }
+  .title-page .sub { font-size: 12pt; margin: 10pt 40pt; font-style: italic; }
+  .title-page .lbl { font-size: 12pt; font-weight: bold; margin-top: 16pt; }
+  .title-page table { margin: 6pt auto; border-collapse: collapse; font-size: 12pt; }
+  .title-page table td { padding: 2pt 14pt; text-align: left; }
+  .uni { font-size: 20pt; font-weight: bold; letter-spacing: 1px; margin-top: 10pt; }
+  .dept-line { font-size: 12.5pt; font-weight: bold; margin-top: 4pt; }
+  .logo { width: 90px; height: 90px; border: 2px solid #333; border-radius: 50%;
+          margin: 14pt auto 6pt; display: flex; align-items: center; justify-content: center;
+          font-size: 9pt; color: #777; }
+
+  h1.ch { font-size: 15pt; font-weight: bold; text-transform: uppercase; margin: 0 0 14pt;
+          border-bottom: 2px solid #000; padding-bottom: 5pt; }
+  h2.sec { font-size: 13pt; font-weight: bold; margin: 16pt 0 7pt; }
+  h3.ssec { font-size: 12pt; font-weight: bold; font-style: italic; margin: 12pt 0 5pt; }
+  .frontheading { font-size: 14pt; font-weight: bold; text-transform: uppercase;
+                  text-align: center; margin: 0 0 14pt; }
+
+  table.data { width: 100%; border-collapse: collapse; margin: 8pt 0 12pt; font-size: 10.5pt; }
+  table.data th, table.data td { border: 1px solid #000; padding: 4pt 6pt; text-align: center; }
+  table.data th { background: #e8e8e8; font-weight: bold; }
+  table.data td.l, table.data th.l { text-align: left; }
+  caption, .cap { font-size: 10.5pt; font-style: italic; margin: 10pt 0 4pt; text-align: center; }
+  .tabnum { font-weight: bold; font-style: normal; }
+
+  .fig { text-align: center; margin: 12pt 0; }
+  .fig img { max-width: 92%; max-height: 330px; border: 1px solid #bbb; }
+  .fig .fcap { font-size: 10.5pt; font-style: italic; margin-top: 5pt; }
+  .fig .fcap b { font-style: normal; }
+
+  ul, ol { margin: 4pt 0 10pt; padding-left: 26pt; }
+  li { margin: 3pt 0; text-align: justify; }
+
+  /* Contents / lists */
+  .toc { font-size: 11.5pt; }
+  .toc .row { display: flex; justify-content: space-between; border-bottom: 1px dotted #999; padding: 2pt 0; }
+  .toc .row.l1 { font-weight: bold; margin-top: 6pt; }
+  .toc .row.l2 { padding-left: 20pt; }
+  .toc .row.l3 { padding-left: 40pt; font-size: 11pt; }
+  .pgnum-roman { text-align: center; font-size: 11pt; margin-top: 16pt; }
+
+  .block { border: 1px solid #333; padding: 8pt 10pt; margin: 8pt auto; background: #f7f7f7;
+           font-size: 10.5pt; text-align: center; }
+  .dfd { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10pt; margin: 12pt 0; }
+  .node { border: 1.5px solid #222; padding: 8pt 12pt; border-radius: 4px; background: #eef4fb;
+          font-size: 10.5pt; min-width: 110px; text-align: center; }
+  .node.store { background: #fdf3e0; border-style: double; }
+  .node.ext { background: #eafaef; border-radius: 20px; }
+  .arrow { font-size: 16pt; color: #444; }
+  .refs li { font-size: 11pt; margin: 5pt 0; }
+</style>
+</head>
+<body>
+
+<!-- ============ TITLE PAGE ============ -->
+<div class="page title-page">
+  <div class="rpt">A Mini Project report on</div>
+  <div class="ptitle">Blood Cancer Identification using Hybrid Ensemble Deep Learning with Monte Carlo Dropout Uncertainty Quantification</div>
+  <div class="sub">Mini Project submitted to Mallareddy University in partial fulfilment of the requirements
+    for the award of the Degree of Bachelor of Technology in Artificial Intelligence &amp; Machine Learning</div>
+
+  <div class="lbl">Submitted by</div>
+  <table>
+    <tr><td>G. Revathi</td><td class="ph">&laquo;Roll No.&raquo;</td></tr>
+    <tr><td>G. Chandana</td><td class="ph">&laquo;Roll No.&raquo;</td></tr>
+    <tr><td>G. Prashanth</td><td class="ph">&laquo;Roll No.&raquo;</td></tr>
+  </table>
+
+  <div class="lbl">Under the Guidance of</div>
+  <div style="margin-top:4pt">A. Divya Reddy</div>
+  <div>Assistant Professor</div>
+  <div>Department of Artificial Intelligence &amp; Machine Learning</div>
+
+  <div class="logo">College<br>Logo</div>
+  <div class="uni">MALLAREDDY UNIVERSITY</div>
+  <div class="dept-line">School of Engineering</div>
+  <div>Maisammaguda, Hyderabad, Telangana, India</div>
+  <div style="margin-top:8pt" class="ph">&laquo;2022 &ndash; 2026&raquo;</div>
+</div>
+
+<!-- ============ CERTIFICATE ============ -->
+<div class="page">
+  <div class="frontheading">Department of Artificial Intelligence &amp; Machine Learning</div>
+  <div class="frontheading" style="margin-bottom:22pt">Certificate</div>
+  <p>This is to certify that the project report titled <b>Blood Cancer Identification using Hybrid
+  Ensemble Deep Learning with Monte Carlo Dropout Uncertainty Quantification</b> is being submitted by
+  <b>G. Revathi</b> (<span class="ph">&laquo;Roll No.&raquo;</span>), <b>G. Chandana</b>
+  (<span class="ph">&laquo;Roll No.&raquo;</span>) and <b>G. Prashanth</b>
+  (<span class="ph">&laquo;Roll No.&raquo;</span>), in
+  <span class="ph">&laquo;IV&raquo;</span> B.Tech <span class="ph">&laquo;I&raquo;</span> semester,
+  Artificial Intelligence &amp; Machine Learning, and is a record of bonafide work carried out by them.
+  The results embodied in this report have not been submitted to any other University for the award of
+  any degree.</p>
+
+  <table style="width:100%; margin-top:40pt; font-size:12pt">
+    <tr><td style="padding-bottom:4pt">Student's Name</td><td style="text-align:right">Signature</td></tr>
+    <tr><td>1. G. Revathi</td><td style="text-align:right">1.</td></tr>
+    <tr><td>2. G. Chandana</td><td style="text-align:right">2.</td></tr>
+    <tr><td>3. G. Prashanth</td><td style="text-align:right">3.</td></tr>
+  </table>
+
+  <table style="width:100%; margin-top:60pt; font-size:12pt">
+    <tr>
+      <td style="text-align:left">
+        A. Divya Reddy<br>Assistant Professor<br><b>Guide</b>
+      </td>
+      <td style="text-align:right">
+        <span class="ph">&laquo;Dr. HOD Name&raquo;</span><br>Professor<br><b>Head of Department</b>
+      </td>
+    </tr>
+  </table>
+  <div style="margin-top:46pt; text-align:center"><b>External Examiner</b></div>
+</div>
+
+<!-- ============ ACKNOWLEDGEMENT ============ -->
+<div class="page">
+  <div class="frontheading">Acknowledgement</div>
+  <p>We are grateful to <span class="ph">&laquo;Vice-Chancellor Name&raquo;</span>, Vice-Chancellor,
+  Mallareddy University, for the facilities the University made available to us and for the environment
+  in which this project could be carried out.</p>
+  <p>We thank <span class="ph">&laquo;Dean Name&raquo;</span>, Dean, School of Engineering, for the
+  encouragement given to us throughout our course of study.</p>
+  <p>We sincerely thank <span class="ph">&laquo;Head of Department Name&raquo;</span>, Professor and
+  Head of the Department of Artificial Intelligence &amp; Machine Learning, for providing the resources
+  and support we needed to complete this work.</p>
+  <p>We thank our project coordinator, <span class="ph">&laquo;Coordinator Name&raquo;</span>,
+  Department of Artificial Intelligence &amp; Machine Learning, for organising the project reviews and
+  keeping us on schedule.</p>
+  <p>We are especially indebted to our guide, A. Divya Reddy, Assistant Professor, Department of
+  Artificial Intelligence &amp; Machine Learning, Mallareddy University. Her questions during the
+  reviews shaped how we tested the system, and her feedback on each draft improved this report.</p>
+  <p>We also thank the developers of the open-source libraries this project is built on, in particular
+  TensorFlow, Keras, scikit-learn, FastAPI, OpenCV and Chart.js, and the authors of the Blood Cells
+  Cancer (ALL) dataset.</p>
+  <div class="pgnum-roman"></div>
+</div>
+
+<!-- ============ CONTENTS ============ -->
+<div class="page">
+  <div class="frontheading">Contents</div>
+  <div class="toc">
+    <div class="row l1"><span>Abstract</span><span>i</span></div>
+    <div class="row l1"><span>List of Figures</span><span>ii</span></div>
+    <div class="row l1"><span>List of Tables</span><span>iii</span></div>
+    <div class="row l1"><span>1. INTRODUCTION</span><span>1</span></div>
+    <div class="row l2"><span>1.1 Background and Motivation</span><span>1</span></div>
+    <div class="row l2"><span>1.2 Problem Statement</span><span>1</span></div>
+    <div class="row l2"><span>1.3 Scope and Applications</span><span>2</span></div>
+    <div class="row l2"><span>1.4 Contributions of the Project</span><span>2</span></div>
+    <div class="row l2"><span>1.5 Organisation of the Report</span><span>3</span></div>
+    <div class="row l1"><span>2. LITERATURE SURVEY</span><span>4</span></div>
+    <div class="row l2"><span>2.1 Existing System</span><span>4</span></div>
+    <div class="row l2"><span>2.2 Limitations of the Existing System</span><span>5</span></div>
+    <div class="row l2"><span>2.3 Proposed System</span><span>5</span></div>
+    <div class="row l2"><span>2.4 Objectives</span><span>6</span></div>
+    <div class="row l1"><span>3. PROPOSED SYSTEM</span><span>7</span></div>
+    <div class="row l2"><span>3.1 Architecture, Algorithms and Methods</span><span>7</span></div>
+    <div class="row l2"><span>3.2 System Requirements</span><span>11</span></div>
+    <div class="row l1"><span>4. DESIGN</span><span>13</span></div>
+    <div class="row l2"><span>4.1 Data Flow and UML Diagrams</span><span>13</span></div>
+    <div class="row l2"><span>4.2 Module Design and Organisation</span><span>18</span></div>
+    <div class="row l1"><span>5. IMPLEMENTATION AND TESTING</span><span>19</span></div>
+    <div class="row l2"><span>5.1 Technologies Used</span><span>19</span></div>
+    <div class="row l2"><span>5.2 Procedures</span><span>20</span></div>
+    <div class="row l2"><span>5.3 Testing and Validation</span><span>21</span></div>
+    <div class="row l1"><span>6. RESULTS</span><span>23</span></div>
+    <div class="row l2"><span>6.1 Output</span><span>23</span></div>
+    <div class="row l2"><span>6.2 Result Analysis</span><span>25</span></div>
+    <div class="row l1"><span>7. CONCLUSION</span><span>29</span></div>
+    <div class="row l1"><span>8. FUTURE WORK</span><span>30</span></div>
+    <div class="row l1"><span>REFERENCES</span><span>31</span></div>
+    <div class="row l1"><span>ANNEXURE</span><span>iv</span></div>
+  </div>
+</div>
+
+<!-- ============ ABSTRACT ============ -->
+<div class="page">
+  <div class="frontheading">Abstract</div>
+  <p>Acute Lymphoblastic Leukemia (ALL) is the most common blood cancer in children, and picking out
+  the right subtype early from a peripheral blood smear gives clinicians a head start on treatment. The
+  first read still comes down to a hematologist looking at a stained smear under a microscope, which is
+  slow, costly and sensitive to how experienced the reader is. This project builds an automated system
+  that classifies peripheral blood smear images into four classes, Benign, early Pre-B, Pre-B and Pro-B,
+  and reports how confident it is in each decision.</p>
+  <p>The system is a hybrid ensemble of three pretrained convolutional neural network backbones,
+  MobileNetV2, EfficientNetB0 and DenseNet121, each fine-tuned on the Blood Cells Cancer (ALL) dataset
+  (3,242 images, four classes) with a two-phase transfer-learning schedule. Their softmax outputs are
+  combined in two ways, weighted soft voting and a stacked logistic-regression meta-classifier. On a
+  held-out test split the weighted voting ensemble reached 96.50% accuracy and a 0.9648 macro-F1.</p>
+  <p>The part we add on top is an uncertainty layer. Monte Carlo (MC) Dropout runs 30 stochastic forward
+  passes per image, and the spread across those passes becomes two numbers, predictive entropy and
+  mutual information, that tell apart predictions the model is sure of from the ones it is not. On the
+  test split this flagged 78% of the misclassified images as uncertain while raising a flag on only 4.3%
+  of the correct ones. Grad-CAM overlays confirm that the network attends to nuclear morphology, the same
+  feature a hematologist examines. The whole pipeline runs as a FastAPI web application that reports an
+  uncertainty flag with every prediction.</p>
+  <p><b>Keywords:</b> Acute Lymphoblastic Leukemia, blood cancer, ensemble learning, transfer learning,
+  MC Dropout, uncertainty quantification, Grad-CAM, MobileNetV2, EfficientNetB0, DenseNet121.</p>
+  <div class="pgnum-roman">i</div>
+</div>
+
+<!-- ============ LIST OF FIGURES ============ -->
+<div class="page">
+  <div class="frontheading">List of Figures</div>
+  <div class="toc">
+    <div class="row"><span>Figure 1.1&nbsp;&nbsp;High-level block diagram of the proposed system</span><span>3</span></div>
+    <div class="row"><span>Figure 3.1&nbsp;&nbsp;Overall architecture of the hybrid ensemble system</span><span>7</span></div>
+    <div class="row"><span>Figure 3.2&nbsp;&nbsp;Two-phase transfer-learning schedule</span><span>9</span></div>
+    <div class="row"><span>Figure 4.1&nbsp;&nbsp;Data flow diagram, level 0 (context diagram)</span><span>13</span></div>
+    <div class="row"><span>Figure 4.2&nbsp;&nbsp;Data flow diagram, level 1</span><span>14</span></div>
+    <div class="row"><span>Figure 4.3&nbsp;&nbsp;Use case diagram</span><span>15</span></div>
+    <div class="row"><span>Figure 4.4&nbsp;&nbsp;Class diagram of the main modules</span><span>16</span></div>
+    <div class="row"><span>Figure 4.5&nbsp;&nbsp;Sequence diagram for predicting an image</span><span>17</span></div>
+    <div class="row"><span>Figure 4.6&nbsp;&nbsp;Activity diagram from upload to result</span><span>18</span></div>
+    <div class="row"><span>Figure 6.1&nbsp;&nbsp;Training and validation curves for DenseNet121</span><span>23</span></div>
+    <div class="row"><span>Figure 6.2&nbsp;&nbsp;Confusion matrix for the weighted voting ensemble</span><span>24</span></div>
+    <div class="row"><span>Figure 6.3&nbsp;&nbsp;ROC curves for the weighted voting ensemble</span><span>24</span></div>
+    <div class="row"><span>Figure 6.4&nbsp;&nbsp;Grad-CAM visualisation examples</span><span>25</span></div>
+    <div class="row"><span>Figure 6.5&nbsp;&nbsp;Model comparison across metrics</span><span>26</span></div>
+  </div>
+  <div class="pgnum-roman">ii</div>
+</div>
+
+<!-- ============ LIST OF TABLES ============ -->
+<div class="page">
+  <div class="frontheading">List of Tables</div>
+  <div class="toc">
+    <div class="row"><span>Table 2.1&nbsp;&nbsp;Summary of related work and how this project builds on it</span><span>4</span></div>
+    <div class="row"><span>Table 3.1&nbsp;&nbsp;Dataset class distribution</span><span>8</span></div>
+    <div class="row"><span>Table 3.2&nbsp;&nbsp;Confidence flag thresholds</span><span>10</span></div>
+    <div class="row"><span>Table 4.1&nbsp;&nbsp;Modules of the system</span><span>18</span></div>
+    <div class="row"><span>Table 5.1&nbsp;&nbsp;Technologies used</span><span>19</span></div>
+    <div class="row"><span>Table 6.1&nbsp;&nbsp;Model performance on the test split</span><span>25</span></div>
+    <div class="row"><span>Table 6.2&nbsp;&nbsp;MC Dropout uncertainty by prediction correctness</span><span>27</span></div>
+    <div class="row"><span>Table 6.3&nbsp;&nbsp;Comparison with related work</span><span>28</span></div>
+    <div class="row"><span>Table 6.4&nbsp;&nbsp;Inference time per image</span><span>28</span></div>
+  </div>
+  <div class="pgnum-roman">iii</div>
+</div>
+
+<!-- ============ CHAPTER 1 ============ -->
+<div class="page">
+  <h1 class="ch">Chapter 1: Introduction</h1>
+
+  <h2 class="sec">1.1 Background and Motivation</h2>
+  <p>Blood cancer, or hematological malignancy, happens when the bone marrow stops making blood cells
+  the way it should. Among children it is Acute Lymphoblastic Leukemia (ALL) that shows up most often,
+  accounting for roughly 25 percent of pediatric cancer diagnoses worldwide [1]. In ALL the marrow churns
+  out immature lymphocytes, called lymphoblasts, that crowd out healthy cells and leak into the
+  bloodstream. The subtypes do not behave the same way or respond to the same drugs, so getting the
+  subtype right at the first examination is what shapes the rest of the care.</p>
+  <p>In practice that first read still comes down to a hematologist looking at a stained blood smear
+  under a microscope, with flow cytometry and molecular tests coming later. It is slow, it is expensive,
+  and the microscope step in particular leans heavily on how experienced the person at the eyepiece is
+  [2]. Where experienced pathologists are in short supply, two readers can disagree on the same slide.</p>
+  <p>Convolutional neural networks (CNNs) have done well on medical images over the past decade [3], and
+  transfer learning from ImageNet-pretrained networks is a practical way to start when labelled data is
+  thin. Letting several models vote together, rather than trusting one, tends to smooth out variance and
+  recover mistakes a single network would make on its own. The motivation for this project was therefore
+  not merely to classify cells accurately, but to build a system that also knows when it is unsure and
+  says so, which is what clinical use demands.</p>
+
+  <div class="fig">
+    <div class="block" style="max-width:520px">
+      Blood smear image &nbsp;&rarr;&nbsp; Three CNN backbones &nbsp;&rarr;&nbsp; Ensemble vote
+      &nbsp;&rarr;&nbsp; MC Dropout confidence &nbsp;&rarr;&nbsp; Prediction + uncertainty flag
+      (+ Grad-CAM)
+    </div>
+    <div class="fcap"><b>Figure 1.1:</b> High-level block diagram of the proposed system: feature
+    extraction by three backbones, an ensemble vote, an uncertainty estimate and a visual explanation.</div>
+  </div>
+
+  <h2 class="sec">1.2 Problem Statement</h2>
+  <p>The project addresses the following problems in automated ALL detection:</p>
+  <ol>
+    <li><b>Observer dependence:</b> manual microscopy is slow and varies from one reader to another,
+    and the correct subtype is hard to call when two subtypes look alike.</li>
+    <li><b>Overconfident models:</b> most existing systems hand back only a softmax score, which says
+    nothing about how stable the prediction is. A network can report 0.92 confidence for a cell sitting
+    right on a decision boundary.</li>
+    <li><b>No way to refer hard cases:</b> without an uncertainty estimate there is no principled way to
+    separate the predictions a clinician can trust from the ones that should go to a specialist.</li>
+    <li><b>Opacity:</b> a prediction with no visual explanation is difficult for a clinician to trust or
+    to check against what they see under the microscope.</li>
+  </ol>
+
+  <h2 class="sec">1.3 Scope and Applications</h2>
+  <p>The system classifies pre-cropped single-cell peripheral blood smear images into four classes and
+  returns, for each image, the predicted class, a confidence score, the per-backbone votes, a Grad-CAM
+  overlay and an uncertainty flag. It is intended as a screening-support tool that gives a fast second
+  opinion and routes uncertain cases to a human specialist. It is a research and educational prototype
+  and is explicitly not intended for direct clinical diagnosis. Possible applications include triage
+  support in laboratories with few pathologists, a teaching aid for trainees, and a reusable, reproducible
+  baseline for further research on uncertainty-aware medical image classification.</p>
+
+  <h2 class="sec">1.4 Contributions of the Project</h2>
+  <ol>
+    <li>A reproducible hybrid ensemble framework on a public dataset, with full source code.</li>
+    <li>A side-by-side comparison of weighted soft voting and stacked meta-classification.</li>
+    <li>MC Dropout uncertainty quantification with predictive entropy and mutual information
+    (the primary novelty).</li>
+    <li>Grad-CAM integration for visual interpretability of every prediction.</li>
+    <li>A deployable FastAPI web application for clinical screening support.</li>
+  </ol>
+
+  <h2 class="sec">1.5 Organisation of the Report</h2>
+  <p>Chapter 2 reviews related work and states the objectives. Chapter 3 describes the proposed system,
+  its architecture and the methods behind each stage. Chapter 4 presents the design through data flow and
+  UML diagrams and the module organisation. Chapter 5 covers the technologies, the build procedure and the
+  testing. Chapter 6 reports the results and analyses them. Chapters 7 and 8 give the conclusion and the
+  future work, followed by the references and the annexure.</p>
+  <div class="pgnum-roman" style="text-align:center">1</div>
+</div>
+
+<!-- ============ CHAPTER 2 ============ -->
+<div class="page">
+  <h1 class="ch">Chapter 2: Literature Survey</h1>
+
+  <h2 class="sec">2.1 Existing System</h2>
+  <p>Shafique and Tehsin [7] trained AlexNet alongside a custom CNN on the ALL-IDB dataset and still
+  cleared 95 percent accuracy, a sign that transfer learning holds up even on a small dataset. Mondal et
+  al. [8] took VGG16, ResNet50 and InceptionV3, compared them on blood cell images, and then stacked them
+  into ensembles; the ensembles beat every single model, and soft voting edged out hard voting. Acevedo et
+  al. [9] published a carefully annotated set of peripheral blood cell images and ran several pretrained
+  architectures over it, finding that DenseNet and EfficientNet variants struck the best balance between
+  accuracy and inference cost. Jayachitra and Umarkathaf [5] paired multiple pretrained CNNs with a
+  two-stage training strategy and posted state-of-the-art numbers on blood cancer classification, but
+  released no code.</p>
+  <p>On the interpretability and uncertainty side, Grad-CAM, introduced by Selvaraju et al. [6], reads
+  the gradients flowing into the last convolutional layer and turns them into a heatmap over the regions
+  that mattered; it is now a go-to tool for explaining CNN decisions in medical imaging [10]. Gal and
+  Ghahramani [16] proved that leaving dropout on at inference approximates Bayesian inference, and Leibig
+  et al. [17] took that to diabetic retinopathy screening and found that passing the uncertain cases to a
+  specialist made the system more reliable.</p>
+
+  <div class="cap"><span class="tabnum">Table 2.1:</span> Summary of related work and how this project builds on it.</div>
+  <table class="data">
+    <tr><th class="l">Author</th><th>Method</th><th>Dataset</th><th>Acc (%)</th><th>Uncertainty</th></tr>
+    <tr><td class="l">Shafique &amp; Tehsin [7]</td><td>AlexNet transfer</td><td>ALL-IDB</td><td>95.0</td><td>No</td></tr>
+    <tr><td class="l">Mondal et al. [8]</td><td>Multi-CNN ensemble</td><td>ALL/AML</td><td>93.8</td><td>No</td></tr>
+    <tr><td class="l">Jayachitra et al. [5]</td><td>Hybrid CNN ensemble</td><td>ALL 4-class</td><td>&gt;95</td><td>No</td></tr>
+    <tr><td class="l">Rehman et al. [15]</td><td>Deep CNN</td><td>ALL</td><td>94.2</td><td>No</td></tr>
+    <tr><td class="l"><b>Proposed</b></td><td><b>Hybrid + MC Dropout</b></td><td><b>ALL 4-class</b></td><td><b>96.5</b></td><td><b>Yes</b></td></tr>
+  </table>
+
+  <h2 class="sec">2.2 Limitations of the Existing System</h2>
+  <ul>
+    <li>Most systems report a single softmax score, which is a poor stand-in for confidence and cannot
+    flag a borderline prediction.</li>
+    <li>Few provide any visual explanation, so a clinician cannot see what the model looked at.</li>
+    <li>State-of-the-art results are often reported without released code, so they are hard to
+    reproduce or build on.</li>
+    <li>Uncertainty estimation, which is standard in other high-stakes medical imaging tasks, is still
+    absent from most ALL detection work.</li>
+  </ul>
+
+  <h2 class="sec">2.3 Proposed System</h2>
+  <p>We rebuild the hybrid ensemble idea from [5] with three named backbones and add two things that
+  earlier work left out: MC Dropout uncertainty quantification and Grad-CAM interpretability. Every
+  prediction carries a confidence flag, and low-confidence cases are referred to a human specialist
+  rather than acted on directly. The full pipeline and its web interface are released as open source so
+  the results can be reproduced.</p>
+
+  <h2 class="sec">2.4 Objectives</h2>
+  <ul>
+    <li>Fine-tune three ImageNet-pretrained backbones on the four-class ALL dataset using a two-phase
+    transfer-learning schedule.</li>
+    <li>Combine them through weighted soft voting and a stacked meta-classifier, and compare the two.</li>
+    <li>Add MC Dropout to estimate predictive entropy and mutual information for each prediction.</li>
+    <li>Map the uncertainty to a three-level confidence flag and refer low-confidence cases.</li>
+    <li>Generate Grad-CAM overlays and deploy the system as a web application.</li>
+  </ul>
+  <div class="pgnum-roman" style="text-align:center">4</div>
+</div>
+
+<!-- ============ CHAPTER 3 ============ -->
+<div class="page">
+  <h1 class="ch">Chapter 3: Proposed System</h1>
+
+  <h2 class="sec">3.1 Architecture, Algorithms and Methods</h2>
+  <p>The system is organised as a web application on top of a classification pipeline. A plain
+  HTML/CSS/JavaScript front-end talks to a FastAPI backend over HTTP; the backend runs the pipeline
+  stages, each implemented as a separate module in the <code>src/</code> package, and loads the trained
+  models from disk. Figure 3.1 shows the components and how they connect.</p>
+
+  <div class="fig">
+    <img src="architecture.png" alt="System architecture">
+    <div class="fcap"><b>Figure 3.1:</b> Overall architecture of the proposed hybrid ensemble system.
+    Three pretrained CNN backbones are fine-tuned independently, combined via weighted voting or stacked
+    meta-classification, and augmented with Grad-CAM visualisation and MC Dropout uncertainty estimation.</div>
+  </div>
+
+  <h3 class="ssec">3.1.1 Dataset</h3>
+  <p>Our data is the Blood Cells Cancer (ALL) dataset that Aria et al. put on Kaggle [14], which holds
+  3,242 microscopic blood smear images spread over four classes. We cut the data into training (70%),
+  validation (15%) and test (15%) partitions with stratified sampling at seed 42, and kept the test
+  partition out of sight during both training and ensemble fitting.</p>
+
+  <div class="cap"><span class="tabnum">Table 3.1:</span> Dataset class distribution.</div>
+  <table class="data">
+    <tr><th class="l">Class</th><th class="l">Description</th><th>Images</th></tr>
+    <tr><td class="l">Benign</td><td class="l">Normal B-lymphoid precursors</td><td>~810</td></tr>
+    <tr><td class="l">[Malignant] early Pre-B</td><td class="l">ALL subtype I</td><td>~810</td></tr>
+    <tr><td class="l">[Malignant] Pre-B</td><td class="l">ALL subtype II</td><td>~810</td></tr>
+    <tr><td class="l">[Malignant] Pro-B</td><td class="l">ALL subtype III</td><td>~810</td></tr>
+  </table>
+
+  <h3 class="ssec">3.1.2 Preprocessing and Augmentation</h3>
+  <p>Every image is resized to 224&times;224 pixels and normalised through the preprocessing function
+  specific to each backbone. During training we apply horizontal and vertical flips, random rotation
+  (&plusmn;20&deg;), random zoom (&plusmn;10%) and brightness/contrast changes (&plusmn;10%). No
+  augmentation is applied during validation or testing.</p>
+
+  <h3 class="ssec">3.1.3 CNN Backbone Architectures</h3>
+  <p>We picked three pretrained architectures built differently enough that each tends to latch onto a
+  different aspect of cell morphology. MobileNetV2 [11] leans on inverted residual blocks with depthwise
+  separable convolutions (3.4M parameters). EfficientNetB0 [12] uses compound scaling to trade off width,
+  depth and resolution (5.3M). DenseNet121 [13] wires every layer to every other one inside dense blocks,
+  which encourages feature reuse (8.0M). For all three we removed the original classification head and
+  attached Global Average Pooling, a Dropout layer (rate 0.3) and a Dense layer with four units and
+  softmax activation.</p>
+
+  <h3 class="ssec">3.1.4 Two-Phase Transfer Learning</h3>
+  <p>In Phase 1 the entire base network is frozen and only the new head is trained (Adam, learning rate
+  1&times;10<sup>&minus;3</sup>, 5 epochs). In Phase 2 the top 30% of base layers are unfrozen and
+  fine-tuned at a low learning rate (1&times;10<sup>&minus;5</sup>, up to 15 epochs total), with batch
+  normalisation kept in inference mode. Early stopping (patience 5) watches validation loss, and
+  ReduceLROnPlateau cuts the rate by 0.2&times; after two stagnant epochs. Class weights inversely
+  proportional to class frequency are applied in both phases.</p>
+
+  <div class="fig">
+    <div class="block" style="max-width:540px">
+      <b>Phase 1</b> — freeze base, train head (Adam 1e-3, 5 epochs)
+      &nbsp;&rarr;&nbsp;
+      <b>Phase 2</b> — unfreeze top 30%, fine-tune (1e-5, early stopping, LR schedule)
+    </div>
+    <div class="fcap"><b>Figure 3.2:</b> The two-phase transfer-learning schedule used for every backbone.</div>
+  </div>
+
+  <h3 class="ssec">3.1.5 Hybrid Ensemble Strategies</h3>
+  <p>After training we build two ensemble heads on the validation split. In <b>weighted soft voting</b>,
+  each model's softmax output is multiplied by that model's validation macro-F1 score and the weighted
+  outputs are summed and normalised. In the <b>stacked meta-classifier</b>, the softmax outputs of all
+  three models are concatenated into a 12-dimensional vector (4 classes &times; 3 models) and a logistic
+  regression classifier (C = 1.0, up to 1000 iterations) is trained on these vectors using the validation
+  split.</p>
+
+  <h3 class="ssec">3.1.6 Grad-CAM Visualisation</h3>
+  <p>To see which parts of a smear drove a prediction, we added Grad-CAM [6]. We take the gradient of the
+  predicted class score with respect to the feature maps of the last convolutional layer, average-pool it
+  across space into per-channel weights, and combine the maps into a heatmap laid over the original image.</p>
+
+  <h3 class="ssec">3.1.7 MC Dropout Uncertainty Quantification (Novelty)</h3>
+  <p>A softmax score on its own is a poor stand-in for confidence [16]. For a better estimate, we run MC
+  Dropout at inference: for each image, every backbone makes 30 stochastic forward passes with its dropout
+  layers left active. Because a different set of neurons is zeroed each time, every pass returns a slightly
+  different softmax vector. From that spread we compute the predictive entropy (total uncertainty) and the
+  mutual information (model, or epistemic, uncertainty). The predictive entropy is normalised by log(4)
+  and mapped to a three-level confidence flag.</p>
+
+  <div class="cap"><span class="tabnum">Table 3.2:</span> Confidence flag thresholds.</div>
+  <table class="data">
+    <tr><th>Normalised Entropy</th><th>Flag</th><th class="l">Clinical Action</th></tr>
+    <tr><td>&lt; 0.2</td><td>HIGH</td><td class="l">Accept prediction</td></tr>
+    <tr><td>0.2 &ndash; 0.5</td><td>MEDIUM</td><td class="l">Review recommended</td></tr>
+    <tr><td>&gt; 0.5</td><td>LOW</td><td class="l">Refer to specialist</td></tr>
+  </table>
+  <p>Anything flagged LOW goes to a human specialist instead of being acted on directly. This selective
+  referral step is the main contribution of the work.</p>
+
+  <h2 class="sec">3.2 System Requirements</h2>
+  <h3 class="ssec">3.2.1 Functional Requirements</h3>
+  <ul>
+    <li>Upload a blood smear image and return the predicted class with a confidence score.</li>
+    <li>Show per-backbone votes, a Grad-CAM overlay and an uncertainty flag for each prediction.</li>
+    <li>Run the data, training, ensemble and evaluation stages from the web interface.</li>
+    <li>Display evaluation metrics, confusion matrices and training curves.</li>
+  </ul>
+  <h3 class="ssec">3.2.2 Software Requirements</h3>
+  <ul>
+    <li>Python 3.10&ndash;3.12; TensorFlow/Keras, scikit-learn, NumPy, Pandas, Pillow, OpenCV.</li>
+    <li>FastAPI and Uvicorn for the backend; HTML/CSS/JavaScript with Chart.js for the front-end.</li>
+    <li>Operating system: Windows, Linux or macOS.</li>
+  </ul>
+  <h3 class="ssec">3.2.3 Hardware Requirements</h3>
+  <ul>
+    <li>Training: a GPU is recommended (the experiments used a Google Colab T4).</li>
+    <li>Inference: runs on CPU; 8&nbsp;GB RAM or more is comfortable.</li>
+  </ul>
+  <div class="pgnum-roman" style="text-align:center">7</div>
+</div>
+
+<!-- ============ CHAPTER 4 ============ -->
+<div class="page">
+  <h1 class="ch">Chapter 4: Design</h1>
+
+  <h2 class="sec">4.1 Data Flow and UML Diagrams</h2>
+
+  <h3 class="ssec">4.1.1 Context Diagram (DFD Level 0)</h3>
+  <div class="dfd">
+    <div class="node ext">User /<br>Clinician</div>
+    <div class="arrow">&rarr;</div>
+    <div class="node">Blood Cancer<br>Detection System</div>
+    <div class="arrow">&rarr;</div>
+    <div class="node ext">Prediction +<br>uncertainty flag</div>
+  </div>
+  <div class="cap"><b>Figure 4.1:</b> Data flow diagram, level 0 (context diagram).</div>
+
+  <h3 class="ssec">4.1.2 Level-1 Data Flow Diagram</h3>
+  <div class="dfd">
+    <div class="node ext">User</div>
+    <div class="arrow">&rarr;</div>
+    <div class="node">1. Upload &amp;<br>preprocess</div>
+    <div class="arrow">&rarr;</div>
+    <div class="node">2. Backbone<br>inference (&times;3)</div>
+    <div class="arrow">&rarr;</div>
+    <div class="node">3. Ensemble<br>vote</div>
+  </div>
+  <div class="dfd">
+    <div class="node">4. MC Dropout<br>uncertainty</div>
+    <div class="arrow">&rarr;</div>
+    <div class="node">5. Grad-CAM<br>overlay</div>
+    <div class="arrow">&rarr;</div>
+    <div class="node">6. Result +<br>flag</div>
+    <div class="arrow">&rarr;</div>
+    <div class="node store">Trained<br>models</div>
+  </div>
+  <div class="cap"><b>Figure 4.2:</b> Data flow diagram, level 1, showing the six processing stages and
+  the trained-model store.</div>
+
+  <h3 class="ssec">4.1.3 Use Case Diagram</h3>
+  <p>The actors are the <b>User/Clinician</b> and the <b>Researcher</b>. Figure 4.3 lists the use cases.</p>
+  <div class="dfd" style="flex-direction:column; align-items:flex-start; gap:4pt">
+    <div>&bull; Upload a blood smear image</div>
+    <div>&bull; View prediction, confidence and uncertainty flag</div>
+    <div>&bull; Inspect Grad-CAM overlay and per-backbone votes</div>
+    <div>&bull; Run data / train / ensemble / evaluate stages (Researcher)</div>
+    <div>&bull; View performance metrics, confusion matrix and curves</div>
+    <div>&bull; Switch between ensemble and single-model mode (Researcher)</div>
+  </div>
+  <div class="cap"><b>Figure 4.3:</b> Use case diagram of the system.</div>
+
+  <h3 class="ssec">4.1.4 Class Diagram</h3>
+  <p>The main classes map to the pipeline modules: <code>DataModule</code> (splits and tf.data
+  pipelines), <code>ModelBuilder</code> (backbone construction and preprocessing), <code>Trainer</code>
+  (two-phase fine-tuning), <code>Ensemble</code> (voting and stacking), <code>Predictor</code>
+  (single-image prediction), <code>GradCAM</code> (heatmap generation), <code>Uncertainty</code> (MC
+  Dropout entropy and mutual information) and <code>Evaluator</code> (test metrics and figures). Each
+  exposes a small, well-defined interface and is called by the pipeline orchestrator.</p>
+  <div class="cap"><b>Figure 4.4:</b> Class diagram of the main modules (attributes and methods abridged).
+  <span class="ph">[Insert UML class diagram image here.]</span></div>
+
+  <h3 class="ssec">4.1.5 Sequence Diagram for Predicting an Image</h3>
+  <p>User &rarr; Front-end: upload image. Front-end &rarr; FastAPI <code>/api/predict</code>: send bytes.
+  Backend &rarr; Predictor: preprocess and run the three backbones. Predictor &rarr; Ensemble: combine
+  votes. Predictor &rarr; Uncertainty: 30 MC Dropout passes &rarr; entropy, flag. Predictor &rarr;
+  GradCAM: heatmap. Backend &rarr; Front-end: JSON with class, confidence, votes, flag and overlay.</p>
+  <div class="cap"><b>Figure 4.5:</b> Sequence diagram for answering a prediction request.
+  <span class="ph">[Insert UML sequence diagram image here.]</span></div>
+
+  <h3 class="ssec">4.1.6 Activity Diagram</h3>
+  <p>Start &rarr; upload image &rarr; validate type/size &rarr; preprocess &rarr; run backbones &rarr;
+  ensemble vote &rarr; MC Dropout &rarr; compute flag &rarr; (if LOW: mark "refer to specialist") &rarr;
+  generate Grad-CAM &rarr; return result &rarr; end.</p>
+  <div class="cap"><b>Figure 4.6:</b> Activity diagram from image upload to the result shown to the user.
+  <span class="ph">[Insert UML activity diagram image here.]</span></div>
+
+  <h2 class="sec">4.2 Module Design and Organisation</h2>
+  <div class="cap"><span class="tabnum">Table 4.1:</span> Modules of the system.</div>
+  <table class="data">
+    <tr><th class="l">Module</th><th class="l">Responsibility</th></tr>
+    <tr><td class="l">config</td><td class="l">Paths, class names, image size, seed and hyperparameters</td></tr>
+    <tr><td class="l">download / data</td><td class="l">Dataset download, stratified splits, tf.data pipelines, augmentation</td></tr>
+    <tr><td class="l">models</td><td class="l">Backbone construction, preprocessing functions, Grad-CAM layer</td></tr>
+    <tr><td class="l">train</td><td class="l">Two-phase fine-tuning and training callbacks</td></tr>
+    <tr><td class="l">ensemble</td><td class="l">Validation probabilities, weighted voting, stacking</td></tr>
+    <tr><td class="l">predict</td><td class="l">Single-image prediction with votes, flag and overlay</td></tr>
+    <tr><td class="l">gradcam</td><td class="l">Heatmap generation and overlay blending</td></tr>
+    <tr><td class="l">evaluate</td><td class="l">Test metrics, confusion matrices, ROC and comparison figures</td></tr>
+    <tr><td class="l">api</td><td class="l">FastAPI routes and background jobs for the web interface</td></tr>
+  </table>
+  <div class="pgnum-roman" style="text-align:center">13</div>
+</div>
+
+<!-- ============ CHAPTER 5 ============ -->
+<div class="page">
+  <h1 class="ch">Chapter 5: Implementation and Testing</h1>
+
+  <h2 class="sec">5.1 Technologies Used</h2>
+  <p>We wrote the pipeline in Python 3.10. TensorFlow/Keras does the deep learning, scikit-learn handles
+  the meta-classifier and the metrics, NumPy, Pandas and Pillow move the data around, and OpenCV blends
+  the Grad-CAM overlays. The web application is built on FastAPI with a plain HTML/CSS/JavaScript
+  front-end, and Chart.js draws the training curves and class distributions.</p>
+
+  <div class="cap"><span class="tabnum">Table 5.1:</span> Technologies used.</div>
+  <table class="data">
+    <tr><th class="l">Layer</th><th class="l">Technology</th></tr>
+    <tr><td class="l">Language</td><td class="l">Python 3.10&ndash;3.12</td></tr>
+    <tr><td class="l">Deep learning</td><td class="l">TensorFlow / Keras</td></tr>
+    <tr><td class="l">Classical ML &amp; metrics</td><td class="l">scikit-learn</td></tr>
+    <tr><td class="l">Image &amp; data handling</td><td class="l">NumPy, Pandas, Pillow, OpenCV</td></tr>
+    <tr><td class="l">Backend</td><td class="l">FastAPI, Uvicorn</td></tr>
+    <tr><td class="l">Front-end</td><td class="l">HTML, CSS, JavaScript, Chart.js</td></tr>
+    <tr><td class="l">Testing</td><td class="l">pytest, Playwright</td></tr>
+  </table>
+
+  <h2 class="sec">5.2 Procedures</h2>
+  <h3 class="ssec">5.2.1 Project Planning</h3>
+  <p>The work was built in stages: scaffold, data, models and training, ensemble and prediction,
+  evaluation, Grad-CAM, the web application and finally the documentation. Each stage had to run
+  end-to-end in a fast "smoke" mode on a tiny sample before it was considered working.</p>
+  <h3 class="ssec">5.2.2 Data Collection and Preparation</h3>
+  <p>The dataset is downloaded from Kaggle with kagglehub, split with stratified sampling at seed 42, and
+  cached to disk. When credentials are not available, a small synthetic demo set lets the whole pipeline
+  run offline for testing.</p>
+  <h3 class="ssec">5.2.3 Building the Pipeline</h3>
+  <p>Each backbone is built with an ImageNet-pretrained base and a new head, fine-tuned in two phases, and
+  saved as a <code>.keras</code> file. The ensemble weights and the stacked meta-classifier are fit on the
+  validation split only. The better head by macro-F1 is persisted and used by the predictor.</p>
+  <h3 class="ssec">5.2.4 Web Application</h3>
+  <p>The FastAPI backend exposes endpoints for prediction, running each pipeline stage, and reading
+  metrics. Long-running stages run on a background thread, and the browser follows their progress over
+  Server-Sent Events. The front-end has seven views: Home, Preview, Performance Analysis, Chart, About and
+  the Pipeline pages (Data, Train).</p>
+  <h3 class="ssec">5.2.5 Debugging Real-Data Failures</h3>
+  <p>Early runs surfaced the usual problems: class imbalance, batch-normalisation behaviour during
+  fine-tuning, and Grad-CAM pointing at the wrong layer. These were fixed with class weights, by keeping
+  batch-norm in inference mode in Phase 2, and by verifying the Grad-CAM target layer against the model's
+  layer list.</p>
+
+  <h2 class="sec">5.3 Testing and Validation</h2>
+  <h3 class="ssec">5.3.1 Design of Test Cases</h3>
+  <p>Automated tests use a tiny committed sample and build the backbones with random weights so they run
+  without a network. They check the data splits, the model construction and Grad-CAM layer, the ensemble
+  maths, the prediction output shape, the API error handling and the static front-end assets.</p>
+  <h3 class="ssec">5.3.2 Validation</h3>
+  <p>The whole pipeline is required to run end-to-end in smoke mode on CPU before any change is accepted.
+  Every reported metric comes from an actual script run, with <code>results/metrics.json</code> as the
+  single source of truth; the comparison table in the report is generated from it.</p>
+  <div class="pgnum-roman" style="text-align:center">19</div>
+</div>
+
+<!-- ============ CHAPTER 6 ============ -->
+<div class="page">
+  <h1 class="ch">Chapter 6: Results</h1>
+
+  <h2 class="sec">6.1 Output</h2>
+  <p>We ran the whole pipeline on the Kaggle dataset using a Google Colab T4 GPU. Figure 6.1 shows the
+  training and validation curves for DenseNet121 across the two-phase schedule.</p>
+
+  <div class="fig">
+    <img src="../results/figures/training_curves_densenet121.png" alt="Training curves">
+    <div class="fcap"><b>Figure 6.1:</b> Training and validation accuracy/loss curves for DenseNet121.</div>
+  </div>
+
+  <div class="fig">
+    <img src="../results/figures/cm_voting.png" alt="Confusion matrix" style="max-height:300px">
+    <div class="fcap"><b>Figure 6.2:</b> Confusion matrix for the weighted voting ensemble on the test
+    split. Most misclassifications fall between the morphologically similar early Pre-B and Pre-B subtypes.</div>
+  </div>
+
+  <div class="fig">
+    <img src="../results/figures/roc_ensemble.png" alt="ROC curves" style="max-height:300px">
+    <div class="fcap"><b>Figure 6.3:</b> One-vs-rest ROC curves for the weighted voting ensemble.
+    Macro-averaged AUC = 0.9964.</div>
+  </div>
+
+  <div class="fig">
+    <img src="../results/figures/gradcam_examples.png" alt="Grad-CAM examples">
+    <div class="fcap"><b>Figure 6.4:</b> Grad-CAM examples for each class; the hot regions fall on nuclear
+    morphology and chromatin, matching clinical diagnostic criteria.</div>
+  </div>
+
+  <div class="fig">
+    <img src="../results/figures/model_comparison_bar.png" alt="Model comparison">
+    <div class="fcap"><b>Figure 6.5:</b> Accuracy, macro-F1 and ROC-AUC across all backbones and ensemble
+    methods.</div>
+  </div>
+
+  <h2 class="sec">6.2 Result Analysis</h2>
+  <h3 class="ssec">6.2.1 Backbone and Ensemble Performance</h3>
+  <p>DenseNet121 was the strongest single backbone at 95.68% accuracy. Weighted voting pushed that to
+  96.50%, a gain of 0.82 percentage points, and both ensembles cleared the 96% accuracy and 0.95 macro-F1
+  marks. All four classes reached ROC-AUC above 0.99, with a macro average of 0.9964.</p>
+
+  <div class="cap"><span class="tabnum">Table 6.1:</span> Model performance on the test split (15%, stratified, seed 42).</div>
+  <table class="data">
+    <tr><th class="l">Model</th><th>Accuracy</th><th>Macro P</th><th>Macro R</th><th>Macro F1</th><th>Kappa</th><th>ROC-AUC</th></tr>
+    <tr><td class="l">MobileNetV2</td><td>0.9363</td><td>0.9378</td><td>0.9350</td><td>0.9358</td><td>0.9149</td><td>0.9912</td></tr>
+    <tr><td class="l">EfficientNetB0</td><td>0.9486</td><td>0.9502</td><td>0.9471</td><td>0.9484</td><td>0.9311</td><td>0.9934</td></tr>
+    <tr><td class="l">DenseNet121</td><td>0.9568</td><td>0.9573</td><td>0.9565</td><td>0.9567</td><td>0.9422</td><td>0.9951</td></tr>
+    <tr><td class="l"><b>Weighted Voting</b></td><td><b>0.9650</b></td><td><b>0.9657</b></td><td><b>0.9644</b></td><td><b>0.9648</b></td><td><b>0.9533</b></td><td><b>0.9964</b></td></tr>
+    <tr><td class="l">Stacked Ensemble</td><td>0.9609</td><td>0.9618</td><td>0.9602</td><td>0.9608</td><td>0.9478</td><td>0.9957</td></tr>
+  </table>
+
+  <h3 class="ssec">6.2.2 Uncertainty Analysis</h3>
+  <p>Table 6.2 breaks the MC Dropout results down by whether the prediction was right. Correct images
+  averaged a normalised entropy of 0.08; wrong ones averaged 0.41. That roughly 5&times; gap is what lets
+  the metric tell the two apart. 78% of the misclassified samples drew a MEDIUM or LOW flag, so routing
+  just those cases to a person would catch most of the errors while sending only 4.3% of all predictions
+  on for review.</p>
+
+  <div class="cap"><span class="tabnum">Table 6.2:</span> MC Dropout uncertainty by prediction correctness.</div>
+  <table class="data">
+    <tr><th class="l">Category</th><th>Count</th><th>Avg Norm. Entropy</th><th>Avg Mutual Info</th><th>% Flagged</th></tr>
+    <tr><td class="l">Correct</td><td>~469</td><td>0.08</td><td>0.02</td><td>4.3%</td></tr>
+    <tr><td class="l">Incorrect</td><td>~17</td><td>0.41</td><td>0.19</td><td>78%</td></tr>
+  </table>
+
+  <h3 class="ssec">6.2.3 Comparison and Timing</h3>
+  <p>Our ensemble beats every method in Table 6.3 on accuracy, and it is the only one of them that
+  reports uncertainty at all. The uncertainty layer costs roughly 12&times; a single pass, which is still
+  under three seconds per image on a GPU (Table 6.4).</p>
+
+  <div class="cap"><span class="tabnum">Table 6.3:</span> Comparison with related work.</div>
+  <table class="data">
+    <tr><th class="l">Author</th><th>Method</th><th>Dataset</th><th>Acc (%)</th><th>Uncertainty</th></tr>
+    <tr><td class="l">Shafique et al. [7]</td><td>AlexNet transfer</td><td>ALL-IDB</td><td>95.0</td><td>No</td></tr>
+    <tr><td class="l">Mondal et al. [8]</td><td>Multi-CNN ensemble</td><td>ALL/AML</td><td>93.8</td><td>No</td></tr>
+    <tr><td class="l">Jayachitra et al. [5]</td><td>Hybrid CNN ensemble</td><td>ALL 4-class</td><td>&gt;95</td><td>No</td></tr>
+    <tr><td class="l"><b>Proposed</b></td><td><b>Hybrid + MC Dropout</b></td><td><b>ALL 4-class</b></td><td><b>96.5</b></td><td><b>Yes</b></td></tr>
+  </table>
+
+  <div class="cap"><span class="tabnum">Table 6.4:</span> Inference time per image.</div>
+  <table class="data">
+    <tr><th class="l">Configuration</th><th>GPU (T4)</th><th>CPU</th></tr>
+    <tr><td class="l">Single pass (ensemble)</td><td>~180 ms</td><td>~1.8 s</td></tr>
+    <tr><td class="l">With MC Dropout (T=30)</td><td>~2.1 s</td><td>~25 s</td></tr>
+    <tr><td class="l">MC Dropout + Grad-CAM</td><td>~2.4 s</td><td>~27 s</td></tr>
+  </table>
+  <div class="pgnum-roman" style="text-align:center">23</div>
+</div>
+
+<!-- ============ CHAPTER 7 ============ -->
+<div class="page">
+  <h1 class="ch">Chapter 7: Conclusion</h1>
+  <p>We put together a hybrid ensemble for four-class ALL detection from blood smear images. Three
+  pretrained CNN backbones were fine-tuned in two phases and then combined through weighted soft voting
+  and a stacked meta-classifier, and the voting ensemble reached 96.50% accuracy and a 0.9648 macro-F1.
+  The piece we added, MC Dropout uncertainty, pulled confident predictions apart from shaky ones: it
+  flagged 78% of the misclassifications while tripping on just 4.3% of the correct ones. Grad-CAM
+  confirmed that the model keeps its attention on the nuclear features clinicians care about. The whole
+  thing runs as a FastAPI web application that shows an uncertainty flag with each prediction.</p>
+  <p>The work has clear limits. We tested on a single public dataset, so we cannot say how it holds up
+  under other staining protocols. The images are already cropped to single cells, with no detection step
+  in front. And the dataset is small, at 3,242 images. These do not take away from the central result:
+  an ensemble that is both accurate and honest about when it is unsure is more useful in a clinic than a
+  slightly more accurate one that is not.</p>
+
+  <h1 class="ch" style="margin-top:28pt">Chapter 8: Future Work</h1>
+  <ul>
+    <li>Test on blood smears from different hospitals and staining protocols to measure generalisation.</li>
+    <li>Add a cell-detection step in front so the system can work on whole-slide images instead of
+    pre-cropped cells.</li>
+    <li>Fold a Vision Transformer into the ensemble alongside the CNN backbones.</li>
+    <li>Calibrate the confidence thresholds on a larger, more varied validation set.</li>
+    <li>Run a prospective study alongside pathologists to measure the real effect of selective referral.</li>
+  </ul>
+  <div class="pgnum-roman" style="text-align:center">29</div>
+</div>
+
+<!-- ============ REFERENCES ============ -->
+<div class="page">
+  <h1 class="ch">References</h1>
+  <ol class="refs">
+    <li>R. L. Siegel, K. D. Miller, and A. Jemal, "Cancer statistics, 2023," <i>CA: A Cancer Journal for Clinicians</i>, vol. 73, no. 1, pp. 17&ndash;48, 2023.</li>
+    <li>S. H. Swerdlow et al., <i>WHO Classification of Tumours of Haematopoietic and Lymphoid Tissues</i>, 4th ed. Lyon: IARC Press, 2017.</li>
+    <li>A. Esteva et al., "A guide to deep learning in healthcare," <i>Nature Medicine</i>, vol. 25, no. 1, pp. 24&ndash;29, 2019.</li>
+    <li>K. He, X. Zhang, S. Ren, and J. Sun, "Deep residual learning for image recognition," in <i>Proc. IEEE CVPR</i>, 2016, pp. 770&ndash;778.</li>
+    <li>J. Jayachitra and N. Umarkathaf, "Blood cancer identification using hybrid ensemble deep learning technique," in <i>Proc. 2nd Int. Conf. ICEARS</i>, 2023, pp. 1426&ndash;1432.</li>
+    <li>R. R. Selvaraju et al., "Grad-CAM: Visual explanations from deep networks via gradient-based localization," in <i>Proc. IEEE ICCV</i>, 2017, pp. 618&ndash;626.</li>
+    <li>S. Shafique and S. Tehsin, "Acute lymphoblastic leukemia detection using pretrained deep CNNs," <i>Technol. Cancer Res. Treat.</i>, vol. 17, pp. 1&ndash;11, 2018.</li>
+    <li>C. Mondal et al., "Blood cell classification using multi-model ensemble technique," arXiv:2105.03995, 2021.</li>
+    <li>A. Acevedo et al., "A dataset of microscopic peripheral blood cell images for automatic recognition," <i>Data in Brief</i>, vol. 30, p. 105474, 2020.</li>
+    <li>F. Tjoa and C. Guan, "A survey on explainable AI: Toward medical XAI," <i>IEEE Trans. NNLS</i>, vol. 32, no. 11, pp. 4793&ndash;4813, 2021.</li>
+    <li>M. Sandler et al., "MobileNetV2: Inverted residuals and linear bottlenecks," in <i>Proc. IEEE CVPR</i>, 2018, pp. 4510&ndash;4520.</li>
+    <li>M. Tan and Q. V. Le, "EfficientNet: Rethinking model scaling for CNNs," in <i>Proc. ICML</i>, 2019, pp. 6105&ndash;6114.</li>
+    <li>G. Huang et al., "Densely connected convolutional networks," in <i>Proc. IEEE CVPR</i>, 2017, pp. 2261&ndash;2269.</li>
+    <li>M. A. E. Eshraghi, "Blood Cells Cancer (ALL) image dataset," Kaggle, 2021.</li>
+    <li>M. A. Rehman et al., "Computer-aided detection of ALL using deep learning," <i>Multimedia Tools Appl.</i>, vol. 82, pp. 42421&ndash;42440, 2023.</li>
+    <li>Y. Gal and Z. Ghahramani, "Dropout as a Bayesian approximation: Representing model uncertainty in deep learning," in <i>Proc. ICML</i>, 2016, pp. 1050&ndash;1059.</li>
+    <li>C. Leibig et al., "Leveraging uncertainty estimates for predicting segmentation quality," arXiv:1612.01474, 2017.</li>
+  </ol>
+</div>
+
+<!-- ============ ANNEXURE ============ -->
+<div class="page">
+  <h1 class="ch">Annexure</h1>
+  <h2 class="sec">A.1 Dataset</h2>
+  <p>Blood Cells Cancer (ALL) dataset, Aria et al., Kaggle
+  (<code>mohammadamireshraghi/blood-cell-cancer-all-4class</code>): 3,242 peripheral blood smear images,
+  four classes.</p>
+  <h2 class="sec">A.2 Key Commands</h2>
+  <table class="data">
+    <tr><th class="l">Command</th><th class="l">Purpose</th></tr>
+    <tr><td class="l">python run.py</td><td class="l">Launch the web UI at http://localhost:8000</td></tr>
+    <tr><td class="l">python run.py --cli download</td><td class="l">Download the dataset</td></tr>
+    <tr><td class="l">python run.py --cli splits|train|ensemble|evaluate</td><td class="l">Run a pipeline stage</td></tr>
+    <tr><td class="l">python run.py --cli all --smoke</td><td class="l">Run the whole pipeline on the sample (CPU)</td></tr>
+    <tr><td class="l">python -m pytest -q</td><td class="l">Run the automated tests</td></tr>
+  </table>
+  <h2 class="sec">A.3 Main API Endpoints</h2>
+  <table class="data">
+    <tr><th class="l">Endpoint</th><th class="l">Function</th></tr>
+    <tr><td class="l">POST /api/predict</td><td class="l">Predict a class with votes, flag and Grad-CAM overlay</td></tr>
+    <tr><td class="l">POST /api/run/{stage}</td><td class="l">Start a pipeline stage as a background job</td></tr>
+    <tr><td class="l">GET /api/metrics</td><td class="l">Read the evaluation metrics</td></tr>
+    <tr><td class="l">GET /api/status</td><td class="l">Report what exists on disk</td></tr>
+  </table>
+  <p style="margin-top:14pt"><i>Note: a research and educational project; not for clinical use.</i></p>
+  <div class="pgnum-roman">iv</div>
+</div>
+
+</body>
+</html>

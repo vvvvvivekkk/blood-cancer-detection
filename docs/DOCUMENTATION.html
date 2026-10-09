@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<title>Blood Cancer Detection — Documentation</title>
+<style>
+  @page { size: letter; margin: 0.8in; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10.5pt; line-height: 1.5;
+         color: #1a1a1a; max-width: 100%; }
+  h1 { font-size: 22pt; color: #0F2B46; border-bottom: 3px solid #2EA68F; padding-bottom: 6px; }
+  h2 { font-size: 15pt; color: #0F2B46; border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-top: 22px; }
+  h3 { font-size: 12.5pt; color: #1F6FB2; margin-top: 16px; }
+  h4 { font-size: 11pt; color: #333; }
+  code { background: #f3f5f7; padding: 1px 5px; border-radius: 3px; font-size: 9.5pt;
+          font-family: Consolas, monospace; color: #b1004e; }
+  pre { background: #0F2B46; color: #e8eef3; padding: 12px 14px; border-radius: 6px;
+         overflow-x: auto; font-size: 9pt; line-height: 1.4; }
+  pre code { background: none; color: inherit; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 9.5pt; }
+  th, td { border: 1px solid #ccc; padding: 5px 8px; text-align: left; }
+  th { background: #eef3f7; color: #0F2B46; }
+  tr:nth-child(even) td { background: #fafcfd; }
+  a { color: #1F6FB2; text-decoration: none; }
+  hr { border: none; border-top: 1px solid #ddd; margin: 18px 0; }
+  blockquote { border-left: 4px solid #2EA68F; margin: 10px 0; padding: 4px 14px; color: #555; background: #f7fbfa; }
+  ul, ol { margin: 6px 0; padding-left: 22px; }
+  li { margin: 2px 0; }
+</style></head><body>
+<h1 id="blood-cancer-detection-hybrid-ensemble-deep-learning">Blood Cancer Detection -- Hybrid Ensemble Deep Learning</h1>
+<p>Comprehensive documentation for the Blood Cancer (ALL) Detection system using a hybrid ensemble of pretrained CNN backbones.</p>
+<hr />
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol>
+<li><a href="#1-project-overview">Project Overview</a></li>
+<li><a href="#2-system-architecture">System Architecture</a></li>
+<li><a href="#3-installation--setup">Installation &amp; Setup</a></li>
+<li><a href="#4-dataset">Dataset</a></li>
+<li><a href="#5-model-architecture">Model Architecture</a></li>
+<li><a href="#6-pipeline-stages">Pipeline Stages</a></li>
+<li><a href="#7-web-application">Web Application</a></li>
+<li><a href="#8-testing">Testing</a></li>
+<li><a href="#9-configuration-reference">Configuration Reference</a></li>
+<li><a href="#10-troubleshooting">Troubleshooting</a></li>
+<li><a href="#11-api-reference">API Reference</a></li>
+<li><a href="#12-deployment-notes">Deployment Notes</a></li>
+</ol>
+<hr />
+<h2 id="1-project-overview">1. Project Overview</h2>
+<h3 id="what-this-project-does">What This Project Does</h3>
+<p>This project implements an automated blood cancer detection system that classifies microscopic blood cell images into four categories of Acute Lymphoblastic Leukemia (ALL):</p>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Benign</strong></td>
+<td>Healthy/normal cells</td>
+</tr>
+<tr>
+<td><strong>[Malignant] early Pre-B</strong></td>
+<td>Early Pre-B stage ALL</td>
+</tr>
+<tr>
+<td><strong>[Malignant] Pre-B</strong></td>
+<td>Pre-B stage ALL</td>
+</tr>
+<tr>
+<td><strong>[Malignant] Pro-B</strong></td>
+<td>Pro-B stage ALL</td>
+</tr>
+</tbody>
+</table>
+<p>The system uses a <strong>hybrid ensemble</strong> of three pretrained CNN backbones (MobileNetV2, EfficientNetB0, DenseNet121) combined through weighted soft voting and a stacked logistic regression meta-classifier. It also provides Grad-CAM visual explanations to highlight which regions of the image influenced the prediction.</p>
+<h3 id="target-performance">Target Performance</h3>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Accuracy</td>
+<td>&gt;= 96%</td>
+</tr>
+<tr>
+<td>Macro F1</td>
+<td>&gt;= 95%</td>
+</tr>
+<tr>
+<td>Ensemble margin over best single model</td>
+<td>&gt;= 0.5 pp</td>
+</tr>
+<tr>
+<td>Per-class recall</td>
+<td>&gt;= 90%</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-system-architecture">2. System Architecture</h2>
+<h3 id="high-level-data-flow">High-Level Data Flow</h3>
+<pre><code>Kaggle Dataset (or Demo Data)
+        |
+        v
+   data/raw/ (class-named folders)
+        |
+        v
+  Stratified Split (70/15/15)
+        |
+   +----+----+
+   |    |    |
+train  val  test
+   |    |    |
+   v    |    v
+ Three CNN    |   Evaluation
+ Backbones    |   (evaluate.py)
+   |          |
+   v          v
+ Ensemble Fitting (on val)
+   |
+   +-- Weighted Voting (F1-proportional weights)
+   +-- Stacked Meta-Classifier (LogisticRegression on 12 features)
+   |
+   v
+ Best ensemble selected (by macro-F1 on test)
+   |
+   v
+ Prediction API + Web UI + Grad-CAM
+</code></pre>
+<h3 id="module-dependency-graph">Module Dependency Graph</h3>
+<pre><code>src/config.py       &lt;-- imported by all modules as C
+    |
+src/download.py     (dataset acquisition, synthetic data)
+src/data.py         (splits, tf.data pipelines, augmentation)
+src/models.py       (backbone construction, phase control)
+    |
+src/train.py        (two-phase fine-tuning, uses data + models)
+    |
+src/ensemble.py     (voting + stacking, uses data + models)
+    |
+src/predict.py      (inference, uses ensemble + models + gradcam)
+src/evaluate.py     (test metrics + plots, uses ensemble + models + gradcam)
+src/gradcam.py      (Grad-CAM heatmaps, uses models)
+    |
+src/pipeline.py     (stage orchestration)
+    |
+run.py              (CLI + web server entry point)
+api/main.py         (FastAPI backend)
+api/jobs.py         (background job runner)
+</code></pre>
+<hr />
+<h2 id="3-installation-setup">3. Installation &amp; Setup</h2>
+<h3 id="prerequisites">Prerequisites</h3>
+<ul>
+<li>Python 3.10 or later</li>
+<li>pip</li>
+<li>(Optional) NVIDIA GPU with CUDA for accelerated training</li>
+<li>(Optional) Kaggle account for downloading the real dataset</li>
+</ul>
+<h3 id="environment-setup">Environment Setup</h3>
+<pre><code class="language-bash"># Clone the repository
+git clone &lt;repo-url&gt;
+cd blood-cancer-detection
+
+# Create a virtual environment
+python -m venv .venv
+source .venv/bin/activate   # Linux/macOS
+.venv\Scripts\activate      # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+</code></pre>
+<h3 id="key-dependencies">Key Dependencies</h3>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Version</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tensorflow</td>
+<td>2.15.1 (py&lt;3.12) / 2.21.0 (py&gt;=3.12)</td>
+<td>Deep learning framework</td>
+</tr>
+<tr>
+<td>keras</td>
+<td>3.14.0</td>
+<td>High-level neural network API (py&gt;=3.12)</td>
+</tr>
+<tr>
+<td>fastapi</td>
+<td>0.136.3</td>
+<td>Web API framework</td>
+</tr>
+<tr>
+<td>uvicorn</td>
+<td>0.49.0</td>
+<td>ASGI server</td>
+</tr>
+<tr>
+<td>scikit-learn</td>
+<td>1.7.2</td>
+<td>Meta-classifier, metrics</td>
+</tr>
+<tr>
+<td>streamlit</td>
+<td>1.50.0</td>
+<td>Fallback UI</td>
+</tr>
+<tr>
+<td>kagglehub</td>
+<td>1.0.2 / 0.3.13</td>
+<td>Dataset download</td>
+</tr>
+<tr>
+<td>matplotlib / seaborn</td>
+<td>3.10.7 / 0.13.2</td>
+<td>Plotting</td>
+</tr>
+<tr>
+<td>opencv-python-headless</td>
+<td>4.10.0.84</td>
+<td>Image processing / Grad-CAM overlay</td>
+</tr>
+<tr>
+<td>pillow</td>
+<td>11.3.0</td>
+<td>Image I/O</td>
+</tr>
+</tbody>
+</table>
+<h3 id="kaggle-credentials">Kaggle Credentials</h3>
+<p>To download the real dataset, configure Kaggle credentials using one of these methods:</p>
+<ol>
+<li>
+<p><strong>Environment variables:</strong>
+   <code>bash
+   export KAGGLE_USERNAME=your_username
+   export KAGGLE_KEY=your_api_key</code></p>
+</li>
+<li>
+<p><strong>kaggle.json file</strong> at <code>~/.kaggle/kaggle.json</code>:
+   <code>json
+   {"username": "your_username", "key": "your_api_key"}</code></p>
+</li>
+<li>
+<p><strong>Kaggle Access Token</strong> at <code>~/.kaggle/access_token</code> (KGAT token)</p>
+</li>
+<li>
+<p><strong>Via the Web UI</strong> -- enter credentials or upload a token through the data setup page.</p>
+</li>
+</ol>
+<p>Without credentials, the system falls back to generating synthetic demo data.</p>
+<hr />
+<h2 id="4-dataset">4. Dataset</h2>
+<h3 id="source">Source</h3>
+<p>The dataset comes from Kaggle and contains microscopic images of blood cells categorized into four ALL subtypes.</p>
+<h3 id="classes">Classes</h3>
+<table>
+<thead>
+<tr>
+<th>Index</th>
+<th>Class Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>Benign</td>
+<td>Normal/healthy blood cells</td>
+</tr>
+<tr>
+<td>1</td>
+<td>[Malignant] early Pre-B</td>
+<td>Early Pre-B ALL</td>
+</tr>
+<tr>
+<td>2</td>
+<td>[Malignant] Pre-B</td>
+<td>Pre-B ALL</td>
+</tr>
+<tr>
+<td>3</td>
+<td>[Malignant] Pro-B</td>
+<td>Pro-B ALL</td>
+</tr>
+</tbody>
+</table>
+<h3 id="data-splitting">Data Splitting</h3>
+<p>Images are split using stratified sampling:</p>
+<table>
+<thead>
+<tr>
+<th>Split</th>
+<th>Fraction</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Train</td>
+<td>70%</td>
+<td>Model training</td>
+</tr>
+<tr>
+<td>Validation</td>
+<td>15%</td>
+<td>Ensemble fitting, early stopping, LR scheduling</td>
+</tr>
+<tr>
+<td>Test</td>
+<td>15%</td>
+<td>Final evaluation only (accessed exclusively by <code>evaluate.py</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Split metadata is saved to <code>data/splits/meta.json</code> and CSV files (<code>train.csv</code>, <code>val.csv</code>, <code>test.csv</code>).</p>
+<h3 id="download-instructions">Download Instructions</h3>
+<pre><code class="language-bash"># Download from Kaggle (requires credentials)
+python run.py --cli download
+
+# Or generate synthetic demo data (no credentials needed)
+python run.py --cli demo-data
+</code></pre>
+<h3 id="demo-sample-data">Demo / Sample Data</h3>
+<ul>
+<li><strong>Demo data</strong> (<code>data/demo/</code>): 50 synthetic images per class at 128px. Uses class-specific shapes and colors (circles, squares, triangles, rings) on noisy backgrounds.</li>
+<li><strong>Sample data</strong> (<code>data/sample/</code>): 2 images per class at 64px. Used automatically in smoke-test mode.</li>
+</ul>
+<p>The synthetic data generator (<code>src/download.py:make_synthetic</code>) creates distinct geometric patterns for each class:</p>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Shape</th>
+<th>Color</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Benign</td>
+<td>Circle</td>
+<td>Blue</td>
+</tr>
+<tr>
+<td>[Malignant] early Pre-B</td>
+<td>Square</td>
+<td>Red</td>
+</tr>
+<tr>
+<td>[Malignant] Pre-B</td>
+<td>Triangle</td>
+<td>Green</td>
+</tr>
+<tr>
+<td>[Malignant] Pro-B</td>
+<td>Ring</td>
+<td>Yellow</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5-model-architecture">5. Model Architecture</h2>
+<h3 id="cnn-backbones">CNN Backbones</h3>
+<p>Three ImageNet-pretrained backbones are used, each with the classification head replaced:</p>
+<h4 id="mobilenetv2">MobileNetV2</h4>
+<ul>
+<li>Lightweight architecture optimized for mobile/edge deployment</li>
+<li>Grad-CAM target layer: <code>out_relu</code></li>
+</ul>
+<h4 id="efficientnetb0">EfficientNetB0</h4>
+<ul>
+<li>Compound-scaled architecture balancing depth, width, and resolution</li>
+<li>Grad-CAM target layer: <code>top_activation</code></li>
+</ul>
+<h4 id="densenet121">DenseNet121</h4>
+<ul>
+<li>Dense connectivity pattern for feature reuse</li>
+<li>Grad-CAM target layer: <code>relu</code></li>
+</ul>
+<h3 id="classification-head">Classification Head</h3>
+<p>Each backbone receives the same custom head (3 layers):</p>
+<pre><code>Base (ImageNet, no top)
+  -&gt; GlobalAveragePooling2D
+  -&gt; Dropout(0.3)
+  -&gt; Dense(4, activation='softmax')
+</code></pre>
+<p>The model is built as a <strong>flat</strong> (non-nested) Keras model for compatibility.</p>
+<h3 id="two-phase-training-strategy">Two-Phase Training Strategy</h3>
+<p><strong>Phase 1 -- Head Training:</strong>
+- All base layers frozen
+- Learning rate: 1e-3 (Adam)
+- Duration: 5 epochs
+- Purpose: train the new classification head on blood cell features</p>
+<p><strong>Phase 2 -- Fine-Tuning:</strong>
+- Top 30% of base layers unfrozen (BatchNorm layers remain frozen)
+- Learning rate: 1e-5 (Adam)
+- Duration: remaining epochs up to 15 total
+- Callbacks: EarlyStopping (patience 5), ReduceLROnPlateau (patience 2), ModelCheckpoint (best val_loss)
+- Class weights: computed via <code>sklearn.utils.class_weight.compute_class_weight("balanced")</code></p>
+<h3 id="ensemble-methods">Ensemble Methods</h3>
+<h4 id="weighted-soft-voting">Weighted Soft Voting</h4>
+<ul>
+<li>Each backbone's softmax output is weighted proportional to its validation macro-F1</li>
+<li>Weights saved to <code>models/ensemble_weights.json</code></li>
+<li>Final prediction: <code>argmax(sum(w_i * p_i))</code></li>
+</ul>
+<h4 id="stacked-meta-classifier">Stacked Meta-Classifier</h4>
+<ul>
+<li>A multinomial Logistic Regression (<code>C=1.0</code>, <code>max_iter=1000</code>)</li>
+<li>Input: concatenated softmax outputs from all 3 backbones (12 features)</li>
+<li>Trained on validation set predictions</li>
+<li>Saved to <code>models/meta_clf.pkl</code> via joblib</li>
+</ul>
+<h4 id="ensemble-selection">Ensemble Selection</h4>
+<ul>
+<li><code>evaluate.py</code> tests both methods on the held-out test set</li>
+<li>Selects the method with higher macro-F1 (ties go to voting)</li>
+<li>If the best ensemble does not beat the best single model by the margin target (0.5 pp), fallback strategies are tried: kappa-weighted, F1-squared, drop-one-backbone</li>
+</ul>
+<h3 id="grad-cam">Grad-CAM</h3>
+<p>Implements Selvaraju et al. (2017) for visual explanations:</p>
+<ol>
+<li>Forward pass through the model to a target convolutional layer</li>
+<li>Compute gradients of the predicted class score w.r.t. that layer's activations</li>
+<li>Global average pool the gradients to get channel importance weights</li>
+<li>Weighted combination + ReLU to produce a heatmap</li>
+<li>Overlay on the original image with JET colormap (alpha=0.4)</li>
+</ol>
+<hr />
+<h2 id="6-pipeline-stages">6. Pipeline Stages</h2>
+<p>The pipeline is managed by <code>src/pipeline.py</code> and can be run via CLI or the web UI.</p>
+<h3 id="available-stages">Available Stages</h3>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>download</code></td>
+<td><code>python run.py --cli download</code></td>
+<td>Download Kaggle dataset to <code>data/raw/</code></td>
+</tr>
+<tr>
+<td><code>demo-data</code></td>
+<td><code>python run.py --cli demo-data</code></td>
+<td>Generate synthetic demo images</td>
+</tr>
+<tr>
+<td><code>splits</code></td>
+<td><code>python run.py --cli splits</code></td>
+<td>Create stratified 70/15/15 splits</td>
+</tr>
+<tr>
+<td><code>train</code></td>
+<td><code>python run.py --cli train</code></td>
+<td>Two-phase fine-tuning of all backbones</td>
+</tr>
+<tr>
+<td><code>ensemble</code></td>
+<td><code>python run.py --cli ensemble</code></td>
+<td>Fit voting weights + stacking meta-classifier</td>
+</tr>
+<tr>
+<td><code>evaluate</code></td>
+<td><code>python run.py --cli evaluate</code></td>
+<td>Run test evaluation, generate plots and metrics</td>
+</tr>
+<tr>
+<td><code>all</code></td>
+<td><code>python run.py --cli all</code></td>
+<td>Run full pipeline end-to-end</td>
+</tr>
+</tbody>
+</table>
+<h3 id="stage-download">Stage: download</h3>
+<ul>
+<li>Uses <code>kagglehub.dataset_download</code> to fetch the dataset</li>
+<li>Copies class-named folders into <code>data/raw/</code></li>
+<li>Falls back to demo-data if no Kaggle credentials are found</li>
+</ul>
+<h3 id="stage-splits">Stage: splits</h3>
+<ul>
+<li>Discovers all images in the data directory via <code>list_images()</code></li>
+<li>Performs stratified train/val/test splitting</li>
+<li>Writes CSV files and metadata to <code>data/splits/</code></li>
+<li>Generates <code>results/split_counts.csv</code></li>
+</ul>
+<h3 id="stage-train">Stage: train</h3>
+<ul>
+<li>Builds each backbone with <code>build_backbone()</code></li>
+<li>Phase 1: frozen base, high LR, HEAD_EPOCHS</li>
+<li>Phase 2: partial unfreeze, low LR, remaining epochs</li>
+<li>Saves best checkpoint to <code>models/&lt;name&gt;.keras</code></li>
+<li>Logs training history to <code>results/history/&lt;name&gt;.csv</code></li>
+</ul>
+<h3 id="stage-ensemble">Stage: ensemble</h3>
+<ul>
+<li>Loads all trained <code>.keras</code> models</li>
+<li>Runs inference on the validation split</li>
+<li>Fits weighted voting (F1-proportional weights)</li>
+<li>Fits stacking meta-classifier (LogisticRegression)</li>
+<li>Saves artifacts to <code>models/</code></li>
+</ul>
+<h3 id="stage-evaluate">Stage: evaluate</h3>
+<ul>
+<li>Loads the test split (the <strong>only</strong> module that accesses <code>test.csv</code>)</li>
+<li>Computes metrics for each backbone and both ensemble methods</li>
+<li>Selects the best ensemble by macro-F1</li>
+<li>Generates all result files and figures:</li>
+<li><code>results/metrics.json</code> -- all computed metrics</li>
+<li><code>results/comparison_table.md</code> -- Markdown comparison</li>
+<li><code>results/NOTES.md</code> -- target achievement notes</li>
+<li><code>results/run_info.json</code> -- full provenance</li>
+<li><code>results/figures/</code> -- confusion matrices, ROC curves, training curves, comparison bars, Grad-CAM grids</li>
+</ul>
+<hr />
+<h2 id="7-web-application">7. Web Application</h2>
+<h3 id="starting-the-web-app">Starting the Web App</h3>
+<pre><code class="language-bash"># Default: FastAPI at localhost:8000 (auto-opens browser)
+python run.py
+
+# Custom host/port
+python run.py --host 0.0.0.0 --port 9000
+
+# Without auto-opening browser
+python run.py --no-browser
+
+# Streamlit fallback UI
+python run.py --streamlit
+</code></pre>
+<h3 id="fastapi-backend-apimainpy">FastAPI Backend (<code>api/main.py</code>)</h3>
+<p>The backend serves both the JSON API and the static frontend from the <code>frontend/</code> directory.</p>
+<h3 id="authentication">Authentication</h3>
+<p>Demo login only (not production-grade):
+- Username: <code>admin</code>
+- Password: <code>admin</code>
+- Endpoint: <code>POST /api/login</code></p>
+<h3 id="frontend-views">Frontend Views</h3>
+<p>The <code>frontend/</code> directory contains a static HTML/CSS/JS web UI with pages for:</p>
+<ul>
+<li><strong>Login</strong> -- Demo authentication</li>
+<li><strong>Data Setup</strong> -- Kaggle credential entry, dataset download, demo data generation, split creation</li>
+<li><strong>Training</strong> -- Backbone selection, training launch with real-time progress via SSE</li>
+<li><strong>Ensemble</strong> -- Fit ensemble methods</li>
+<li><strong>Evaluation</strong> -- Run evaluation, view metrics, confusion matrices, ROC curves</li>
+<li><strong>Prediction</strong> -- Upload an image, see prediction with Grad-CAM overlay</li>
+<li><strong>Results</strong> -- Browse all generated figures and download result files</li>
+<li><strong>Settings</strong> -- Switch between ensemble and single-model prediction modes</li>
+</ul>
+<h3 id="background-jobs">Background Jobs</h3>
+<p>Long-running operations (download, train, ensemble, evaluate) run as background jobs via <code>api/jobs.py</code>:</p>
+<ul>
+<li>One job at a time (attempting to start a second returns 409 Conflict)</li>
+<li>Each job has a unique 12-character hex ID</li>
+<li>Progress tracked via a callback protocol (<code>progress_cb(stage, epoch, logs)</code>)</li>
+<li>Real-time updates available via SSE at <code>GET /api/jobs/{job_id}/stream</code></li>
+<li>Job log limited to 500 lines</li>
+</ul>
+<hr />
+<h2 id="8-testing">8. Testing</h2>
+<h3 id="running-tests">Running Tests</h3>
+<pre><code class="language-bash"># Run all tests
+pytest
+
+# Run with verbose output
+pytest -v
+
+# Run a specific test file
+pytest tests/test_config.py
+</code></pre>
+<h3 id="test-coverage">Test Coverage</h3>
+<p>The <code>tests/</code> directory contains pytest tests covering:</p>
+<ul>
+<li>Configuration loading and parameter validation</li>
+<li>Data splitting correctness and pipeline construction</li>
+<li>Model building and phase transitions</li>
+<li>Training loop execution (smoke mode)</li>
+<li>Ensemble fitting and prediction</li>
+<li>Grad-CAM heatmap generation</li>
+<li>API endpoint responses</li>
+<li>End-to-end pipeline orchestration</li>
+</ul>
+<h3 id="smoke-mode">Smoke Mode</h3>
+<p>For fast iteration, use <code>--smoke</code> to run with minimal resources:</p>
+<pre><code class="language-bash">python run.py --smoke --cli all
+</code></pre>
+<p>Smoke mode overrides:
+- Image size: 96px (instead of 224)
+- Batch size: 4 (instead of 32)
+- Epochs: 1 per phase (instead of 5+10)
+- No ImageNet weights
+- Eager execution enabled
+- Uses <code>data/sample/</code> (2 images/class)</p>
+<hr />
+<h2 id="9-configuration-reference">9. Configuration Reference</h2>
+<p>All configuration lives in <code>src/config.py</code>. The module is typically imported as <code>C</code>.</p>
+<h3 id="image-data">Image &amp; Data</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IMG_SIZE</code></td>
+<td>224</td>
+<td>Input image dimension (square)</td>
+</tr>
+<tr>
+<td><code>SEED</code></td>
+<td>42</td>
+<td>Global random seed</td>
+</tr>
+<tr>
+<td><code>SPLIT_FRACTIONS</code></td>
+<td><code>{train: 0.70, val: 0.15, test: 0.15}</code></td>
+<td>Data split ratios</td>
+</tr>
+</tbody>
+</table>
+<h3 id="training-hyperparameters">Training Hyperparameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BATCH_SIZE</code></td>
+<td>32</td>
+<td>Training batch size</td>
+</tr>
+<tr>
+<td><code>EPOCHS</code></td>
+<td>15</td>
+<td>Total training epochs (both phases)</td>
+</tr>
+<tr>
+<td><code>HEAD_EPOCHS</code></td>
+<td>5</td>
+<td>Phase 1 (head-only) epochs</td>
+</tr>
+<tr>
+<td><code>LR_HEAD</code></td>
+<td>1e-3</td>
+<td>Phase 1 learning rate</td>
+</tr>
+<tr>
+<td><code>LR_FINE</code></td>
+<td>1e-5</td>
+<td>Phase 2 learning rate</td>
+</tr>
+<tr>
+<td><code>UNFREEZE_FRACTION</code></td>
+<td>0.30</td>
+<td>Fraction of base layers to unfreeze in Phase 2</td>
+</tr>
+<tr>
+<td><code>DROPOUT</code></td>
+<td>0.3</td>
+<td>Dropout rate in the classification head</td>
+</tr>
+</tbody>
+</table>
+<h3 id="callbacks">Callbacks</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Early stopping patience</td>
+<td>5</td>
+<td>Epochs without val_loss improvement before stopping</td>
+</tr>
+<tr>
+<td>LR plateau patience</td>
+<td>2</td>
+<td>Epochs before reducing LR on plateau</td>
+</tr>
+</tbody>
+</table>
+<h3 id="augmentation">Augmentation</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Rotation</td>
+<td>20 degrees</td>
+<td>Random rotation range</td>
+</tr>
+<tr>
+<td>Zoom</td>
+<td>10%</td>
+<td>Random zoom range</td>
+</tr>
+<tr>
+<td>Brightness</td>
+<td>10%</td>
+<td>Random brightness adjustment</td>
+</tr>
+<tr>
+<td>Contrast</td>
+<td>10%</td>
+<td>Random contrast adjustment</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ensemble">Ensemble</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>META_C</code></td>
+<td>1.0</td>
+<td>Logistic regression regularization strength</td>
+</tr>
+<tr>
+<td><code>META_MAX_ITER</code></td>
+<td>1000</td>
+<td>Max iterations for meta-classifier convergence</td>
+</tr>
+<tr>
+<td><code>ENSEMBLES</code></td>
+<td><code>["voting", "stacking"]</code></td>
+<td>Available ensemble methods</td>
+</tr>
+</tbody>
+</table>
+<h3 id="backbones">Backbones</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BACKBONES</code></td>
+<td><code>["mobilenetv2", "efficientnetb0", "densenet121"]</code></td>
+<td>Available CNN backbones</td>
+</tr>
+<tr>
+<td><code>ACTIVE_MODES</code></td>
+<td><code>["ensemble", "mobilenetv2"]</code></td>
+<td>Prediction modes</td>
+</tr>
+</tbody>
+</table>
+<h3 id="smoke-mode-overrides">Smoke Mode Overrides</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Smoke Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SMOKE_IMG_SIZE</code></td>
+<td>96</td>
+<td>Reduced image size</td>
+</tr>
+<tr>
+<td><code>SMOKE_BATCH_SIZE</code></td>
+<td>4</td>
+<td>Reduced batch size</td>
+</tr>
+<tr>
+<td><code>SMOKE_EPOCHS_PER_PHASE</code></td>
+<td>1</td>
+<td>Single epoch per phase</td>
+</tr>
+</tbody>
+</table>
+<h3 id="target-thresholds">Target Thresholds</h3>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Threshold</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Accuracy</td>
+<td>&gt;= 0.96</td>
+<td>Minimum acceptable accuracy</td>
+</tr>
+<tr>
+<td>Macro F1</td>
+<td>&gt;= 0.95</td>
+<td>Minimum acceptable macro-F1</td>
+</tr>
+<tr>
+<td>Margin</td>
+<td>&gt;= 0.5 pp</td>
+<td>Ensemble must exceed best single model by this</td>
+</tr>
+<tr>
+<td>Class recall</td>
+<td>&gt;= 0.90</td>
+<td>Minimum per-class recall</td>
+</tr>
+</tbody>
+</table>
+<h3 id="environment-variables">Environment Variables</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BCE_ROOT</code></td>
+<td>Override the project root directory for all artifact paths</td>
+</tr>
+<tr>
+<td><code>KAGGLE_USERNAME</code></td>
+<td>Kaggle API username</td>
+</tr>
+<tr>
+<td><code>KAGGLE_KEY</code></td>
+<td>Kaggle API key</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="10-troubleshooting">10. Troubleshooting</h2>
+<h3 id="common-issues">Common Issues</h3>
+<p><strong>Problem: "No Kaggle credentials found"</strong>
+- Ensure <code>KAGGLE_USERNAME</code> and <code>KAGGLE_KEY</code> are set, or <code>~/.kaggle/kaggle.json</code> exists
+- Alternatively, use <code>python run.py --cli demo-data</code> to generate synthetic data</p>
+<p><strong>Problem: Out of memory during training</strong>
+- Reduce <code>BATCH_SIZE</code> in <code>src/config.py</code>
+- Use <code>--smoke</code> mode for testing
+- Ensure you are not running multiple training sessions simultaneously</p>
+<p><strong>Problem: "A job is already running" (409 error)</strong>
+- Only one background job can run at a time
+- Wait for the current job to finish or restart the server</p>
+<p><strong>Problem: Low accuracy on demo data</strong>
+- Demo data uses simple synthetic shapes, not real blood cell images
+- Results on demo data are not representative of real-world performance
+- Download the Kaggle dataset for meaningful results</p>
+<p><strong>Problem: TensorFlow not detecting GPU</strong>
+- Verify CUDA and cuDNN installation: <code>python -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))"</code>
+- Ensure compatible CUDA version for your TensorFlow version</p>
+<p><strong>Problem: Import errors or missing modules</strong>
+- Ensure all dependencies are installed: <code>pip install -r requirements.txt</code>
+- Check Python version compatibility (3.10+)</p>
+<p><strong>Problem: Test split access error</strong>
+- The test split is intentionally restricted; only <code>evaluate.py</code> can access it
+- <code>load_split("test")</code> raises an error by design to prevent data leakage</p>
+<p><strong>Problem: Models not found for prediction</strong>
+- Run the full pipeline first: <code>python run.py --cli all</code>
+- Or fetch pretrained models: <code>python run.py --fetch-models &lt;URL&gt;</code></p>
+<p><strong>Problem: Smoke mode uses wrong data directory</strong>
+- If real-data models already exist, smoke mode redirects to <code>.smoke/</code> via <code>BCE_ROOT</code>
+- This prevents overwriting production models with smoke-test artifacts</p>
+<hr />
+<h2 id="11-api-reference">11. API Reference</h2>
+<p>Base URL: <code>http://localhost:8000</code></p>
+<h3 id="authentication_1">Authentication</h3>
+<h4 id="post-apilogin">POST /api/login</h4>
+<p>Demo login endpoint.</p>
+<p><strong>Request:</strong></p>
+<pre><code class="language-json">{&quot;username&quot;: &quot;admin&quot;, &quot;password&quot;: &quot;admin&quot;}
+</code></pre>
+<p><strong>Response (200):</strong></p>
+<pre><code class="language-json">{&quot;ok&quot;: true}
+</code></pre>
+<p><strong>Response (401):</strong></p>
+<pre><code class="language-json">{&quot;detail&quot;: &quot;Invalid credentials&quot;}
+</code></pre>
+<h3 id="system-status">System Status</h3>
+<h4 id="get-apistatus">GET /api/status</h4>
+<p>Returns full system status including splits, models, ensemble state, metrics, active job, and configuration.</p>
+<p><strong>Response (200):</strong></p>
+<pre><code class="language-json">{
+  &quot;splits_ready&quot;: true,
+  &quot;models&quot;: {&quot;mobilenetv2&quot;: true, &quot;efficientnetb0&quot;: true, &quot;densenet121&quot;: true},
+  &quot;ensemble_ready&quot;: true,
+  &quot;metrics&quot;: {&quot;accuracy&quot;: 0.97, &quot;macro_f1&quot;: 0.96},
+  &quot;active_job&quot;: null,
+  &quot;config&quot;: {&quot;img_size&quot;: 224, &quot;batch_size&quot;: 32, &quot;epochs&quot;: 15}
+}
+</code></pre>
+<h4 id="get-apihealth">GET /api/health</h4>
+<p>Lightweight health check.</p>
+<p><strong>Response (200):</strong></p>
+<pre><code class="language-json">{&quot;status&quot;: &quot;ok&quot;}
+</code></pre>
+<h3 id="data-management">Data Management</h3>
+<h4 id="post-apidatakaggle-creds">POST /api/data/kaggle-creds</h4>
+<p>Save Kaggle username and API key.</p>
+<p><strong>Request:</strong></p>
+<pre><code class="language-json">{&quot;username&quot;: &quot;your_username&quot;, &quot;key&quot;: &quot;your_api_key&quot;}
+</code></pre>
+<h4 id="post-apidatakaggle-token">POST /api/data/kaggle-token</h4>
+<p>Save a Kaggle access token (KGAT).</p>
+<p><strong>Request:</strong></p>
+<pre><code class="language-json">{&quot;token&quot;: &quot;KGAT...&quot;}
+</code></pre>
+<h4 id="post-apidatadownload">POST /api/data/download</h4>
+<p>Start async Kaggle dataset download.</p>
+<p><strong>Response (202):</strong></p>
+<pre><code class="language-json">{&quot;job_id&quot;: &quot;a1b2c3d4e5f6&quot;}
+</code></pre>
+<h4 id="post-apidatademo">POST /api/data/demo</h4>
+<p>Start async demo data generation.</p>
+<p><strong>Request (optional):</strong></p>
+<pre><code class="language-json">{&quot;smoke&quot;: false}
+</code></pre>
+<h4 id="post-apidatasplits">POST /api/data/splits</h4>
+<p>Synchronously create train/val/test splits.</p>
+<h4 id="get-apidatasamples">GET /api/data/samples</h4>
+<p>Get sample images for UI preview.</p>
+<h4 id="get-apidatatest-images">GET /api/data/test-images</h4>
+<p>Get exported test images for prediction demo.</p>
+<h3 id="training">Training</h3>
+<h4 id="post-apitrain">POST /api/train</h4>
+<p>Start async training of specified backbones.</p>
+<p><strong>Request:</strong></p>
+<pre><code class="language-json">{
+  &quot;models&quot;: [&quot;mobilenetv2&quot;, &quot;efficientnetb0&quot;, &quot;densenet121&quot;],
+  &quot;smoke&quot;: false,
+  &quot;epochs&quot;: 15
+}
+</code></pre>
+<p><strong>Response (202):</strong></p>
+<pre><code class="language-json">{&quot;job_id&quot;: &quot;a1b2c3d4e5f6&quot;}
+</code></pre>
+<h3 id="ensemble_1">Ensemble</h3>
+<h4 id="post-apiensemble">POST /api/ensemble</h4>
+<p>Start async ensemble fitting.</p>
+<p><strong>Response (202):</strong></p>
+<pre><code class="language-json">{&quot;job_id&quot;: &quot;a1b2c3d4e5f6&quot;}
+</code></pre>
+<h3 id="evaluation">Evaluation</h3>
+<h4 id="post-apievaluate">POST /api/evaluate</h4>
+<p>Start async evaluation on test set.</p>
+<p><strong>Response (202):</strong></p>
+<pre><code class="language-json">{&quot;job_id&quot;: &quot;a1b2c3d4e5f6&quot;}
+</code></pre>
+<h3 id="full-pipeline">Full Pipeline</h3>
+<h4 id="post-apipipelineall">POST /api/pipeline/all</h4>
+<p>Run the complete pipeline (download/demo -&gt; splits -&gt; train -&gt; ensemble -&gt; evaluate).</p>
+<p><strong>Request (optional):</strong></p>
+<pre><code class="language-json">{&quot;smoke&quot;: false}
+</code></pre>
+<h3 id="jobs">Jobs</h3>
+<h4 id="get-apijobsjob_id">GET /api/jobs/{job_id}</h4>
+<p>Get job status and progress.</p>
+<p><strong>Response (200):</strong></p>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;a1b2c3d4e5f6&quot;,
+  &quot;kind&quot;: &quot;train&quot;,
+  &quot;state&quot;: &quot;running&quot;,
+  &quot;stage&quot;: &quot;mobilenetv2&quot;,
+  &quot;progress&quot;: 45.2,
+  &quot;logs&quot;: [&quot;Phase 1 epoch 1/5 - loss: 0.82 - val_loss: 0.65&quot;],
+  &quot;error&quot;: null
+}
+</code></pre>
+<h4 id="get-apijobsjob_idstream">GET /api/jobs/{job_id}/stream</h4>
+<p>Server-Sent Events stream for real-time job progress updates.</p>
+<h3 id="results">Results</h3>
+<h4 id="get-apiresults">GET /api/results</h4>
+<p>Full results payload with metrics, per-class performance, confusion matrices, figure URLs, training histories, and notes.</p>
+<h4 id="get-apiresultsfilesname">GET /api/results/files/{name}</h4>
+<p>Download a result file. Valid names: <code>metrics.json</code>, <code>comparison_table.md</code>, <code>NOTES.md</code>.</p>
+<h3 id="prediction">Prediction</h3>
+<h4 id="post-apipredict">POST /api/predict</h4>
+<p>Upload an image for classification.</p>
+<p><strong>Request:</strong> multipart/form-data with an <code>image</code> file field.</p>
+<p><strong>Response (200):</strong></p>
+<pre><code class="language-json">{
+  &quot;class&quot;: &quot;Benign&quot;,
+  &quot;class_idx&quot;: 0,
+  &quot;confidence&quot;: 0.987,
+  &quot;probs&quot;: [0.987, 0.005, 0.006, 0.002],
+  &quot;per_model_probs&quot;: {
+    &quot;mobilenetv2&quot;: [0.99, 0.003, 0.005, 0.002],
+    &quot;efficientnetb0&quot;: [0.98, 0.007, 0.008, 0.005],
+    &quot;densenet121&quot;: [0.99, 0.004, 0.004, 0.002]
+  },
+  &quot;votes&quot;: {
+    &quot;mobilenetv2&quot;: &quot;Benign&quot;,
+    &quot;efficientnetb0&quot;: &quot;Benign&quot;,
+    &quot;densenet121&quot;: &quot;Benign&quot;
+  },
+  &quot;mode&quot;: &quot;voting&quot;,
+  &quot;mode_label&quot;: &quot;Weighted Voting Ensemble&quot;,
+  &quot;gradcam&quot;: &quot;data:image/png;base64,...&quot;
+}
+</code></pre>
+<h3 id="settings">Settings</h3>
+<h4 id="get-apisettings">GET /api/settings</h4>
+<p>Get the active prediction mode.</p>
+<h4 id="post-apisettings">POST /api/settings</h4>
+<p>Set the active prediction mode.</p>
+<p><strong>Request:</strong></p>
+<pre><code class="language-json">{&quot;active_mode&quot;: &quot;ensemble&quot;}
+</code></pre>
+<h3 id="static-assets">Static Assets</h3>
+<h4 id="get-mediasourcerel">GET /media/{source}/{rel}</h4>
+<p>Serve images from sample/demo/kaggle/test directories.</p>
+<h4 id="get-figuresname">GET /figures/{name}</h4>
+<p>Serve generated plot PNGs from <code>results/figures/</code>.</p>
+<h4 id="get-apiabout">GET /api/about</h4>
+<p>Returns paper mapping table and architecture information.</p>
+<hr />
+<h2 id="12-deployment-notes">12. Deployment Notes</h2>
+<h3 id="local-development">Local Development</h3>
+<pre><code class="language-bash">python run.py                    # FastAPI on localhost:8000
+python run.py --streamlit        # Streamlit fallback UI
+python run.py --smoke --cli all  # Quick smoke test
+</code></pre>
+<h3 id="production-considerations">Production Considerations</h3>
+<ul>
+<li>The demo login (<code>admin/admin</code>) is <strong>not production-grade</strong>. Implement proper authentication before deploying publicly.</li>
+<li>The job runner is in-process and single-threaded. For production, consider a task queue (Celery, RQ).</li>
+<li>Model files (<code>.keras</code>) can be large. Use <code>--fetch-models &lt;URL&gt;</code> to download pretrained models from a release.</li>
+</ul>
+<h3 id="running-on-google-colab">Running on Google Colab</h3>
+<p>Use the provided <code>notebooks/train_colab.ipynb</code> for training on free GPU:
+1. Upload the notebook to Colab
+2. Set Kaggle credentials in Colab secrets
+3. Run all cells to train and evaluate</p>
+<h3 id="docker-example">Docker (example)</h3>
+<pre><code class="language-dockerfile">FROM python:3.11-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+EXPOSE 8000
+CMD [&quot;python&quot;, &quot;run.py&quot;, &quot;--host&quot;, &quot;0.0.0.0&quot;, &quot;--no-browser&quot;]
+</code></pre>
+<h3 id="model-verification">Model Verification</h3>
+<pre><code class="language-bash"># Verify model checksums against MODELS_SHA256.txt
+python run.py --check
+</code></pre>
+<h3 id="environment-variable-reference">Environment Variable Reference</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BCE_ROOT</code></td>
+<td>Override project root for all paths</td>
+</tr>
+<tr>
+<td><code>KAGGLE_USERNAME</code></td>
+<td>Kaggle API username</td>
+</tr>
+<tr>
+<td><code>KAGGLE_KEY</code></td>
+<td>Kaggle API key</td>
+</tr>
+</tbody>
+</table>
+<h3 id="directory-structure-runtime-artifacts">Directory Structure (Runtime Artifacts)</h3>
+<pre><code>blood-cancer-detection/
+  data/
+    raw/              # Downloaded Kaggle images
+    demo/             # Synthetic demo images
+    sample/           # Minimal smoke-test images
+    splits/           # train.csv, val.csv, test.csv, meta.json
+  models/
+    mobilenetv2.keras
+    efficientnetb0.keras
+    densenet121.keras
+    ensemble_weights.json
+    meta_clf.pkl
+    active_mode.txt
+    ensemble_mode.txt
+    ood_stats.json
+  results/
+    metrics.json
+    comparison_table.md
+    NOTES.md
+    run_info.json
+    split_counts.csv
+    history/          # Per-backbone training CSVs
+    figures/          # All generated plots
+</code></pre>
+</body></html>
