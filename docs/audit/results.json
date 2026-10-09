@@ -1,0 +1,111 @@
+[
+  {
+    "check": "login_wrong_password",
+    "status": "PASS",
+    "detail": "Invalid username or password.",
+    "screenshot": "audit/login_wrong_password.png"
+  },
+  {
+    "check": "login_admin",
+    "status": "PASS",
+    "detail": "Login successful"
+  },
+  {
+    "check": "view_home",
+    "status": "PASS",
+    "detail": "989 chars; broken=[]; errors=[]",
+    "screenshot": "audit/view_home.png"
+  },
+  {
+    "check": "view_performance",
+    "status": "PASS",
+    "detail": "147 chars; broken=[]; errors=[]",
+    "screenshot": "audit/view_performance.png"
+  },
+  {
+    "check": "view_chart",
+    "status": "PASS",
+    "detail": "253 chars; broken=[]; errors=[]",
+    "screenshot": "audit/view_chart.png"
+  },
+  {
+    "check": "view_about",
+    "status": "PASS",
+    "detail": "3786 chars; broken=[]; errors=[]",
+    "screenshot": "audit/view_about.png"
+  },
+  {
+    "check": "view_data",
+    "status": "PASS",
+    "detail": "820 chars; broken=[]; errors=[]",
+    "screenshot": "audit/view_data.png"
+  },
+  {
+    "check": "view_train",
+    "status": "PASS",
+    "detail": "489 chars; broken=[]; errors=[]",
+    "screenshot": "audit/view_train.png"
+  },
+  {
+    "check": "preview_Benign",
+    "status": "PASS",
+    "detail": "true=Benign predicted=Benign (correct) gradcam=True votes=3 errors=[]",
+    "screenshot": "audit/preview_Benign.png"
+  },
+  {
+    "check": "preview_early_PreB",
+    "status": "PASS",
+    "detail": "true=[Malignant] early Pre-B predicted=[Malignant] early Pre-B (correct) gradcam=True votes=3 errors=[]",
+    "screenshot": "audit/preview_early_PreB.png"
+  },
+  {
+    "check": "preview_PreB",
+    "status": "PASS",
+    "detail": "true=[Malignant] Pre-B predicted=[Malignant] Pro-B (MISCLASSIFIED) gradcam=True votes=3 errors=[]",
+    "screenshot": "audit/preview_PreB.png"
+  },
+  {
+    "check": "preview_ProB",
+    "status": "PASS",
+    "detail": "true=[Malignant] Pro-B predicted=[Malignant] Pro-B (correct) gradcam=True votes=3 errors=[]",
+    "screenshot": "audit/preview_ProB.png"
+  },
+  {
+    "check": "upload_non_image_txt",
+    "status": "PASS",
+    "detail": "message='Unsupported file type \".txt\". Use jpg, jpeg, png, bmp, tif, tiff.'; errors=[]",
+    "screenshot": "audit/upload_non_image_txt.png"
+  },
+  {
+    "check": "upload_oversize_11mb",
+    "status": "PASS",
+    "detail": "message='File is larger than 10 MB.'; errors=[]",
+    "screenshot": "audit/upload_oversize_11mb.png"
+  },
+  {
+    "check": "upload_corrupt_png",
+    "status": "PASS",
+    "detail": "message='Could not read the image. The file may be corrupt.'; errors=[]",
+    "screenshot": "audit/upload_corrupt_png.png"
+  },
+  {
+    "check": "refresh_mid_session",
+    "status": "PASS",
+    "detail": "http://localhost:8000/#/chart"
+  },
+  {
+    "check": "dark_mode",
+    "status": "PASS",
+    "detail": "theme=dark body=rgb(13, 20, 27)"
+  },
+  {
+    "check": "logout_and_deep_link_gated",
+    "status": "PASS",
+    "detail": "http://localhost:8000/#/performance"
+  },
+  {
+    "check": "mobile_390_no_horizontal_scroll",
+    "status": "PASS",
+    "detail": "overflowing views=[]"
+  }
+]
