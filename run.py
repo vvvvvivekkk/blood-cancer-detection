@@ -27,6 +27,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--cli", choices=["download", "demo-data", "splits", "train", "ensemble", "evaluate", "all",
                                       "export-test-images"])
+    ap.add_argument("--fetch-models", metavar="URL", help="download + extract a release models.zip into models/")
+    ap.add_argument("--check", action="store_true", help="verify models/ against models/MODELS_SHA256.txt")
     ap.add_argument("--streamlit", action="store_true", help="launch the fallback Streamlit app")
     ap.add_argument("--smoke", action="store_true", help="data/sample, 1 epoch/phase, batch 4, CPU, offline")
     ap.add_argument("--models", nargs="+", help="backbones to train (default: all three)")
@@ -37,6 +39,13 @@ def main():
     a = ap.parse_args()
     os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
     sys.path.insert(0, str(ROOT))
+
+    if a.fetch_models:
+        from scripts.package_models import fetch_models
+        return fetch_models(a.fetch_models)
+    if a.check:
+        from scripts.package_models import check
+        return check()
 
     if a.streamlit:
         env = {**os.environ, "PYTHONPATH": os.pathsep.join([str(ROOT), os.environ.get("PYTHONPATH", "")])}
