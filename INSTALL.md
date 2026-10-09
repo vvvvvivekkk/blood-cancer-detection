@@ -36,6 +36,24 @@ Verify an existing `models/` at any time:
 python run.py --check        # prints CHECK PASS / CHECK FAIL, exit code 0 / 1
 ```
 
+## Clone with the models included (Git LFS, no release needed)
+
+`dist/models.zip` is also committed via **Git LFS**, so a clone can carry the weights directly —
+handy for an offline or friend's laptop. Install [Git LFS](https://git-lfs.com) **first** (`git lfs
+install`), otherwise the clone fetches a tiny pointer file instead of the real zip.
+
+```bash
+git lfs install
+git clone https://github.com/vvvvvivekkk/blood-cancer-detection.git
+cd blood-cancer-detection
+pip install -r requirements.txt
+python run.py --fetch-models "file://$(pwd)/dist/models.zip"   # Windows: file:///C:/full/path/dist/models.zip
+python app.py
+```
+
+`--fetch-models` with a local `file://` path verifies the SHA-256 and unpacks into `models/` just
+like the release URL (or simply unzip `dist/models.zip` into `models/`).
+
 ## Running without the release
 
 You can skip `--fetch-models` and produce the models yourself:
