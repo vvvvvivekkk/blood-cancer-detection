@@ -1,14 +1,12 @@
 """Single entry point.
 
     python run.py                                   -> web app (FastAPI + HTML/JS) at http://localhost:8000
-    python run.py --streamlit                       -> fallback Streamlit app at http://localhost:8501
     python run.py --cli {download,demo-data,splits,train,ensemble,evaluate,all} [--smoke]
     python run.py --cli export-test-images          -> 10 test images per class into test_images/
 """
 import argparse
 import json
 import os
-import subprocess
 import sys
 import threading
 import webbrowser
@@ -29,7 +27,6 @@ def main():
                                       "export-test-images"])
     ap.add_argument("--fetch-models", metavar="URL", help="download + extract a release models.zip into models/")
     ap.add_argument("--check", action="store_true", help="verify models/ against models/MODELS_SHA256.txt")
-    ap.add_argument("--streamlit", action="store_true", help="launch the fallback Streamlit app")
     ap.add_argument("--smoke", action="store_true", help="data/sample, 1 epoch/phase, batch 4, CPU, offline")
     ap.add_argument("--models", nargs="+", help="backbones to train (default: all three)")
     ap.add_argument("--epochs", type=int, help="total epochs per backbone (default from config)")
@@ -46,11 +43,6 @@ def main():
     if a.check:
         from scripts.package_models import check
         return check()
-
-    if a.streamlit:
-        env = {**os.environ, "PYTHONPATH": os.pathsep.join([str(ROOT), os.environ.get("PYTHONPATH", "")])}
-        cmd = [sys.executable, "-m", "streamlit", "run", str(ROOT / "app" / "Home.py")]
-        return subprocess.call(cmd, cwd=ROOT, env=env)
 
     if not a.cli:
         import uvicorn

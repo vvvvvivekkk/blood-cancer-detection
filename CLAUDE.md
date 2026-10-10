@@ -53,7 +53,6 @@ Both are evaluated on test; the better (macro-F1) is persisted to `models/ensemb
 │   └── pipeline.py    stage orchestration shared by run.py and the UI
 ├── api/       main.py (routes, /api/*), jobs.py (one background job at a time)
 ├── frontend/  index.html  css/styles.css  js/{app,api,charts}.js  img/
-├── app/   fallback Streamlit: Home.py  ui.py  pages/{1_Data,2_Train,3_Evaluate,4_Predict,5_About}.py
 ├── models/  results/  notebooks/train_colab.ipynb  docs/  tests/
 ```
 
@@ -61,7 +60,6 @@ Both are evaluated on test; the better (macro-F1) is persisted to `models/ensemb
 ```bash
 pip install -r requirements.txt
 python run.py                                   # web UI → http://localhost:8000
-python run.py --streamlit                       # fallback Streamlit UI → http://localhost:8501
 python docs/capture_screenshots.py              # Playwright screenshots of every view (app must be running)
 python run.py --cli download                    # kagglehub → data/raw/
 python run.py --cli demo-data                   # 200 synthetic images → data/demo/
@@ -78,7 +76,7 @@ Smoke mode: `data/sample/` (8 images), 1 epoch per phase, batch 4, 96 px, `weigh
 3. Every metric in `results/` comes from a script run. `results/metrics.json` is the single source of truth; the README table is generated from it.
 4. Fixed seeds (`SEED=42`) for numpy, tf, random, sklearn.
 5. Save models as `.keras`. Load with `compile=False` for inference.
-6. `src/` never imports streamlit or fastapi. Long stages accept `progress_cb(stage, epoch, logs)`; `api/jobs.py` and the Streamlit pages consume it. UI changes must not change logic in `src/`.
+6. `src/` never imports fastapi. Long stages accept `progress_cb(stage, epoch, logs)`; `api/jobs.py` consumes it. UI changes must not change logic in `src/`.
 7. Every page renders with no data and no models: show what's missing and the button that fixes it. No tracebacks reach the UI.
 8. Uploads: extension jpg/jpeg/png/bmp/tif/tiff, max 10 MB, decoded in memory to RGB, resized to model input. Nothing written to disk.
 9. Grad-CAM target layer lives in `models.GRADCAM_LAYER`; it is verified by iterating `model.layers` (test). Don't guess layer names.

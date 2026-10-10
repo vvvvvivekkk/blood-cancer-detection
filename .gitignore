@@ -21,3 +21,5 @@ kaggle.json
 .env
 test_images/
 .smoke/
+history.db
+uploads/

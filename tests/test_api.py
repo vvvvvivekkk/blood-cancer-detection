@@ -208,7 +208,7 @@ def test_app_py_is_the_same_entry_point():
     import subprocess
     import sys
     out = subprocess.run([sys.executable, str(C.REPO / "app.py"), "--help"], capture_output=True, text=True, timeout=60)
-    assert out.returncode == 0 and "--streamlit" in out.stdout and "export-test-images" in out.stdout
+    assert out.returncode == 0 and "export-test-images" in out.stdout
 
 
 def test_smoke_run_refuses_to_overwrite_real_models(empty_root):
