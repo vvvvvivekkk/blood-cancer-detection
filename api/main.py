@@ -39,7 +39,7 @@ SMOKE_SEC_PER_BACKBONE = 15
 STEP_OF_STAGE = {"download": "data", "demo-data": "data", "splits": "data", "ensemble": "ensemble",
                  "evaluate": "evaluate", **{b: "train" for b in C.BACKBONES}}
 MEDIA_DIRS = {"sample": lambda: C.SAMPLE_DIR, "demo": lambda: C.DEMO_DIR, "kaggle": lambda: C.RAW_DIR,
-              "test": lambda: C.TEST_IMAGES_DIR}
+              "test": lambda: C.TEST_IMAGES_DIR, "demo_images": lambda: C.DEMO_IMAGES_DIR}
 
 app = FastAPI(title="ALL Hybrid Ensemble API", version="1.0")
 jobs = JobRunner()
@@ -320,10 +320,15 @@ def samples():
 
 @app.get("/api/data/test-images")
 def test_images():
-    """Images exported to test_images/ by `python run.py --cli export-test-images`."""
-    root = C.TEST_IMAGES_DIR
-    items = list_images(root) if root.is_dir() else []
-    return {"images": [{"url": _media_url("test", p), "label": lab, "name": Path(p).name} for p, lab in items]}
+    """Images from test_images/ (exported) or data/demo_images/ (bundled fallback)."""
+    if C.TEST_IMAGES_DIR.is_dir():
+        root, source = C.TEST_IMAGES_DIR, "test"
+    elif C.DEMO_IMAGES_DIR.is_dir():
+        root, source = C.DEMO_IMAGES_DIR, "demo_images"
+    else:
+        return {"images": []}
+    items = list_images(root)
+    return {"images": [{"url": _media_url(source, p), "label": lab, "name": Path(p).name} for p, lab in items]}
 
 
 @app.post("/api/data/export-test-images")

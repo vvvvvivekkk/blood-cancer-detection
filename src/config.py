@@ -95,7 +95,7 @@ def set_root(root):
     """Point every artifact path at `root` (tests use a tmp dir)."""
     global ROOT, DATA_DIR, RAW_DIR, DEMO_DIR, SPLITS_DIR, MODELS_DIR, RESULTS_DIR
     global HISTORY_DIR, FIGURES_DIR, WEIGHTS_JSON, META_CLF, MODE_FILE, METRICS_JSON, ACTIVE_MODE_FILE, TEST_IMAGES_DIR
-    global OOD_STATS
+    global DEMO_IMAGES_DIR, OOD_STATS
     ROOT = Path(root)
     DATA_DIR = ROOT / "data"
     RAW_DIR = DATA_DIR / "raw"
@@ -110,6 +110,7 @@ def set_root(root):
     MODE_FILE = MODELS_DIR / "ensemble_mode.txt"
     ACTIVE_MODE_FILE = MODELS_DIR / "active_mode.txt"
     TEST_IMAGES_DIR = ROOT / "test_images"
+    DEMO_IMAGES_DIR = ROOT / "data" / "demo_images"
     METRICS_JSON = RESULTS_DIR / "metrics.json"
     OOD_STATS = MODELS_DIR / "ood_stats.json"
 

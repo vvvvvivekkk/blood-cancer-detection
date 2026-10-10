@@ -18,6 +18,8 @@ python app.py                        # opens http://localhost:8000
 
 Log in with **admin / admin**. No Kaggle account? Press *Use demo data*. No GPU? `python run.py --cli all --smoke` runs the pipeline on CPU in ~2 minutes.
 
+40 real sample images (10 per class) are included in `data/demo_images/` for the live demo. They come from the held-out test split and were never used in training. The images are from the [Blood Cells Cancer (ALL) dataset](https://www.kaggle.com/datasets/mohammadamireshraghi/blood-cell-cancer-all-4class) by M. Aria et al., licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
 ## Results
 
 <!-- RESULTS:START -->
