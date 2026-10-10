@@ -325,8 +325,10 @@ def build_story():
         "8. The Web Application",
         "9. Where Everything Is",
         "10. How It Was Built",
-        "11. Glossary",
-        "12. References",
+        "11. Installation",
+        "12. Using the App — Step-by-Step Demo",
+        "13. Glossary",
+        "14. References",
     ]
     for item in toc_items:
         story.append(p(item, style_toc_entry))
@@ -1055,8 +1057,94 @@ def build_story():
     story.append(p("python run.py --fetch-models &lt;URL&gt;", style_code))
     story.append(p("  This downloads the pre-trained model files (~105 MB) and verifies their integrity.", style_body))
 
-    # ── 11. GLOSSARY ──
-    story.append(h1("11. Glossary"))
+    # ── 11. INSTALLATION ──
+    story.append(h1("11. Installation"))
+    story.append(
+        p(
+            "This section explains how to set up the software on a computer. "
+            "Python 3.10–3.12 must be installed first. No GPU is required — "
+            "the trained models run on a normal laptop CPU."
+        )
+    )
+    story.append(h2("Quick Start (5 Commands)"))
+    story.append(p("git clone https://github.com/vvvvvivekkk/blood-cancer-detection.git", style_code))
+    story.append(p("cd blood-cancer-detection", style_code))
+    story.append(p("pip install -r requirements.txt", style_code))
+    story.append(p("python run.py --fetch-models https://github.com/vvvvvivekkk/blood-cancer-detection/releases/download/v1.0.0/models.zip", style_code))
+    story.append(p("python app.py", style_code))
+    story.append(Spacer(1, 0.3 * cm))
+    story.append(
+        p(
+            f"The {code('--fetch-models')} command downloads the trained models (~105 MB) from "
+            f"the GitHub release, verifies their integrity using SHA-256 checksums against "
+            f"{code('models/MODELS_SHA256.txt')}, and unpacks them into the {code('models/')} folder. "
+            f"You can re-verify at any time with {code('python run.py --check')}."
+        )
+    )
+    story.append(
+        p(
+            f"{code('python app.py')} starts the web dashboard at http://localhost:8000 and "
+            f"opens it in your browser. Log in with {bold('admin / admin')} (a fixed demo login "
+            f"for the walkthrough, not hospital-grade security)."
+        )
+    )
+    story.append(h2("Alternative: Clone with Models Included"))
+    story.append(
+        p(
+            f"The file {code('dist/models.zip')} is stored with Git LFS, so if you install "
+            f"Git LFS before cloning, the models come bundled. Then run: "
+            f"{code('python run.py --fetch-models \"file:///path/to/dist/models.zip\"')} "
+            f"to unpack them."
+        )
+    )
+    story.append(h2("Running Without Pre-Trained Models"))
+    story.append(
+        p(
+            "You can skip the model download and produce the models yourself. On the web dashboard, "
+            "press \"Use demo data\" then \"Run full pipeline\". Alternatively, from the command line:"
+        )
+    )
+    story.append(p("python run.py --cli all --smoke", style_code))
+    story.append(p("  Runs the entire pipeline on 8 bundled sample images on CPU (~2 minutes). "
+                    "This only checks the plumbing; the resulting numbers are meaningless.", style_body))
+    story.append(h2("Troubleshooting"))
+    story.append(bullet(f"{bold('SHA mismatch / CHECK FAIL')} — the download is corrupt; re-run {code('--fetch-models')}."))
+    story.append(bullet(f"{bold('Port in use')} — {code('python run.py --port 8010')}; add {code('--no-browser')} to suppress the browser tab."))
+    story.append(bullet(f"{bold('Browser tests')} — {code('pip install -r requirements-dev.txt && playwright install chromium')}."))
+
+    # ── 12. USING THE APP (Walkthrough) ──
+    story.append(h1("12. Using the App — Step-by-Step Demo"))
+    story.append(
+        p(
+            "This section walks through a complete demonstration of the application, "
+            "suitable for a viva or client presentation (~10 minutes)."
+        )
+    )
+    story.append(h2("Before You Start"))
+    story.append(
+        p(
+            f"Run {code('python run.py --cli export-test-images')} once. This copies 10 images "
+            f"per class from the held-out test set into {code('test_images/')}, so you can "
+            f"demonstrate predictions on images the model has never seen during training."
+        )
+    )
+    walkthrough_steps = [
+        ("Start the App", "Run python app.py. It opens http://localhost:8000 in your browser."),
+        ("Log In", "Enter admin / admin and press Login. A 'Login successful' toast appears and you land on Home."),
+        ("Home", "Show the paper title, citation, and the pipeline stepper (Data → Train → Ensemble → Evaluate → Predict). Point out the 'Not for clinical use' footer on every page."),
+        ("Preview: Test Images", "Open Preview. Under 'Try a test image', pick one from the Benign group. Its preview appears. Press Submit. The result shows the predicted class, confidence ring, probability bars, Grad-CAM overlay (drag the opacity slider) and per-backbone votes. Repeat for each malignant class."),
+        ("Preview: Upload", "Press 'Choose image' and pick any file. Then try dropping a .txt file to show the inline error message (no crash)."),
+        ("Performance Analysis", "The four large tiles show Accuracy, Precision, Recall and F-measure. The confusion matrix is directly below. Click tabs to compare backbones. Scroll down for ROC curves, per-class metrics and the Grad-CAM grid."),
+        ("Chart", "Model Loss and Model Accuracy show train vs validation per epoch. Switch between backbones with the tabs."),
+        ("About", "Shows the architecture diagram, method summary, and disclaimer."),
+        ("Settings", "The sidebar switch 'Single model: MobileNetV2' makes Preview use one model alone. Switch it back to ensemble."),
+        ("Logout", "Press Logout. You return to the login screen; deep links require logging in again."),
+    ]
+    for i, (title, desc) in enumerate(walkthrough_steps, 1):
+        story.append(p(f"{bold(f'Step {i} — {title}:')} {desc}"))
+
+    # ── 13. GLOSSARY ──
+    story.append(h1("13. Glossary"))
     glossary = [
         ("Accuracy", "The percentage of all predictions that were correct."),
         ("ALL (Acute Lymphoblastic Leukaemia)", "A type of blood cancer affecting white blood cells."),
@@ -1102,8 +1190,8 @@ def build_story():
     for term, defn in glossary:
         story.append(p(f"{bold(term)}: {defn}", style_glossary))
 
-    # ── 12. REFERENCES ──
-    story.append(h1("12. References"))
+    # ── 14. REFERENCES ──
+    story.append(h1("14. References"))
     refs = [
         "J. Jayachitra and N. Umarkathaf, \"Blood Cancer Identification using Hybrid Ensemble Deep Learning Technique,\" "
         "2023 International Conference on Emerging Research in Applied Sciences (ICEARS), IEEE, 2023.",
@@ -1346,7 +1434,26 @@ def _get_docx_sections():
     s.append(("bullet", "python run.py --cli evaluate  (evaluate and generate figures)"))
 
     # 11
-    s.append(("h1", "11. Glossary"))
+    s.append(("h1", "11. Installation"))
+    s.append(("p", "Quick start: git clone, pip install -r requirements.txt, "
+              "python run.py --fetch-models <URL>, python app.py. "
+              "The --fetch-models command downloads ~105 MB of trained models and verifies SHA-256 checksums. "
+              "Log in with admin / admin. See the PDF for full installation details and troubleshooting."))
+
+    # 12
+    s.append(("h1", "12. Using the App — Step-by-Step Demo"))
+    s.append(("p", "Run python run.py --cli export-test-images first. Then:"))
+    s.append(("bullet", "Step 1: Start the app with python app.py (opens http://localhost:8000)."))
+    s.append(("bullet", "Step 2: Log in with admin / admin."))
+    s.append(("bullet", "Step 3: Home shows the pipeline status and paper citation."))
+    s.append(("bullet", "Step 4: Preview — pick a test image per class, press Submit, see prediction and Grad-CAM."))
+    s.append(("bullet", "Step 5: Performance Analysis — accuracy tiles, confusion matrix, ROC curves."))
+    s.append(("bullet", "Step 6: Chart — training loss and accuracy curves per backbone."))
+    s.append(("bullet", "Step 7: About — architecture diagram and disclaimer."))
+    s.append(("bullet", "Step 8: Logout returns to the login screen."))
+
+    # 13
+    s.append(("h1", "13. Glossary"))
     glossary = [
         "Accuracy: The percentage of all predictions that were correct.",
         "ALL: Acute Lymphoblastic Leukaemia, a type of blood cancer.",
@@ -1369,8 +1476,8 @@ def _get_docx_sections():
     for g in glossary:
         s.append(("bullet", g))
 
-    # 12
-    s.append(("h1", "12. References"))
+    # 14
+    s.append(("h1", "14. References"))
     s.append(("p", "[1] J. Jayachitra and N. Umarkathaf, 'Blood Cancer Identification using Hybrid Ensemble Deep Learning Technique,' ICEARS 2023, IEEE."))
     s.append(("p", "[2] M. A. Eshraghi et al., 'Blood Cells Cancer (ALL) — 4 Classes,' Kaggle dataset."))
     s.append(("p", "[3] M. Sandler et al., 'MobileNetV2,' CVPR 2018."))

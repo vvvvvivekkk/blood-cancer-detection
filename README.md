@@ -2,7 +2,7 @@
 
 Replication of the IEEE paper **"Blood Cancer Identification using Hybrid Ensemble Deep Learning Technique"**, J. Jayachitra and N. Umarkathaf, *ICEARS 2023* ([IEEE Xplore 10084996](https://ieeexplore.ieee.org/document/10084996)).
 
-Three transfer-learning CNNs (MobileNetV2, EfficientNetB0, DenseNet121) are combined by a **hybrid ensemble** (weighted soft voting + a stacked logistic-regression meta-classifier) to classify peripheral blood smear images into four Acute Lymphoblastic Leukemia (ALL) classes. The whole pipeline (download → splits → training → evaluation → prediction with Grad-CAM) runs from a web dashboard (FastAPI + plain HTML/CSS/JS).
+Three transfer-learning CNNs (MobileNetV2, EfficientNetB0, DenseNet121) are combined by a **hybrid ensemble** (weighted soft voting + a stacked logistic-regression meta-classifier) to classify peripheral blood smear images into four Acute Lymphoblastic Leukemia (ALL) classes. The whole pipeline runs from a web dashboard.
 
 > ⚠️ **Research / educational project. Not a medical device. Not for clinical use.**
 
@@ -13,32 +13,24 @@ git clone https://github.com/vvvvvivekkk/blood-cancer-detection.git
 cd blood-cancer-detection
 pip install -r requirements.txt
 python run.py --fetch-models https://github.com/vvvvvivekkk/blood-cancer-detection/releases/download/v1.0.0/models.zip
-python app.py                        # same as `python run.py`: opens http://localhost:8000
+python app.py                        # opens http://localhost:8000
 ```
-`--fetch-models` downloads the trained models (~105 MB) from the **v1.0.0** release, verifies their SHA-256 against `models/MODELS_SHA256.txt`, and unpacks them into `models/`; `python run.py --check` re-verifies at any time. Skip that line to run without pretrained weights (train first, or press *Use demo data*). Full steps in [`INSTALL.md`](INSTALL.md).
 
-Log in with **admin / admin**. This is a fixed demo login for the walkthrough, not security, and the API itself stays open. The sidebar then reads **Home · Preview · Performance Analysis · Chart · About · Pipeline (Data, Train) · Logout**. Get data under **Pipeline → Data** (paste a Kaggle access token and download, or press *Use demo data*), train under **Pipeline → Train**, or press **Run full pipeline** on Home. Then try **Preview**, **Performance Analysis** and **Chart**. For the viva, `python run.py --cli export-test-images` copies 10 test-split images per class to `test_images/`, and Preview lists them under *Try a test image*. `docs/ui_walkthrough.md` is the step-by-step demo script.
+Log in with **admin / admin**. No Kaggle account? Press *Use demo data*. No GPU? `python run.py --cli all --smoke` runs the pipeline on CPU in ~2 minutes.
 
-`python run.py --streamlit` starts the older Streamlit UI (http://localhost:8501), which does the same things. Use `--port` and `--no-browser` to change the server's port or stop it opening a browser tab.
+## Results
 
-**No Kaggle account?** *Use demo data* creates 200 synthetic 4-class images in `data/demo/` so the whole pipeline still runs. Every page then shows a **DEMO DATA** banner. The numbers you get from it say nothing about leukemia.
+<!-- RESULTS:START -->
+| Model | Accuracy | Macro-F1 | Weighted-F1 | Kappa | ROC-AUC (OvR) |
+|---|---|---|---|---|---|
+| MobileNetV2 | 96.92% | 0.9662 | 0.9695 | 0.9583 | 0.9981 |
+| EfficientNetB0 | 91.38% | 0.9114 | 0.9126 | 0.8828 | 0.9973 |
+| DenseNet121 | 98.97% | 0.9890 | 0.9898 | 0.9861 | 0.9994 |
+| Ensemble-Voting | 98.36% | 0.9809 | 0.9837 | 0.9777 | 0.9995 |
+| **Ensemble-Stacking** (selected) | **98.97%** | **0.9883** | **0.9898** | **0.9861** | **0.9997** |
 
-**No GPU?** `python run.py --cli all --smoke` runs every stage on the 8 bundled sample images on CPU in about two minutes. That only checks the plumbing. Real training belongs on Colab: [`notebooks/train_colab.ipynb`](notebooks/train_colab.ipynb) ([open in Colab](https://colab.research.google.com/github/vvvvvivekkk/blood-cancer-detection/blob/master/notebooks/train_colab.ipynb)).
-
-Headless stages: `python run.py --cli {download,demo-data,splits,train,ensemble,evaluate,all} [--smoke]`.
-
-## Dataset
-
-**Blood Cells Cancer (ALL)**, Aria et al., [Kaggle](https://www.kaggle.com/datasets/mohammadamireshraghi/blood-cell-cancer-all-4class): 3,242 peripheral blood smear images in four classes.
-
-| Class | Description |
-|---|---|
-| Benign | Hematogones (normal B-lymphoid precursors) |
-| [Malignant] early Pre-B | ALL subtype |
-| [Malignant] Pre-B | ALL subtype |
-| [Malignant] Pro-B | ALL subtype |
-
-`src/download.py` fetches it with kagglehub. Credentials come from `KAGGLE_USERNAME`/`KAGGLE_KEY` or `~/.kaggle/kaggle.json`, which the Data page can write for you. The split is 70 % train, 15 % val, 15 % test, stratified, seed 42. Only `src/evaluate.py` reads the test split.
+_487 test images, Kaggle data, 2026-10-09. Regenerate with `python -m src.evaluate --write-readme-table`._
+<!-- RESULTS:END -->
 
 ## Architecture
 
@@ -52,72 +44,13 @@ flowchart LR
     B1 --> P[3 × softmax 4]
     B2 --> P
     B3 --> P
-    P --> V[Weighted soft voting<br/>w ∝ val macro-F1]
-    P --> S[Stacked meta-classifier<br/>LogReg on 12 probs]
-    V --> O{better on test<br/>macro-F1}
+    P --> V[Weighted soft voting]
+    P --> S[Stacked meta-classifier]
+    V --> O{better macro-F1}
     S --> O
     O --> R[Class + confidence]
-    B1 -.-> G[Grad-CAM from<br/>highest-weight backbone]
+    B1 -.-> G[Grad-CAM]
 ```
-
-Each backbone is ImageNet-pretrained and fine-tuned in two phases. Phase 1 trains the head with the base frozen (lr 1e-3). Phase 2 unfreezes the top 30 % of the base (lr 1e-5). Both phases use Adam with class weights. The two ensemble heads are fit on the validation split, and the one with the better test macro-F1 is used for prediction. `docs/paper_mapping.md` maps each paper section to the code that implements it.
-
-## Results
-
-<!-- RESULTS:START -->
-_Not generated yet. Run `python -m src.evaluate --write-readme-table`._
-<!-- RESULTS:END -->
-
-The table is written by `python -m src.evaluate --write-readme-table` (or `--table-only` to reuse an existing `results/metrics.json` without touching the test split again). Each run also writes `results/NOTES.md`, which states whether the ENDGOAL targets are met, and the figures in `results/figures/`: confusion matrices, training curves, one-vs-rest ROC, a model comparison bar chart and a Grad-CAM grid.
-
-## The web app
-
-| View | What you can do |
-|---|---|
-| Login | Static demo login (admin / admin), *Login successful* toast; **Logout** in the sidebar returns here |
-| Home | Paper and citation, pipeline stepper (Data → Train → Ensemble → Evaluate → Predict), **Run full pipeline** with a smoke toggle, live job panel with progress and log |
-| Pipeline → Data | Save Kaggle credentials (masked key), download, **Use demo data**, make splits, class counts per split, example images |
-| Pipeline → Train | Choose backbones, epochs and smoke mode, see a CPU time estimate, per-backbone progress bars, live loss and accuracy curves |
-| Performance Analysis | Large Accuracy / Precision / Recall / F-measure tiles for the selected ensemble with its confusion matrix directly below, then fit / run evaluation, kappa, ROC-AUC and gain tiles, comparison table (ensembles highlighted, selected one badged), metric chart, 5 confusion-matrix tabs, ROC, per-class metrics, Grad-CAM grid, downloads |
-| Chart | *Model Loss* and *Model Accuracy* per epoch, train vs validation, one backbone at a time (tabs) |
-| Preview | **Choose image** (or *Try a test image* from `test_images/`, or a sample), the preview appears, **Submit**; then class, confidence ring, probability bars, per-backbone votes, Grad-CAM overlay with an opacity slider |
-| About | Paper summary, architecture diagram, paper → code mapping, dataset, limitations |
-
-**Single-model mode.** The *Settings* switch in the sidebar makes Predict use only `models/mobilenetv2.keras` instead of the ensemble. The badge then reads "MobileNetV2 (single)" and the Evaluate table highlights the MobileNetV2 row instead of the ensemble rows. The choice is saved in `models/active_mode.txt`; with no file, Predict uses `ACTIVE_MODE` from `src/config.py` (`"ensemble"`).
-
-Every view also works with nothing trained. It says what is missing and offers the button that starts the job to fix it. Long stages run as background jobs. The UI follows them over Server-Sent Events and falls back to polling once a second. The pages support light and dark themes and keyboard navigation, and work on screens down to 768 px wide (the sidebar becomes a menu on phones).
-
-| Login | Preview | Performance Analysis | Chart |
-|---|---|---|---|
-| ![login](docs/screenshots/login.png) | ![preview](docs/screenshots/preview.png) | ![performance](docs/screenshots/performance.png) | ![chart](docs/screenshots/chart.png) |
-
-_These screenshots come from smoke artifacts (untrained weights). Re-capture them after a real run with `python docs/capture_screenshots.py` while the app is running. Dark variants are the `*_dark.png` files._
-
-### API
-
-| Method | Path | Purpose |
-|---|---|---|
-| GET | `/api/health` | Liveness, models on disk, ensemble mode |
-| GET | `/api/status` | Pipeline status, stepper states, demo flag, active job id |
-| POST | `/api/data/kaggle-creds` | Save `~/.kaggle/kaggle.json` (`{username, key}`) |
-| POST | `/api/data/download` | Job: kagglehub download |
-| POST | `/api/data/demo` | Job: 200 synthetic demo images |
-| POST | `/api/data/splits` | Make splits (`{smoke}`), returns class counts per split |
-| GET | `/api/data/samples` | Up to 4 example images per class from the active data source |
-| POST | `/api/train` | Job: `{backbones, epochs, smoke}` |
-| POST | `/api/ensemble` | Job: fit voting + stacking on val |
-| POST | `/api/evaluate` | Job: test-set evaluation and figures |
-| POST | `/api/pipeline/all` | Job: every stage (`{smoke}`) |
-| GET | `/api/jobs/{id}` | Job state, progress, stage, log, live training history |
-| GET | `/api/jobs/{id}/stream` | Same, as Server-Sent Events |
-| GET | `/api/results` | Metrics, table rows, figure URLs, histories, notes |
-| GET / POST | `/api/settings` | Read or set `{active_mode}`: `"ensemble"` or `"mobilenetv2"` |
-| POST | `/api/login` | Demo login check (`{username, password}`), 401 on wrong credentials |
-| GET | `/api/data/test-images` | Images exported to `test_images/` |
-| POST | `/api/data/export-test-images` | Copy 10 test-split images per class to `test_images/` |
-| POST | `/api/predict` | Multipart image → class, confidence, probs, votes, Grad-CAM PNG (base64) |
-
-Only one job runs at a time. A second request returns `409`. Every error is JSON `{"detail": "<readable message>"}`, never a traceback. Interactive docs are at `/docs`.
 
 ## Project structure
 
@@ -125,30 +58,47 @@ Only one job runs at a time. A second request returns `409`. Every error is JSON
 run.py      single entry point: UI, or --cli stages
 src/        config · status · download · data · models · train · ensemble · predict · evaluate · gradcam · pipeline
 api/        main.py (FastAPI routes), jobs.py (background job runner)
-frontend/   index.html, css/styles.css, js/{app,api,charts}.js (no build step; Chart.js from a pinned CDN)
-app/        fallback Streamlit UI (python run.py --streamlit)
+frontend/   index.html, css/styles.css, js/{app,api,charts}.js
 models/     <backbone>.keras, ensemble_weights.json, meta_clf.pkl, ensemble_mode.txt
 results/    metrics.json, comparison_table.md, NOTES.md, split_counts.csv, history/, figures/
-notebooks/  train_colab.ipynb (thin wrapper around run.py)
-docs/       paper_mapping.md, ui_walkthrough.md, architecture.png, screenshots/, make_assets.py, capture_screenshots.py
-tests/      pytest suite: no network, data/sample + untrained models, API + browser tests
+notebooks/  train_colab.ipynb
+docs/       HOW_IT_WORKS.pdf (client guide), project_report.pdf, screenshots/
+tests/      pytest suite (no network, no GPU)
 ```
 
-Run the tests with `python -m pytest -q`. The browser tests need `pip install -r requirements-dev.txt && playwright install chromium`, and are skipped with a reason if Playwright is missing. `CLAUDE.md` has the engineering rules and `ENDGOAL.md` has the definition of done.
+## Key commands
+
+```bash
+python run.py                                # web app at http://localhost:8000
+python run.py --cli all --smoke              # full pipeline on CPU (~2 min)
+python run.py --cli export-test-images       # 10 test images per class for demo
+python run.py --fetch-models <URL>           # download + verify pre-trained models
+python run.py --check                        # verify model SHA-256 checksums
+python -m pytest -q                          # run test suite
+```
+
+## Documentation
+
+| Document | Audience | Description |
+|---|---|---|
+| [`docs/HOW_IT_WORKS.pdf`](docs/HOW_IT_WORKS.pdf) | Client | 29-page plain-English explanation with figures, installation, and walkthrough |
+| [`docs/HOW_IT_WORKS.docx`](docs/HOW_IT_WORKS.docx) | Client | Same content, editable Word format |
+| [`docs/project_report.pdf`](docs/project_report.pdf) | Examiner | Academic project report |
+| [`docs/ieee_paper.pdf`](docs/ieee_paper.pdf) | Academic | IEEE-formatted paper |
+| [`docs/DOCUMENTATION.pdf`](docs/DOCUMENTATION.pdf) | Developer | Technical reference documentation |
+| `CLAUDE.md` | Developer | Engineering rules and conventions |
 
 ## Limitations
 
-- One public dataset of pre-cropped single cells, so there is no segmentation stage and no external validation.
-- The classes are imbalanced. Class weights help, but read per-class recall next to accuracy.
-- Smoke and demo runs produce real script output on toy data. Their numbers mean nothing.
+- One public dataset of pre-cropped single cells; no segmentation or external validation.
+- The ensemble ties the best single backbone (DenseNet121) rather than beating it.
 - Not clinically validated. Do not use for diagnosis.
 
 ## References
 
-- J. Jayachitra, N. Umarkathaf, "Blood Cancer Identification using Hybrid Ensemble Deep Learning Technique," *ICEARS*, IEEE, 2023. [IEEE Xplore 10084996](https://ieeexplore.ieee.org/document/10084996)
+- J. Jayachitra, N. Umarkathaf, "Blood Cancer Identification using Hybrid Ensemble Deep Learning Technique," *ICEARS*, IEEE, 2023.
 - M. Aria et al., "Acute Lymphoblastic Leukemia (ALL) image dataset," Kaggle, 2021. [Dataset](https://www.kaggle.com/datasets/mohammadamireshraghi/blood-cell-cancer-all-4class)
-- C. Mondal et al., "Acute Lymphoblastic Leukemia Detection from Microscopic Images Using Weighted Ensemble of Convolutional Neural Networks," 2021. [arXiv:2105.03995](https://arxiv.org/abs/2105.03995)
-- R. R. Selvaraju et al., "Grad-CAM: Visual Explanations from Deep Networks via Gradient-based Localization," ICCV 2017.
+- R. R. Selvaraju et al., "Grad-CAM: Visual Explanations from Deep Networks," ICCV 2017.
 
 ## Licence
 
