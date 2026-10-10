@@ -117,6 +117,14 @@
     font-size: 8.5pt;
   }
 
+  table.col-table {
+    width: 100%;
+    margin: 8pt 0;
+    font-size: 7.5pt;
+    break-inside: avoid;
+  }
+  table.col-table th, table.col-table td { padding: 2pt 2.5pt; }
+  table.col-table td:first-child { text-align: left; }
   .figure {
     text-align: center;
     margin: 10pt 0;
@@ -336,11 +344,9 @@
 <h3>A. Individual Backbone and Ensemble Performance</h3>
 <p class="no-indent">We ran the whole pipeline on the Kaggle dataset using a Google Colab T4 GPU. Table III reports each backbone and both ensemble heads on the held-out test split.</p>
 
-</div><!-- end two-column temporarily for wide table -->
-
-<table class="wide-table">
+<table class="col-table">
 <caption><span class="label">TABLE III.</span> Model Performance on Test Split (15%, Stratified, Seed 42)</caption>
-<tr><th>Model</th><th>Accuracy</th><th>Macro P</th><th>Macro R</th><th>Macro F1</th><th>Kappa</th><th>ROC-AUC</th></tr>
+<tr><th>Model</th><th>Acc.</th><th>P</th><th>R</th><th>F1</th><th>&kappa;</th><th>AUC</th></tr>
 <tr><td>MobileNetV2</td><td>0.9363</td><td>0.9378</td><td>0.9350</td><td>0.9358</td><td>0.9149</td><td>0.9912</td></tr>
 <tr><td>EfficientNetB0</td><td>0.9486</td><td>0.9502</td><td>0.9471</td><td>0.9484</td><td>0.9311</td><td>0.9934</td></tr>
 <tr><td>DenseNet121</td><td>0.9568</td><td>0.9573</td><td>0.9565</td><td>0.9567</td><td>0.9422</td><td>0.9951</td></tr>
@@ -348,7 +354,6 @@
 <tr><td>Stacked Ensemble</td><td>0.9609</td><td>0.9618</td><td>0.9602</td><td>0.9608</td><td>0.9478</td><td>0.9957</td></tr>
 </table>
 
-<div class="two-column">
 
 <p>DenseNet121 was the strongest single backbone at 95.68% accuracy. Weighted voting pushed that to 96.50%, a gain of 0.82 percentage points, and both ensembles cleared the 96% accuracy and 0.95 macro-F1 marks.</p>
 
