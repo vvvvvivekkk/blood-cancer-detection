@@ -24,3 +24,5 @@ test_images/
 .smoke/
 history.db
 uploads/
+dist/models.zip
+!dist/models.zip.part*

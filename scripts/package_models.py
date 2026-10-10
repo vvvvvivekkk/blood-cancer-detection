@@ -108,25 +108,33 @@ def fetch_models(url=None):
 
     With no url, pulls the pinned release asset so a fresh clone needs no arguments.
     """
-    url = url or RELEASE_URL
     DIST.mkdir(exist_ok=True)
-    print(f"Downloading {url} ...", flush=True)
-    try:
-        with urllib.request.urlopen(url) as r:  # noqa: S310 - pinned release, or a URL the user supplied
-            data = r.read()
-    except urllib.error.HTTPError as e:
-        hint = ("release or asset not found — has v1.0.0 been published, and is the repo public?"
-                if e.code == 404 else f"HTTP {e.code} {e.reason}")
-        return _fail(hint, url)
-    except (urllib.error.URLError, OSError) as e:
-        return _fail(f"could not reach the host ({e})", url)
+    data = None
+    if url is None:
+        # Offline-first: the repo ships models.zip as plain git parts (each < 100 MB, no LFS).
+        parts = sorted(DIST.glob("models.zip.part*"))
+        if parts:
+            print(f"Assembling models.zip from {len(parts)} bundled part(s) in {DIST} ...", flush=True)
+            data = b"".join(pt.read_bytes() for pt in parts)
+    if data is None:
+        url = url or RELEASE_URL
+        print(f"Downloading {url} ...", flush=True)
+        try:
+            with urllib.request.urlopen(url) as r:  # noqa: S310 - pinned release, or a URL the user supplied
+                data = r.read()
+        except urllib.error.HTTPError as e:
+            hint = ("release or asset not found — has v1.0.0 been published, and is the repo public?"
+                    if e.code == 404 else f"HTTP {e.code} {e.reason}")
+            return _fail(hint, url)
+        except (urllib.error.URLError, OSError) as e:
+            return _fail(f"could not reach the host ({e})", url)
 
     got = hashlib.sha256(data).hexdigest()
     exp = _expected().get("models.zip")
     if exp and got != exp:
         return _fail(
             f"sha256 mismatch — expected {exp[:12]}…, got {got[:12]}… "
-            f"(download was truncated, or the asset was replaced)", url)
+            f"(download was truncated, or the asset was replaced)", url or "bundled parts")
     ZIP.write_bytes(data)
     MODELS.mkdir(exist_ok=True)
     with zipfile.ZipFile(io.BytesIO(data)) as z:

@@ -14,7 +14,7 @@ Three tiers. **Tier 1 is all you need to see the system work** — tiers 2 and 3
 git clone https://github.com/vvvvvivekkk/blood-cancer-detection.git
 cd blood-cancer-detection
 pip install -r requirements.txt
-python run.py --fetch-models          # trained models from the pinned release (~105 MB)
+python run.py --fetch-models          # unpacks the bundled models (dist/models.zip.part*, ~105 MB) and verifies SHA-256
 python app.py                         # opens http://localhost:8000
 ```
 
@@ -52,7 +52,7 @@ python run.py --cli evaluate             # refresh results/ + figures
 
 | Path | What it holds |
 |---|---|
-| `models/` | 3 `.keras` backbones + ensemble weights, meta-classifier, mode, OOD stats. Not in git — fetched from the release. |
+| `models/` | 3 `.keras` backbones + ensemble weights, meta-classifier, mode, OOD stats. Built by `--fetch-models` from the two bundled parts in `dist/` (falls back to the GitHub release). |
 | `data/demo_images/` | 40 real test-split images (10 per class). Committed. Drives the Tier 1 demo. CC BY 4.0, Aria et al. |
 | `data/sample/` | 8 tiny synthetic images. Committed. Used by the automated tests only — not a demo. |
 | `data/raw/`, `data/splits/` | The Kaggle dataset and generated splits. Gitignored, created by Tier 2. |
@@ -119,7 +119,7 @@ tests/      pytest suite (no network, no GPU)
 python run.py                                # web app at http://localhost:8000
 python run.py --cli all --smoke              # full pipeline on CPU (~2 min)
 python run.py --cli export-test-images       # 10 test images per class for demo
-python run.py --fetch-models                 # download + verify models from the release
+python run.py --fetch-models                 # unpack + verify models (bundled parts, or release URL)
 python run.py --check                        # verify model SHA-256 checksums
 python -m pytest -q                          # run test suite
 ```
