@@ -111,7 +111,7 @@ def run_info(metrics, voting):
 
 
 def notes(metrics):
-    """Plain statement of which ENDGOAL targets are met."""
+    """Plain statement of which acceptance targets are met."""
     best = metrics["models"][metrics["best_ensemble"]]
     backbones = {k: v for k, v in metrics["models"].items() if k in C.BACKBONES}
     top = max(backbones, key=lambda k: backbones[k]["accuracy"])
@@ -131,13 +131,13 @@ def notes(metrics):
     lines += [f"| {t} | {v} | {'yes' if ok else 'NO'} |" for t, v, ok in checks]
     if margin < C.TARGET_MARGIN_PP:
         lines += ["", "The ensemble does not beat the best single backbone by the target margin. "
-                  "Next things to try (ENDGOAL.md): kappa-weighted voting, test-time augmentation, swapping a backbone."]
+                  "Next things to try: kappa-weighted voting, test-time augmentation, swapping a backbone."]
     return "\n".join(lines) + "\n"
 
 
 def fallback_attempts(per_model, probs_test, y_test):
     """When the primary ensemble fails the 'beats best backbone by TARGET_MARGIN_PP' target, try the
-    ENDGOAL fallbacks. Variant WEIGHTS are selected on the val split only (results/val_probs.npy from the
+    documented fallbacks. Variant WEIGHTS are selected on the val split only (results/val_probs.npy from the
     ensemble stage); the test numbers are reported, never used to choose a variant. Returns a markdown
     section, or '' if val probs are unavailable. TTA is deferred (CPU-prohibitive; run on Colab GPU)."""
     from src.ensemble import macro_f1
@@ -166,7 +166,7 @@ def fallback_attempts(per_model, probs_test, y_test):
     top = max(C.BACKBONES, key=lambda k: per_model[k]["accuracy"])
     top_acc = per_model[top]["accuracy"]
     margin = 100 * (chosen[2] - top_acc)
-    out = ["", "## Fallback attempts (ENDGOAL)", "",
+    out = ["", "## Fallback attempts", "",
            f"The selected ensemble ties/loses to the best backbone ({C.DISPLAY_NAMES[top]}, "
            f"test acc {top_acc:.4f}). Variants below are **selected on val macro-F1**; test is reported only.", "",
            "| Variant | Val macro-F1 | Test acc | Test macro-F1 |", "|---|---|---|---|"]

@@ -643,9 +643,7 @@ function setPipelineOpen(open) {
 // ---------- about ----------
 async function renderAbout() {
   if (state.aboutLoaded) return;
-  const a = await api.about();
-  $("#mapping").innerHTML = `<thead><tr>${a.mapping.header.map((h) => `<th scope="col">${inline(h)}</th>`).join("")}</tr></thead>
-    <tbody>${a.mapping.rows.map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join("")}</tr>`).join("")}</tbody>`;
+  await api.about();
   state.aboutLoaded = true;
 }
 

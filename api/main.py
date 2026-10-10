@@ -4,7 +4,6 @@ import base64
 import io
 import json
 import logging
-import re
 import secrets
 from pathlib import Path
 from typing import List
@@ -414,16 +413,9 @@ def architecture():
     return FileResponse(C.REPO / "docs" / "architecture.png")
 
 
-def _md_table(text):
-    rows = [ln.strip().strip("|").split("|") for ln in text.splitlines() if ln.strip().startswith("|")]
-    rows = [[c.strip() for c in r] for r in rows if not re.fullmatch(r"[\s|:-]+", "|".join(r))]
-    return {"header": rows[0], "rows": rows[1:]} if rows else {"header": [], "rows": []}
-
-
 @app.get("/api/about")
 def about():
-    return {"mapping": _md_table((C.REPO / "docs" / "paper_mapping.md").read_text(encoding="utf-8")),
-            "architecture_url": "/docs-assets/architecture.png", "dataset": C.KAGGLE_DATASET,
+    return {"architecture_url": "/docs-assets/architecture.png", "dataset": C.KAGGLE_DATASET,
             "class_names": C.CLASS_NAMES}
 
 

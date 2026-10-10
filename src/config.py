@@ -67,7 +67,7 @@ OOD_PX = 64
 OOD_BINS = 36
 OOD_PERCENTILE = 99.0  # training range = [100-p, p] percentile of saturation / hist distance
 
-# Targets from ENDGOAL.md, checked in results/NOTES.md
+# Acceptance targets, checked in results/NOTES.md
 TARGET_ACCURACY = 0.96
 TARGET_MACRO_F1 = 0.95
 TARGET_MARGIN_PP = 0.5

@@ -1,4 +1,4 @@
-"""Regenerate docs/architecture.png: python docs/make_assets.py (screenshots: docs/capture_screenshots.py)"""
+"""Regenerate docs/architecture.png: python scripts/make_assets.py (screenshots: scripts/capture_screenshots.py)"""
 from pathlib import Path
 
 import matplotlib
@@ -7,7 +7,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.patches import FancyBboxPatch  # noqa: E402
 
-DOCS = Path(__file__).resolve().parent
+DOCS = Path(__file__).resolve().parents[1] / "docs"
 
 
 def box(ax, x, y, w, h, text, colour):

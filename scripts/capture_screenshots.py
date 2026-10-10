@@ -1,21 +1,23 @@
 """Capture docs/screenshots/<view>[_dark].png from a running web app.
 
     python run.py --no-browser &          # serve the artifacts you want to show
-    python docs/capture_screenshots.py [--base http://localhost:8000] [--theme light|dark] [--suffix _dark]
+    python scripts/capture_screenshots.py [--base http://localhost:8000] [--theme light|dark] [--suffix _dark]
 """
 import argparse
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-DOCS = Path(__file__).resolve().parent
-REPO = DOCS.parent
+REPO = Path(__file__).resolve().parents[1]
+DOCS = REPO / "docs"
 VIEWS = ["home", "preview", "performance", "chart", "about", "data", "train"]
 
 
 def predict_image():
-    """A held-out test image if exported (python run.py --cli export-test-images), else a bundled sample."""
-    for root in (REPO / "test_images" / "[Malignant] Pro-B", REPO / "data" / "sample" / "[Malignant] Pro-B"):
+    """A held-out test image if exported, else the bundled demo images, else a synthetic sample."""
+    for root in (REPO / "test_images" / "[Malignant] Pro-B",
+                 REPO / "data" / "demo_images" / "[Malignant] Pro-B",
+                 REPO / "data" / "sample" / "[Malignant] Pro-B"):
         if root.is_dir():
             return next(root.iterdir())
     raise FileNotFoundError("no image to predict")

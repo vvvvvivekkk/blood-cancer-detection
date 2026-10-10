@@ -1,4 +1,4 @@
-# Browser tests (tests/test_frontend.py) and screenshots (docs/capture_screenshots.py).
+# Browser tests (tests/test_frontend.py) and screenshots (scripts/capture_screenshots.py).
 # After installing: playwright install chromium
 -r requirements.txt
 playwright==1.63.0

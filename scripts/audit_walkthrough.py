@@ -1,7 +1,7 @@
 """Examiner-flow audit against a running app: every check from docs/ui_walkthrough.md plus edge cases.
 
     python app.py --no-browser &
-    python docs/audit_walkthrough.py [--base http://localhost:8000]
+    python scripts/audit_walkthrough.py [--base http://localhost:8000]
 
 Writes docs/audit/results.json and docs/audit/<check>.png for every failing check (and a few
 reference shots). Exit code 1 if any check fails. Uses the real CDN (the examiner's machine does too).
@@ -13,8 +13,8 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-DOCS = Path(__file__).resolve().parent
-REPO = DOCS.parent
+REPO = Path(__file__).resolve().parents[1]
+DOCS = REPO / "docs"
 OUT = DOCS / "audit"
 sys.path.insert(0, str(REPO))
 from src.config import CLASS_NAMES  # noqa: E402

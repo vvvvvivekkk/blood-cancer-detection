@@ -1,10 +1,7 @@
 # CLAUDE.md — Blood Cancer Identification using Hybrid Ensemble Deep Learning
 
 ## What this project is
-Replication of the IEEE paper **"Blood Cancer Identification using Hybrid Ensemble Deep Learning Technique"** (J. Jayachitra, N. Umarkathaf, ICEARS 2023, IEEE Xplore doc 10084996).
-Goal: classify peripheral blood smear (PBS) images into 4 classes of Acute Lymphoblastic Leukemia (ALL) using a **hybrid ensemble of transfer-learning CNNs**, beating every single backbone, and drive the whole pipeline from a **web dashboard** (FastAPI backend + vanilla HTML/CSS/JS frontend). A Streamlit app remains as a fallback.
-
-Read `ENDGOAL.md` before starting any task. It is the definition of done.
+Goal: classify peripheral blood smear (PBS) images into 4 classes of Acute Lymphoblastic Leukemia (ALL) using a **hybrid ensemble of transfer-learning CNNs**, beating every single backbone, and drive the whole pipeline from a **web dashboard** (FastAPI backend + vanilla HTML/CSS/JS frontend).
 
 ## Dataset (fixed — do not substitute)
 - Kaggle: `mohammadamireshraghi/blood-cell-cancer-all-4class` ("Blood Cells Cancer (ALL)", Aria et al.)
@@ -28,7 +25,7 @@ Both are evaluated on test; the better (macro-F1) is persisted to `models/ensemb
 ## Stack
 - Python 3.10–3.12, TensorFlow/Keras (2.15 on py ≤ 3.11, 2.21 on py 3.12 — pinned with markers), scikit-learn, NumPy, Pandas, Pillow, OpenCV (headless), Matplotlib, Seaborn
 - **Web UI**: FastAPI + uvicorn (`api/`), vanilla HTML/CSS/JS (`frontend/`), Chart.js from a pinned CDN, no build step, no npm
-- Fallback **Streamlit** UI (`app/`), kagglehub for download
+- kagglehub for dataset download
 - Dev: Playwright for browser tests and screenshots (`requirements-dev.txt`)
 - Grad-CAM hand-rolled in `src/gradcam.py` (no extra deps)
 - Config in `src/config.py`; no magic numbers in scripts
@@ -36,9 +33,12 @@ Both are evaluated on test; the better (macro-F1) is persisted to `models/ensemb
 ## Repo layout
 ```
 .
-├── run.py               single entry point (UI or --cli stages)
-├── CLAUDE.md README.md ENDGOAL.md LICENSE requirements.txt .gitignore
-├── data/   raw/ demo/ (gitignored)  splits/ (generated)  sample/ (8 committed tiny images)
+├── run.py  app.py       single entry point (UI, --cli stages, --fetch-models, --check)
+├── CLAUDE.md README.md LICENSE requirements.txt requirements-dev.txt .gitignore
+├── data/
+│   ├── raw/ demo/ splits/   (gitignored / generated)
+│   ├── demo_images/         40 real test-split images, 10 per class — committed, drives the demo
+│   └── sample/              8 synthetic images, committed, for the automated tests only
 ├── src/
 │   ├── config.py      paths, CLASS_NAMES, IMG_SIZE, SEED, hyperparams, set_root()
 │   ├── status.py      what exists on disk (used by UI + CLI)
@@ -53,14 +53,26 @@ Both are evaluated on test; the better (macro-F1) is persisted to `models/ensemb
 │   └── pipeline.py    stage orchestration shared by run.py and the UI
 ├── api/       main.py (routes, /api/*), jobs.py (one background job at a time)
 ├── frontend/  index.html  css/styles.css  js/{app,api,charts}.js  img/
-├── models/  results/  notebooks/train_colab.ipynb  docs/  tests/
+├── scripts/   package_models.py  export_test_images.py  build_how_it_works.py
+│             capture_screenshots.py  audit_walkthrough.py  make_assets.py
+├── docs/      deliverables: HOW_IT_WORKS.{pdf,docx}  project_report.{pdf,docx}
+│   │          ieee_paper.pdf  DOCUMENTATION.pdf  presentation.pptx  architecture.png
+│   ├── src/              HTML/MD sources that regenerate those PDFs
+│   ├── how_it_works_src/ figures for the HOW_IT_WORKS build
+│   ├── screenshots/      UI captures
+│   └── audit/            results.json + preview_*/view_* reference shots
+├── models/  results/  notebooks/train_colab.ipynb  tests/
 ```
+
+Models are **not** in git. They ship as the `models.zip` asset on the pinned
+release and land in `models/` via `python run.py --fetch-models`, verified
+against `models/MODELS_SHA256.txt`.
 
 ## Commands
 ```bash
 pip install -r requirements.txt
 python run.py                                   # web UI → http://localhost:8000
-python docs/capture_screenshots.py              # Playwright screenshots of every view (app must be running)
+python scripts/capture_screenshots.py              # Playwright screenshots of every view (app must be running)
 python run.py --cli download                    # kagglehub → data/raw/
 python run.py --cli demo-data                   # 200 synthetic images → data/demo/
 python run.py --cli splits|train|ensemble|evaluate [--smoke]
@@ -96,4 +108,4 @@ Smoke mode: `data/sample/` (8 images), 1 epoch per phase, batch 4, 96 px, `weigh
 - https://arxiv.org/abs/2105.03995 — Mondal et al., weighted CNN ensemble for ALL
 
 ## Build order
-P0 scaffold → P1 data → P2 models+train → P3 ensemble+predict → P4 evaluate → P5 gradcam → P6 Streamlit app → P7 Colab → P8 docs → P9 web UI (FastAPI + HTML/CSS/JS).
+P0 scaffold → P1 data → P2 models+train → P3 ensemble+predict → P4 evaluate → P5 gradcam → P6 Colab → P7 docs → P8 web UI (FastAPI + HTML/CSS/JS).
