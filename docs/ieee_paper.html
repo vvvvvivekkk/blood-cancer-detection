@@ -110,6 +110,13 @@
   }
   th { font-weight: bold; background: #f0f0f0; }
 
+  table.wide-table {
+    column-span: all;
+    width: 80%;
+    margin: 10pt auto;
+    font-size: 8.5pt;
+  }
+
   .figure {
     text-align: center;
     margin: 10pt 0;
@@ -173,6 +180,13 @@
 <!-- ===== AUTHORS ===== -->
 <div class="author-grid">
   <div class="author-block">
+    <div class="name">A. Divya Reddy</div>
+    <div class="dept">Dept. of Artificial Intelligence &amp; ML,</div>
+    <div class="inst">Mallareddy University</div>
+    <div class="inst">Maisammaguda, Hyderabad, India</div>
+    <div class="email">areddy.divya@mallareddyuniversity.ac.in</div>
+  </div>
+  <div class="author-block">
     <div class="name">G. Revathi</div>
     <div class="dept">Dept. of Artificial Intelligence &amp; ML,</div>
     <div class="inst">Mallareddy University</div>
@@ -192,13 +206,6 @@
     <div class="inst">Mallareddy University</div>
     <div class="inst">Maisammaguda, Hyderabad, India</div>
     <div class="email">Prashanthyadav0819@gmail.com</div>
-  </div>
-  <div class="author-block">
-    <div class="name">A. Divya Reddy</div>
-    <div class="dept">Dept. of Artificial Intelligence &amp; ML,</div>
-    <div class="inst">Mallareddy University</div>
-    <div class="inst">Maisammaguda, Hyderabad, India</div>
-    <div class="email">areddy.divya@mallareddyuniversity.ac.in</div>
   </div>
 </div>
 
@@ -329,7 +336,9 @@
 <h3>A. Individual Backbone and Ensemble Performance</h3>
 <p class="no-indent">We ran the whole pipeline on the Kaggle dataset using a Google Colab T4 GPU. Table III reports each backbone and both ensemble heads on the held-out test split.</p>
 
-<table>
+</div><!-- end two-column temporarily for wide table -->
+
+<table class="wide-table">
 <caption><span class="label">TABLE III.</span> Model Performance on Test Split (15%, Stratified, Seed 42)</caption>
 <tr><th>Model</th><th>Accuracy</th><th>Macro P</th><th>Macro R</th><th>Macro F1</th><th>Kappa</th><th>ROC-AUC</th></tr>
 <tr><td>MobileNetV2</td><td>0.9363</td><td>0.9378</td><td>0.9350</td><td>0.9358</td><td>0.9149</td><td>0.9912</td></tr>
@@ -338,6 +347,8 @@
 <tr style="font-weight:bold"><td>Weighted Voting</td><td>0.9650</td><td>0.9657</td><td>0.9644</td><td>0.9648</td><td>0.9533</td><td>0.9964</td></tr>
 <tr><td>Stacked Ensemble</td><td>0.9609</td><td>0.9618</td><td>0.9602</td><td>0.9608</td><td>0.9478</td><td>0.9957</td></tr>
 </table>
+
+<div class="two-column">
 
 <p>DenseNet121 was the strongest single backbone at 95.68% accuracy. Weighted voting pushed that to 96.50%, a gain of 0.82 percentage points, and both ensembles cleared the 96% accuracy and 0.95 macro-F1 marks.</p>
 
