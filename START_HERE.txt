@@ -1,0 +1,92 @@
+===========================================================================
+  BLOOD CANCER DETECTION  -  START HERE
+===========================================================================
+
+  A tool that looks at a microscope image of a blood smear and predicts
+  which of four Acute Lymphoblastic Leukaemia (ALL) classes it belongs to,
+  shows how confident it is, and highlights the cells it looked at.
+
+  Research / educational project. NOT a medical device. Not for clinical use.
+
+
+---------------------------------------------------------------------------
+  WHAT YOU NEED
+---------------------------------------------------------------------------
+
+  * A Windows or Mac laptop
+  * An internet connection for the FIRST run (to download the software)
+  * About 4 GB of free memory (RAM)
+  * About 2 GB of free disk space
+
+  No Kaggle account, no graphics card, and no training needed -
+  the trained models are already included in this folder.
+
+
+---------------------------------------------------------------------------
+  SETUP  (first time only)
+---------------------------------------------------------------------------
+
+  1. Install Python 3.12 from  https://www.python.org/downloads/
+        >> On Windows, on the very first screen,
+           TICK the box "Add Python to PATH".  (This matters.)
+
+  2. Unzip this folder anywhere you like - for example, your Desktop.
+
+  3. Start it:
+        Windows :  double-click  setup.bat
+        Mac     :  open a Terminal in this folder and run  ./setup.sh
+
+     This installs everything and then starts the app.
+     It takes about 10-15 minutes the first time, mostly downloading.
+
+  4. Your web browser opens at  http://localhost:8000
+        Log in with     username: admin     password: admin
+
+
+---------------------------------------------------------------------------
+  EVERY TIME AFTER
+---------------------------------------------------------------------------
+
+        Windows :  double-click  run.bat
+        Mac     :  run  ./run.sh
+
+  (Setup only needs to be done once.)
+
+
+---------------------------------------------------------------------------
+  WHAT YOU CAN DO
+---------------------------------------------------------------------------
+
+  PREVIEW
+      Upload a blood-smear image, or pick one of the 40 built-in example
+      images. You get back:
+        - the predicted class
+        - a confidence flag (green = confident, amber = review recommended,
+          red = refer to a specialist)
+        - a heatmap showing which cells the model looked at
+
+  PERFORMANCE ANALYSIS  /  CHART
+      The saved results: accuracy, confusion matrices, and charts.
+
+  The other pages (Data, Train) are for rebuilding the models from scratch
+  and are not needed to use the tool.
+
+
+---------------------------------------------------------------------------
+  IF SOMETHING GOES WRONG
+---------------------------------------------------------------------------
+
+  "python is not recognised" (Windows)
+      Python was installed without being added to PATH. Reinstall Python
+      and TICK "Add Python to PATH" on the first screen, then run setup again.
+
+  "port 8000 is already in use"
+      Another program is using that address. Close it, or start the app on a
+      different port:  python app.py --port 8001
+      then open  http://localhost:8001
+
+  The first run is slow / looks stuck
+      It is downloading the software (TensorFlow is large). Let it finish -
+      this only happens once.
+
+===========================================================================

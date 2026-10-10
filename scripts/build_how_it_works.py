@@ -1142,20 +1142,41 @@ def build_story():
     story.append(h1("11. Installation"))
     story.append(
         p(
-            "This section explains how to set up the software on a computer. "
-            "Python 3.10–3.12 must be installed first. No GPU is required — "
-            "the trained models run on a normal laptop CPU."
-        )
-    )
-    story.append(
-        p(
-            "Setup comes in three tiers. Tier 1 is the only one most people need: it gets the "
-            "system running with real images in about five minutes and requires no Kaggle "
-            "account. Tiers 2 and 3 are optional."
+            f"The simplest way to run this tool needs no commands and no technical knowledge. "
+            f"The one-page {code('START_HERE.txt')} in the main folder covers it, and this chapter "
+            f"repeats it with a little more detail. No graphics card and no Kaggle account are "
+            f"needed — the trained models are already included."
         )
     )
 
-    story.append(h2("Tier 1 — Demo in 5 Minutes (default)"))
+    story.append(h2("What You Need"))
+    story.append(bullet("A Windows or Mac laptop."))
+    story.append(bullet("An internet connection for the first run (to download the software)."))
+    story.append(bullet("About 4 GB of free memory and 2 GB of free disk space."))
+
+    story.append(h2("Setup (first time only)"))
+    story.append(p(
+        f"1. Install Python 3.12 from python.org. {bold('On Windows, tick the box')} "
+        f"“Add Python to PATH” on the first screen of the installer."))
+    story.append(p("2. Unzip the project folder anywhere, for example onto the Desktop."))
+    story.append(p(
+        f"3. Start it: on Windows double-click {code('setup.bat')}; on a Mac open a Terminal in "
+        f"the folder and run {code('./setup.sh')}. This installs everything and then launches the "
+        f"app. It takes about 10–15 minutes the first time, mostly downloading."))
+    story.append(p(
+        f"4. Your browser opens at http://localhost:8000. Log in with {bold('admin / admin')}."))
+    story.append(p(
+        f"{bold('Every time after that,')} just double-click {code('run.bat')} (Windows) or run "
+        f"{code('./run.sh')} (Mac). Setup only needs doing once."))
+    story.append(p(
+        f"If {code('python')} “is not recognised” on Windows, Python was installed without "
+        f"being added to PATH — reinstall it and tick that box. If port 8000 is already in use, "
+        f"start the app on another port with {code('python app.py --port 8001')} and open "
+        f"http://localhost:8001 instead."))
+
+    story.append(h2("The Same Thing From a Command Line"))
+    story.append(p(
+        "The setup script simply runs these five commands; you can run them by hand instead:"))
     story.append(p("git clone https://github.com/vvvvvivekkk/blood-cancer-detection.git", style_code))
     story.append(p("cd blood-cancer-detection", style_code))
     story.append(p("pip install -r requirements.txt", style_code))
@@ -1639,14 +1660,26 @@ def _get_docx_sections():
 
     # 11
     s.append(("h1", "11. Installation"))
-    s.append(("p", "Setup comes in three tiers; Tier 1 is the only one most people need."))
-    s.append(("p", "Tier 1 — Demo in 5 minutes (no Kaggle account, no downloads): git clone, "
-              "pip install -r requirements.txt, python run.py --fetch-models, python app.py. "
-              "The trained models ship inside the repository, split across "
-              "dist/models.zip.part00 and part01 because a single 105 MB file is awkward to "
-              "store in Git. --fetch-models joins the parts, verifies them against SHA-256 "
-              "checksums and unpacks them into models/ — entirely offline, in a few seconds. "
-              "Log in with admin / admin. The Preview page is already stocked with the 40 "
+    s.append(("p", "The simplest way to run this tool needs no commands. The one-page "
+              "START_HERE.txt in the main folder covers it; this chapter repeats it. No graphics "
+              "card and no Kaggle account are needed - the trained models are already included."))
+    s.append(("p", "What you need: a Windows or Mac laptop; internet for the first run; about "
+              "4 GB of free memory and 2 GB of free disk space."))
+    s.append(("p", "Setup (first time only): (1) Install Python 3.12 from python.org - on Windows "
+              "tick \"Add Python to PATH\" on the first screen. (2) Unzip the folder anywhere. "
+              "(3) On Windows double-click setup.bat; on a Mac run ./setup.sh. This installs "
+              "everything and starts the app (about 10-15 minutes the first time, mostly "
+              "downloading). (4) Your browser opens at http://localhost:8000; log in with "
+              "admin / admin."))
+    s.append(("p", "Every time after that, double-click run.bat (Windows) or run ./run.sh (Mac). "
+              "Setup only needs doing once."))
+    s.append(("p", "Troubleshooting: if python \"is not recognised\" on Windows, reinstall Python "
+              "and tick \"Add Python to PATH\". If port 8000 is in use, run "
+              "python app.py --port 8001 and open http://localhost:8001."))
+    s.append(("p", "From a command line instead, the setup script simply runs: git clone, "
+              "pip install -r requirements.txt, python run.py --fetch-models, python app.py. The "
+              "models ship inside the folder as dist/models.zip.part00 and part01; --fetch-models "
+              "joins and verifies them offline. The Preview page is pre-stocked with the 40 "
               "bundled demo images, so predictions work immediately."))
     s.append(("p", "Tier 2 — Full test set (optional, ~6 GB): add a Kaggle API token on the Data "
               "page or in ~/.kaggle, press Download, then run "
