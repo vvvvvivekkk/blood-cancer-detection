@@ -295,6 +295,8 @@ def build_story():
     story.append(Spacer(1, 1 * cm))
     story.append(p("How It Works — A Non-Technical Guide", style_subtitle))
     story.append(Spacer(1, 0.5 * cm))
+    story.append(p("Divya Reddy", style_subtitle))
+    story.append(Spacer(1, 0.3 * cm))
     story.append(p("Prepared for the client", style_subtitle))
     story.append(Spacer(1, 1 * cm))
     story.append(
@@ -599,7 +601,7 @@ def build_story():
         for cls_name, vals in pc.items():
             bb_rows.append([p(cls_name, style_body), p(pct(vals["precision"]), style_body),
                            p(pct(vals["recall"]), style_body), p(f4(vals["f1-score"]), style_body)])
-        story.append(make_table(bb_headers, bb_rows, col_widths=[5.5*cm, 3*cm, 3*cm, 3*cm]))
+        story.append(make_table(bb_headers, bb_rows, col_widths=[6*cm, 2.8*cm, 2.8*cm, 2.8*cm]))
 
     story.append(h2("Two-Phase Fine-Tuning"))
     story.append(
@@ -775,7 +777,7 @@ def build_story():
             p(f4(m["kappa"]), style_body),
             p(f4(m["roc_auc_ovr"]), style_body),
         ])
-    story.append(make_table(comp_headers, comp_rows, col_widths=[3.5 * cm, 2.3 * cm, 2.3 * cm, 2.3 * cm, 2.3 * cm, 2.3 * cm]))
+    story.append(make_table(comp_headers, comp_rows, col_widths=[4.5 * cm, 2.1 * cm, 2.1 * cm, 2.1 * cm, 2.1 * cm, 2.1 * cm]))
     story.append(Spacer(1, 0.3 * cm))
     story.append(
         p(
@@ -806,7 +808,7 @@ def build_story():
             p(f4(vals["f1-score"]), style_body),
             p(str(int(vals["support"])), style_body),
         ])
-    story.append(make_table(pc_headers, pc_rows, col_widths=[5 * cm, 2.5 * cm, 2.5 * cm, 2.5 * cm, 2.5 * cm]))
+    story.append(make_table(pc_headers, pc_rows, col_widths=[5.5 * cm, 2.2 * cm, 2.2 * cm, 2.2 * cm, 2.2 * cm]))
     story.append(Spacer(1, 0.3 * cm))
     story.append(
         p(
@@ -1268,6 +1270,10 @@ def build_docx():
     sub = doc.add_paragraph("How It Works — A Non-Technical Guide")
     sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
     for run in sub.runs:
+        run.font.size = Pt(14)
+    author = doc.add_paragraph("Divya Reddy")
+    author.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    for run in author.runs:
         run.font.size = Pt(14)
     disc = doc.add_paragraph(
         "IMPORTANT NOTICE: This software is a research and educational project. "
