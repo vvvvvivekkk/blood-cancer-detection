@@ -68,6 +68,36 @@ def comparison_table(metrics, best=None):
     return "\n".join(rows) + "\n" + note + "\n"
 
 
+def uncertainty_table(metrics):
+    """'Uncertainty' sub-table for comparison_table.md. Empty string when MC has not been run."""
+    u = metrics.get("uncertainty")
+    if not u:
+        return ""
+    f = lambda v, s="": "–" if v is None else f"{v}{s}"  # noqa: E731
+    t = u["thresholds"]
+    rows = [
+        "", "### Uncertainty (MC Dropout)", "",
+        "| Measure | Value |", "|---|---|",
+        f"| Stochastic passes (T) | {u['passes']} |",
+        f"| Review threshold (entropy ≥) | {t['review']:.4f} |",
+        f"| Low-confidence threshold (entropy ≥) | {t['low_confidence']:.4f} |",
+        f"| Errors flagged | {f(u['errors_flagged_pct'], '%')} |",
+        f"| Correct predictions flagged | {f(u['correct_flagged_pct'], '%')} |",
+        f"| Mean entropy, correct | {f(u['mean_entropy_correct'])} |",
+        f"| Mean entropy, wrong | {f(u['mean_entropy_wrong'])} |",
+        f"| Entropy AUROC as wrong-prediction detector | {f(u['entropy_auroc_vs_wrong'])} |",
+        f"| Mutual-information AUROC | {f(u['mi_auroc_vs_wrong'])} |",
+        f"| Flags (HIGH / MEDIUM / LOW) | {u['flag_counts']['HIGH']} / "
+        f"{u['flag_counts']['MEDIUM']} / {u['flag_counts']['LOW']} |",
+        "",
+        f"_Thresholds calibrated on the **{t['calibrated_on']}** split ({t['method']} method); "
+        f"the numbers above are measured on test._",
+    ]
+    if u.get("caveat"):
+        rows += ["", f"> **Note:** {u['caveat']}"]
+    return "\n".join(rows) + "\n"
+
+
 def write_readme_table(metrics=None, readme=None):
     metrics = metrics or json.loads(C.METRICS_JSON.read_text())
     readme = readme or C.README_PATH
@@ -145,8 +175,19 @@ def fallback_attempts(per_model, probs_test, y_test):
     if not (vp.is_file() and vl.is_file()):
         return ""
     val, yv = np.load(vp), np.load(vl)  # val: (n_backbones, Nval, 4) in C.BACKBONES order
+    if val.shape[0] != len(C.BACKBONES) or val.shape[1] != len(yv):
+        return ""  # shape does not match the current backbones/labels
+    if len(yv) != len(load_split("val")):
+        # Left over from an earlier run on a different split (e.g. smoke): the variants below would
+        # be fitted to the wrong images. Re-run the ensemble stage to refresh them.
+        return ""
     vprob = {n: val[i] for i, n in enumerate(C.BACKBONES)}
-    wvote = lambda P, w: sum((w[n] / sum(w.values())) * P[n] for n in w)  # noqa: E731
+
+    def wvote(P, w):
+        total = sum(w.values())
+        if total <= 0:  # every weight clamped to zero -> this variant carries no information
+            return None
+        return sum((w[n] / total) * P[n] for n in w)
     f1v = {n: macro_f1(yv, vprob[n]) for n in C.BACKBONES}
     kapv = {n: max(cohen_kappa_score(yv, vprob[n].argmax(1), labels=LABELS), 0.0) for n in C.BACKBONES}
     variants = {
@@ -157,12 +198,17 @@ def fallback_attempts(per_model, probs_test, y_test):
     }
     rows, chosen = [], None
     for label, w in variants.items():
-        v_mf1 = macro_f1(yv, wvote(vprob, w))
-        t_acc = float(accuracy_score(y_test, wvote(probs_test, w).argmax(1)))
-        t_mf1 = macro_f1(y_test, wvote(probs_test, w))
+        v_probs, t_probs = wvote(vprob, w), wvote(probs_test, w)
+        if v_probs is None or t_probs is None:
+            continue  # degenerate weights (all zero); nothing to compare
+        v_mf1 = macro_f1(yv, v_probs)
+        t_acc = float(accuracy_score(y_test, t_probs.argmax(1)))
+        t_mf1 = macro_f1(y_test, t_probs)
         rows.append((label, v_mf1, t_acc, t_mf1))
         if chosen is None or v_mf1 > chosen[1]:
             chosen = (label, v_mf1, t_acc, t_mf1)
+    if chosen is None:
+        return ""  # no usable variant
     top = max(C.BACKBONES, key=lambda k: per_model[k]["accuracy"])
     top_acc = per_model[top]["accuracy"]
     margin = 100 * (chosen[2] - top_acc)
@@ -190,6 +236,98 @@ def fallback_attempts(per_model, probs_test, y_test):
 
 
 # ---------- figures ----------
+
+def uncertainty_section(test, y, progress_cb=None, T=None):
+    """MC Dropout on the test split, ONCE. Thresholds come from models/ (calibrated on val).
+
+    Returns the metrics dict, or None if calibration has not been run.
+    """
+    import time
+
+    from src import uncertainty as U
+
+    th = U.load_thresholds()
+    # An uncalibrated run still exercises the full MC path (that is what smoke mode checks); the
+    # flags just come from the neutral fallback thresholds and are marked as such.
+    T = T or int(th.get("passes") or C.MC_PASSES)
+    t0 = time.time()
+    passes = U.mc_ensemble_probs(test, T, progress_cb=progress_cb)
+    mins = (time.time() - t0) / 60
+    m = U.metrics_from_passes(passes)
+    ent, mi = m["entropy"], m["mutual_information"]
+    wrong = m["mean_probs"].argmax(1) != y
+    flagged = np.array([U.flag_for(e, th) for e in ent]) != "HIGH"
+    n_wrong = int(wrong.sum())
+
+    out = {
+        "passes": int(T),
+        "mc_minutes": round(mins, 1),
+        "thresholds": {"review": th["review"], "low_confidence": th["low_confidence"],
+                       "method": th.get("method", "fallback"), "calibrated_on": th.get("split", "val"),
+                       "uncalibrated": bool(th.get("uncalibrated"))},
+        "n_test": int(len(y)),
+        "n_wrong": n_wrong,
+        "mc_accuracy": round(float((~wrong).mean()), 4),
+        "errors_flagged_pct": round(float(flagged[wrong].mean() * 100), 1) if n_wrong else None,
+        "correct_flagged_pct": round(float(flagged[~wrong].mean() * 100), 1) if (~wrong).any() else None,
+        "mean_entropy_correct": round(float(ent[~wrong].mean()), 4) if (~wrong).any() else None,
+        "mean_entropy_wrong": round(float(ent[wrong].mean()), 4) if n_wrong else None,
+        "mean_mi_correct": round(float(mi[~wrong].mean()), 4) if (~wrong).any() else None,
+        "mean_mi_wrong": round(float(mi[wrong].mean()), 4) if n_wrong else None,
+        "entropy_auroc_vs_wrong": round(U.auroc(ent, wrong), 4) if n_wrong else None,
+        "mi_auroc_vs_wrong": round(U.auroc(mi, wrong), 4) if n_wrong else None,
+        "flag_counts": {f: int((np.array([U.flag_for(e, th) for e in ent]) == f).sum()) for f in U.FLAGS},
+    }
+    if th.get("uncalibrated"):
+        out["caveat"] = ("Thresholds are the uncalibrated fallback — run the ensemble stage on real "
+                         "data to calibrate them on the validation split. Flags here are not meaningful.")
+    elif n_wrong and n_wrong < U.MIN_WRONG_FOR_YOUDEN:
+        out["caveat"] = (f"Only {n_wrong} test error(s); the flagged-error rate and AUROC are "
+                         f"estimated from that many positives and carry wide uncertainty.")
+    np.savez_compressed(C.RESULTS_DIR / "uncertainty_test.npz",
+                        entropy=ent, mutual_information=mi, top_std=m["top_std"], wrong=wrong, y=y)
+    plot_uncertainty_hist(ent, wrong, th)
+    plot_uncertainty_reliability(m["mean_probs"], y)
+    return out
+
+
+def plot_uncertainty_hist(ent, wrong, th):
+    fig, ax = plt.subplots(figsize=(7, 4))
+    bins = np.linspace(0, 1, 41)
+    ax.hist(ent[~wrong], bins=bins, color="#1b7a3e", alpha=0.75, label=f"correct (n={(~wrong).sum()})")
+    if wrong.any():
+        ax.hist(ent[wrong], bins=bins, color="#b42318", alpha=0.85, label=f"wrong (n={wrong.sum()})")
+    ax.axvline(th["review"], color="#6b4e00", ls="--", lw=1.6, label=f"review ≥ {th['review']:.3f}")
+    ax.axvline(th["low_confidence"], color="#b42318", ls=":", lw=1.8,
+               label=f"low confidence ≥ {th['low_confidence']:.3f}")
+    ax.set(xlabel="normalised predictive entropy", ylabel="images",
+           title="MC Dropout uncertainty: correct vs misclassified")
+    ax.set_yscale("log")
+    ax.legend(fontsize=8)
+    _save(fig, "uncertainty_hist.png")
+
+
+def plot_uncertainty_reliability(probs, y, n_bins=10):
+    """Accuracy vs confidence. A calibrated model tracks the diagonal."""
+    conf = probs.max(1)
+    correct = probs.argmax(1) == y
+    edges = np.linspace(0, 1, n_bins + 1)
+    xs, ys, ns = [], [], []
+    for lo, hi in zip(edges[:-1], edges[1:]):
+        m = (conf >= lo) & (conf < hi if hi < 1 else conf <= hi)
+        if m.sum():
+            xs.append(conf[m].mean()); ys.append(correct[m].mean()); ns.append(int(m.sum()))
+    fig, ax = plt.subplots(figsize=(5.2, 4.6))
+    ax.plot([0, 1], [0, 1], ls="--", c="#888", lw=1, label="perfect calibration")
+    ax.plot(xs, ys, "o-", c="#0b6a8f", lw=2, label="MC Dropout mean")
+    for x, yv, n in zip(xs, ys, ns):
+        ax.annotate(str(n), (x, yv), textcoords="offset points", xytext=(0, 7), ha="center", fontsize=7)
+    ece = float(sum(n * abs(x - yv) for x, yv, n in zip(xs, ys, ns)) / max(sum(ns), 1))
+    ax.set(xlabel="mean predicted confidence", ylabel="accuracy in bin",
+           title=f"Reliability (ECE = {ece:.3f})", xlim=(0, 1.02), ylim=(0, 1.02))
+    ax.legend(fontsize=8, loc="lower right")
+    _save(fig, "uncertainty_reliability.png")
+
 
 def _save(fig, name):
     C.FIGURES_DIR.mkdir(parents=True, exist_ok=True)
@@ -301,9 +439,22 @@ def run(progress_cb=None, write_readme=False):
         "best_ensemble": best,
     }
     C.RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    C.MODE_FILE.write_text(best)  # before MC: the uncertainty run combines with the SELECTED head
+
+    smoke = bool(meta.get("smoke"))
+    unc = uncertainty_section(test, y, progress_cb=progress_cb, T=C.MC_PASSES_SMOKE if smoke else None)
+    if unc:
+        metrics["uncertainty"] = unc
+        if unc["errors_flagged_pct"] is not None and unc["correct_flagged_pct"] is not None:
+            auroc = unc["entropy_auroc_vs_wrong"]
+            print(f"flagged {unc['errors_flagged_pct']}% of errors at a cost of "
+                  f"{unc['correct_flagged_pct']}% of correct predictions "
+                  f"(T={unc['passes']}" + (f", entropy AUROC {auroc}" if auroc is not None else "") + ")",
+                  flush=True)
+
     C.METRICS_JSON.write_text(json.dumps(metrics, indent=2))
-    C.MODE_FILE.write_text(best)
-    (C.RESULTS_DIR / "comparison_table.md").write_text(comparison_table(metrics, best), encoding="utf-8")
+    (C.RESULTS_DIR / "comparison_table.md").write_text(
+        comparison_table(metrics, best) + uncertainty_table(metrics), encoding="utf-8")
     (C.RESULTS_DIR / "NOTES.md").write_text(notes(metrics), encoding="utf-8")
     (C.RESULTS_DIR / "run_info.json").write_text(json.dumps(run_info(metrics, voting), indent=2))
     np.savez(C.RESULTS_DIR / "test_probs.npz", y=y, **{n: probs[n] for n in C.BACKBONES})

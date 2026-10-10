@@ -105,6 +105,17 @@ def fit_all(progress_cb=None):
     fit_stacking(probs, y)
     if progress_cb:
         progress_cb("ensemble", 1, {"val_macro_f1": info["val_macro_f1"], "weights": info["weights"]})
+
+    # MC Dropout thresholds belong here: this is the one stage that is allowed to see val, and the
+    # ensemble head they combine through has just been fitted.
+    from src.uncertainty import calibrate
+    smoke = bool((json.loads((C.SPLITS_DIR / "meta.json").read_text()) if (C.SPLITS_DIR / "meta.json").is_file()
+                  else {}).get("smoke"))
+    info["uncertainty"] = calibrate(df=val, T=C.MC_PASSES_SMOKE if smoke else None,
+                                    progress_cb=progress_cb)
+    if progress_cb:
+        progress_cb("ensemble", 2, {"uncertainty_thresholds": {
+            k: info["uncertainty"][k] for k in ("review", "low_confidence", "method")}})
     return info
 
 

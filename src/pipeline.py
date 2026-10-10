@@ -27,7 +27,8 @@ def run(stage, smoke=False, progress_cb=None, models=None, epochs=None):
     if stage == "evaluate":
         from src.evaluate import run as evaluate
         m = evaluate(progress_cb=progress_cb)
-        return (C.RESULTS_DIR / "comparison_table.md").read_text() + f"\nbest ensemble: {m['best_ensemble']}"
+        return ((C.RESULTS_DIR / "comparison_table.md").read_text(encoding="utf-8")
+                + f"\nbest ensemble: {m['best_ensemble']}")
     if stage == "all":
         out = []
         if not smoke:

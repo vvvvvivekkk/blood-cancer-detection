@@ -3,7 +3,7 @@
     "source": "kaggle",
     "smoke": false,
     "n_test": 487,
-    "generated_at": "2026-10-09 13:48 UTC",
+    "generated_at": "2026-10-10 14:55 UTC",
     "voting_weights": {
       "mobilenetv2": 0.3418159652934133,
       "efficientnetb0": 0.31135082184827917,
@@ -327,5 +327,33 @@
       ]
     }
   },
-  "best_ensemble": "stacking"
+  "best_ensemble": "stacking",
+  "uncertainty": {
+    "passes": 30,
+    "mc_minutes": 17.6,
+    "thresholds": {
+      "review": 0.176013,
+      "low_confidence": 0.551871,
+      "method": "percentile",
+      "calibrated_on": "val",
+      "uncalibrated": false
+    },
+    "n_test": 487,
+    "n_wrong": 6,
+    "mc_accuracy": 0.9877,
+    "errors_flagged_pct": 83.3,
+    "correct_flagged_pct": 5.6,
+    "mean_entropy_correct": 0.0837,
+    "mean_entropy_wrong": 0.4671,
+    "mean_mi_correct": 0.0051,
+    "mean_mi_wrong": 0.0799,
+    "entropy_auroc_vs_wrong": 0.9653,
+    "mi_auroc_vs_wrong": 0.9473,
+    "flag_counts": {
+      "HIGH": 455,
+      "MEDIUM": 24,
+      "LOW": 8
+    },
+    "caveat": "Only 6 test error(s); the flagged-error rate and AUROC are estimated from that many positives and carry wide uncertainty."
+  }
 }

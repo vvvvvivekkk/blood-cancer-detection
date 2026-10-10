@@ -23,12 +23,17 @@ def _as_dict(p):
     return {c: float(v) for c, v in zip(C.CLASS_NAMES, p)}
 
 
-def predict_image(img, with_gradcam=False):
+def predict_image(img, with_gradcam=False, with_uncertainty=True, mc_passes=None):
     """img: path, PIL image or uint8 array.
 
     Returns {class, class_idx, confidence, probs, per_model_probs, votes, mode, mode_label, active_mode,
-    gradcam_model[, gradcam]}. mode is 'single' when models/active_mode.txt selects MobileNetV2 alone, else
-    'stacking' / 'voting' (from models/ensemble_mode.txt) or 'mean' when no ensemble is fitted.
+    gradcam_model[, gradcam][, uncertainty]}. mode is 'single' when models/active_mode.txt selects
+    MobileNetV2 alone, else 'stacking' / 'voting' (from models/ensemble_mode.txt) or 'mean' when no
+    ensemble is fitted.
+
+    with_uncertainty adds MC Dropout entropy / mutual information / flag. Preview uses
+    config.MC_PASSES_PREVIEW (10) rather than the full MC_PASSES (30) so the page stays responsive;
+    evaluate and Batch Test use the full count. The reported `passes` says which was used.
     """
     active = C.get_active_mode()
     single = active == C.SINGLE_MODEL
@@ -70,6 +75,12 @@ def predict_image(img, with_gradcam=False):
         "active_mode": active,
         "gradcam_model": cam_model,
     }
+    if with_uncertainty:
+        from src.uncertainty import uncertainty_for_image
+        u = uncertainty_for_image(img, models=models, T=mc_passes)
+        u.pop("mean_probs", None)  # the reported probs stay the deterministic ones, for consistency
+        out["uncertainty"] = u
+
     if with_gradcam:
         from src.gradcam import gradcam_overlay
         m = models[cam_model]

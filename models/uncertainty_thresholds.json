@@ -1,0 +1,30 @@
+{
+  "passes": 30,
+  "split": "val",
+  "n_images": 486,
+  "n_wrong": 1,
+  "method": "percentile",
+  "review": 0.176013,
+  "low_confidence": 0.551871,
+  "rationale": {
+    "review": "95th percentile of entropy among correct validation predictions",
+    "low_confidence": "99th percentile of entropy among correct validation predictions",
+    "caveat": "Only 1 validation error(s): too few for Youden's J, which would be fitted to 1 point(s). Thresholds taken from the 95th/99th percentile of the 485 correct predictions instead. Error-detection rates measured on this split are not meaningful at this sample size \u2014 see the test-split numbers."
+  },
+  "candidates": {
+    "youden": 0.56386,
+    "youden_j": 0.9918,
+    "pctl95_correct": 0.176013,
+    "pctl99_correct": 0.551871
+  },
+  "val": {
+    "accuracy": 0.9979,
+    "errors_flagged_pct": 100.0,
+    "correct_flagged_pct": 5.2,
+    "mean_entropy_correct": 0.0788,
+    "mean_entropy_wrong": 0.5648,
+    "entropy_auroc_vs_wrong": 0.9918,
+    "mi_auroc_vs_wrong": 1.0,
+    "auroc_note": "AUROC estimated from 1 wrong prediction(s); not reliable."
+  }
+}

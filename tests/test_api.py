@@ -221,3 +221,27 @@ def test_smoke_run_refuses_to_overwrite_real_models(empty_root):
         r = client.post(url, json=body)
         assert r.status_code == 409 and "overwrite" in r.json()["detail"], (url, r.text)
     assert C.model_path("mobilenetv2").read_bytes() == b"real"
+
+
+def test_predict_returns_mc_dropout_uncertainty(smoke):
+    with open(SAMPLE, "rb") as f:
+        d = client.post("/api/predict", files={"file": (SAMPLE.name, f, "image/png")}).json()
+    u = d["uncertainty"]
+    assert set(u) >= {"entropy", "mutual_information", "flag", "passes", "pass_top_probs", "thresholds"}
+    assert 0 <= u["entropy"] <= 1 and u["mutual_information"] >= 0
+    assert u["mutual_information"] <= u["entropy"] + 1e-6
+    assert u["flag"] in ("HIGH", "MEDIUM", "LOW")
+    assert u["passes"] == C.MC_PASSES_PREVIEW and len(u["pass_top_probs"]) == u["passes"]
+    assert all(0 <= p <= 1 for p in u["pass_top_probs"])
+    assert u["thresholds"]["review"] <= u["thresholds"]["low_confidence"]
+
+
+def test_results_exposes_uncertainty_key(smoke):
+    wait(client.post("/api/evaluate").json()["job_id"])
+    r = client.get("/api/results").json()
+    assert "uncertainty" in r  # None until thresholds are calibrated; the key must always be present
+    u = r["uncertainty"]
+    if u:
+        assert u["passes"] >= 1 and 0 <= u["correct_flagged_pct"] <= 100
+        assert set(u["flag_counts"]) == {"HIGH", "MEDIUM", "LOW"}
+        assert sum(u["flag_counts"].values()) == u["n_test"]

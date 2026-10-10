@@ -48,6 +48,12 @@ LR_FINE = 1e-5
 UNFREEZE_FRACTION = 0.30
 DROPOUT = 0.3
 EARLY_STOP_PATIENCE = 5
+
+# MC Dropout uncertainty. Passes are stochastic forward passes with head_dropout left active.
+MC_PASSES = 30          # calibration (val) and evaluation (test)
+MC_PASSES_PREVIEW = 10  # single-image Preview: fewer passes to keep the UI responsive
+MC_PASSES_SMOKE = 2     # smoke runs: enough to prove the passes differ, nothing more
+MC_SEED = 1234          # per-pass seeding so a repeated run reproduces the same flags
 LR_PLATEAU_PATIENCE = 2
 LR_PLATEAU_FACTOR = 0.2
 MIN_LR = 1e-7
@@ -95,7 +101,7 @@ def set_root(root):
     """Point every artifact path at `root` (tests use a tmp dir)."""
     global ROOT, DATA_DIR, RAW_DIR, DEMO_DIR, SPLITS_DIR, MODELS_DIR, RESULTS_DIR
     global HISTORY_DIR, FIGURES_DIR, WEIGHTS_JSON, META_CLF, MODE_FILE, METRICS_JSON, ACTIVE_MODE_FILE, TEST_IMAGES_DIR
-    global DEMO_IMAGES_DIR, OOD_STATS
+    global DEMO_IMAGES_DIR, OOD_STATS, UNCERTAINTY_THRESHOLDS
     ROOT = Path(root)
     DATA_DIR = ROOT / "data"
     RAW_DIR = DATA_DIR / "raw"
@@ -113,6 +119,7 @@ def set_root(root):
     DEMO_IMAGES_DIR = ROOT / "data" / "demo_images"
     METRICS_JSON = RESULTS_DIR / "metrics.json"
     OOD_STATS = MODELS_DIR / "ood_stats.json"
+    UNCERTAINTY_THRESHOLDS = MODELS_DIR / "uncertainty_thresholds.json"
 
 
 set_root(os.environ.get("BCE_ROOT", REPO))

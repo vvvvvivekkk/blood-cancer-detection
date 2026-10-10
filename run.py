@@ -39,6 +39,11 @@ def main():
     a = ap.parse_args()
     os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
     sys.path.insert(0, str(ROOT))
+    for _stream in (sys.stdout, sys.stderr):  # tables use ≥; a cp1252 Windows console would crash on print
+        try:
+            _stream.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
 
     if a.fetch_models is not None:
         from scripts.package_models import fetch_models
