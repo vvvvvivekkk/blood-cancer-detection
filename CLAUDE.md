@@ -64,9 +64,11 @@ Both are evaluated on test; the better (macro-F1) is persisted to `models/ensemb
 ├── models/  results/  notebooks/train_colab.ipynb  tests/
 ```
 
-Models are **not** in git. They ship as the `models.zip` asset on the pinned
-release and land in `models/` via `python run.py --fetch-models`, verified
-against `models/MODELS_SHA256.txt`.
+Models ship **in the repo** as `dist/models.zip.part00` + `part01` (plain
+blobs, each < 100 MB — no Git LFS). `python run.py --fetch-models` joins the
+parts offline, verifies them against `models/MODELS_SHA256.txt` and unpacks
+into `models/`. A URL argument still overrides, falling back to a release
+asset. The `.keras` files themselves stay gitignored.
 
 ## Commands
 ```bash

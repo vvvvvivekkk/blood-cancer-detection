@@ -1085,11 +1085,15 @@ def build_story():
     story.append(Spacer(1, 0.3 * cm))
     story.append(
         p(
-            f"{code('--fetch-models')} downloads the trained models (~105 MB) from the project's "
-            f"release, checks them against the SHA-256 checksums in "
-            f"{code('models/MODELS_SHA256.txt')}, and unpacks them into {code('models/')}. "
-            f"If anything goes wrong it prints a direct download link rather than an error trace. "
-            f"You can re-verify at any time with {code('python run.py --check')}."
+            f"The trained models ship {bold('inside the repository')}, so the clone you just made "
+            f"already contains them — there is nothing to download and no account to create. "
+            f"Because a single 105 MB file is awkward to store in Git, they are split across "
+            f"{code('dist/models.zip.part00')} and {code('dist/models.zip.part01')}. "
+            f"{code('--fetch-models')} joins the parts back together, checks the result against the "
+            f"SHA-256 checksums in {code('models/MODELS_SHA256.txt')}, and unpacks them into "
+            f"{code('models/')}. The step runs entirely offline and takes a few seconds. "
+            f"You can re-verify at any time with {code('python run.py --check')}, which prints "
+            f"{code('CHECK PASS')} when every file matches."
         )
     )
     story.append(
@@ -1158,7 +1162,8 @@ def build_story():
     _where = [
         [code("models/"),
          "The three trained networks plus the ensemble weights, meta-classifier and "
-         "calibration files. Not stored in the repository — downloaded by --fetch-models."],
+         "calibration files. Unpacked here by --fetch-models from the bundled "
+         "dist/models.zip.part00/01."],
         [code("data/demo_images/"),
          "40 real blood-smear images, ten per class, held out from training. Included in "
          "the project; these are what Tier 1 demonstrates on. CC BY 4.0, Aria et al."],
@@ -1177,11 +1182,12 @@ def build_story():
     story.append(make_table(_where_headers, _where, col_widths=[4.2 * cm, 11.3 * cm]))
 
     story.append(h2("Troubleshooting"))
-    story.append(bullet(f"{bold('Download failed / 404')} — the release may not be published yet, or the "
-                        f"repository may be private. The error message prints a direct link; download "
-                        f"{code('models.zip')} by hand, unzip into {code('models/')}, then run "
-                        f"{code('python run.py --check')}."))
-    story.append(bullet(f"{bold('SHA mismatch / CHECK FAIL')} — the download is corrupt; re-run {code('--fetch-models')}."))
+    story.append(bullet(f"{bold('No models found')} — {code('--fetch-models')} needs both "
+                        f"{code('dist/models.zip.part00')} and {code('part01')}. If either is missing, "
+                        f"the clone was incomplete; re-clone the repository."))
+    story.append(bullet(f"{bold('SHA mismatch / CHECK FAIL')} — a part file is truncated or was altered. "
+                        f"Re-clone, or restore the two parts with "
+                        f"{code('git checkout -- dist/')}, then re-run {code('--fetch-models')}."))
     story.append(bullet(f"{bold('Port in use')} — {code('python run.py --port 8010')}; add {code('--no-browser')} to suppress the browser tab."))
     story.append(bullet(f"{bold('Browser tests')} — {code('pip install -r requirements-dev.txt && playwright install chromium')}."))
 
@@ -1521,19 +1527,22 @@ def _get_docx_sections():
     # 11
     s.append(("h1", "11. Installation"))
     s.append(("p", "Setup comes in three tiers; Tier 1 is the only one most people need."))
-    s.append(("p", "Tier 1 — Demo in 5 minutes (no Kaggle account): git clone, "
+    s.append(("p", "Tier 1 — Demo in 5 minutes (no Kaggle account, no downloads): git clone, "
               "pip install -r requirements.txt, python run.py --fetch-models, python app.py. "
-              "--fetch-models pulls ~105 MB of trained models from the release and verifies them "
-              "against SHA-256 checksums. Log in with admin / admin. The Preview page is already "
-              "stocked with the 40 bundled demo images, so predictions work immediately."))
+              "The trained models ship inside the repository, split across "
+              "dist/models.zip.part00 and part01 because a single 105 MB file is awkward to "
+              "store in Git. --fetch-models joins the parts, verifies them against SHA-256 "
+              "checksums and unpacks them into models/ — entirely offline, in a few seconds. "
+              "Log in with admin / admin. The Preview page is already stocked with the 40 "
+              "bundled demo images, so predictions work immediately."))
     s.append(("p", "Tier 2 — Full test set (optional, ~6 GB): add a Kaggle API token on the Data "
               "page or in ~/.kaggle, press Download, then run "
               "python run.py --cli export-test-images."))
     s.append(("p", "Tier 3 — Retrain (optional, needs Tier 2): notebooks/train_colab.ipynb on a "
               "free Colab GPU (~40 min) or python run.py --cli all on CPU (~1.5 h); copy models/ "
               "back, then python run.py --cli evaluate."))
-    s.append(("p", "What is where — models/: the trained networks, fetched from the release, not "
-              "in git. data/demo_images: 40 real held-out test images (10 per class, CC BY 4.0, "
+    s.append(("p", "What is where — models/: the trained networks, unpacked from the bundled "
+              "dist/models.zip.part00/01. data/demo_images: 40 real held-out test images (10 per class, CC BY 4.0, "
               "Aria et al.) that drive the Tier 1 demo. data/sample: 8 synthetic images for the "
               "automated tests only. results/: metrics and figures. docs/: the finished "
               "deliverables. docs/src: the sources they are generated from."))
