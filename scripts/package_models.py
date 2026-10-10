@@ -1,7 +1,8 @@
 """Package the trained models for a GitHub release, and verify a download.
 
     python scripts/package_models.py              # build dist/models.zip + models/MODELS_SHA256.txt
-    python run.py --fetch-models <url>            # download + extract a release models.zip into models/
+    python run.py --fetch-models                  # download from the default release into models/
+    python run.py --fetch-models <url>            # ... or from a URL / file:// path you supply
     python run.py --check                         # verify models/ against models/MODELS_SHA256.txt
 
 The .keras backbones and meta_clf.pkl are gitignored (too big / regenerable), so they ship as a
@@ -10,6 +11,7 @@ release asset instead. MODELS_SHA256.txt is committed so a fresh clone can verif
 import hashlib
 import io
 import sys
+import urllib.error
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -19,6 +21,11 @@ MODELS = ROOT / "models"
 DIST = ROOT / "dist"
 ZIP = DIST / "models.zip"
 SHA_FILE = MODELS / "MODELS_SHA256.txt"
+
+# Where `python run.py --fetch-models` looks when the client gives no URL.
+RELEASE_TAG = "v1.0.0"
+RELEASE_URL = ("https://github.com/vvvvvivekkk/blood-cancer-detection/"
+               f"releases/download/{RELEASE_TAG}/models.zip")
 
 # Everything the ensemble needs at inference time (no training history / caches).
 MEMBERS = ["mobilenetv2.keras", "efficientnetb0.keras", "densenet121.keras",
@@ -82,16 +89,44 @@ def check():
     return 0 if ok else 1
 
 
-def fetch_models(url):
-    """Download a release models.zip (http(s):// or file://), verify it, extract into models/."""
+def _fail(reason, url):
+    """One readable error with the manual fallback, instead of a raw traceback."""
+    print(
+        f"\nCould not fetch the models.\n"
+        f"  reason : {reason}\n"
+        f"  url    : {url}\n\n"
+        f"Download models.zip by hand from:\n"
+        f"  https://github.com/vvvvvivekkk/blood-cancer-detection/releases/tag/{RELEASE_TAG}\n"
+        f"then unzip it into {MODELS} and run:\n"
+        f"  python run.py --check\n",
+        file=sys.stderr, flush=True)
+    return 1
+
+
+def fetch_models(url=None):
+    """Download a release models.zip (http(s):// or file://), verify it, extract into models/.
+
+    With no url, pulls the pinned release asset so a fresh clone needs no arguments.
+    """
+    url = url or RELEASE_URL
     DIST.mkdir(exist_ok=True)
     print(f"Downloading {url} ...", flush=True)
-    with urllib.request.urlopen(url) as r:  # noqa: S310 - user supplies their own release URL
-        data = r.read()
+    try:
+        with urllib.request.urlopen(url) as r:  # noqa: S310 - pinned release, or a URL the user supplied
+            data = r.read()
+    except urllib.error.HTTPError as e:
+        hint = ("release or asset not found — has v1.0.0 been published, and is the repo public?"
+                if e.code == 404 else f"HTTP {e.code} {e.reason}")
+        return _fail(hint, url)
+    except (urllib.error.URLError, OSError) as e:
+        return _fail(f"could not reach the host ({e})", url)
+
     got = hashlib.sha256(data).hexdigest()
     exp = _expected().get("models.zip")
     if exp and got != exp:
-        raise ValueError(f"models.zip sha256 mismatch: expected {exp[:12]}…, got {got[:12]}…")
+        return _fail(
+            f"sha256 mismatch — expected {exp[:12]}…, got {got[:12]}… "
+            f"(download was truncated, or the asset was replaced)", url)
     ZIP.write_bytes(data)
     MODELS.mkdir(exist_ok=True)
     with zipfile.ZipFile(io.BytesIO(data)) as z:

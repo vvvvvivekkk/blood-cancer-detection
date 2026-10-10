@@ -3,6 +3,8 @@
     python run.py                                   -> web app (FastAPI + HTML/JS) at http://localhost:8000
     python run.py --cli {download,demo-data,splits,train,ensemble,evaluate,all} [--smoke]
     python run.py --cli export-test-images          -> 10 test images per class into test_images/
+    python run.py --fetch-models [URL]              -> trained models into models/ (default: pinned release)
+    python run.py --check                           -> verify models/ against models/MODELS_SHA256.txt
 """
 import argparse
 import json
@@ -25,7 +27,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--cli", choices=["download", "demo-data", "splits", "train", "ensemble", "evaluate", "all",
                                       "export-test-images"])
-    ap.add_argument("--fetch-models", metavar="URL", help="download + extract a release models.zip into models/")
+    ap.add_argument("--fetch-models", nargs="?", const="", metavar="URL",
+                    help="download + extract models.zip into models/ (default: the pinned release)")
     ap.add_argument("--check", action="store_true", help="verify models/ against models/MODELS_SHA256.txt")
     ap.add_argument("--smoke", action="store_true", help="data/sample, 1 epoch/phase, batch 4, CPU, offline")
     ap.add_argument("--models", nargs="+", help="backbones to train (default: all three)")
@@ -37,9 +40,9 @@ def main():
     os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
     sys.path.insert(0, str(ROOT))
 
-    if a.fetch_models:
+    if a.fetch_models is not None:
         from scripts.package_models import fetch_models
-        return fetch_models(a.fetch_models)
+        return fetch_models(a.fetch_models or None)
     if a.check:
         from scripts.package_models import check
         return check()
