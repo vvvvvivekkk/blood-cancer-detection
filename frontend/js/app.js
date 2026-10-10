@@ -459,6 +459,7 @@ async function renderEvaluate() {
   setImg($("#roc-img"), r.figures["roc_ensemble.png"]);
   $("#roc-model").textContent = dn(r.best_ensemble);
   setImg($("#gradcam-img"), r.figures["gradcam_examples.png"]);
+  renderUncertaintyCard(r);
 
   const sel = $("#pc-model");
   const keep = sel.value || r.best_ensemble;
@@ -520,6 +521,59 @@ async function analyze() {
   }
 }
 
+function renderUncertaintyCard(r) {
+  const card = $("#unc-card");
+  const u = r.uncertainty;
+  if (!u) { card.hidden = true; return; }
+  card.hidden = false;
+  const pc = (v) => (v === null || v === undefined ? "–" : `${v}%`);
+  const nv = (v) => (v === null || v === undefined ? "–" : num(v, 4));
+  $("#unc-passes-note").textContent = `${u.passes} stochastic passes · thresholds from the ${u.thresholds.calibrated_on} split`;
+  $("#unc-table").innerHTML = `<tbody>
+    <tr><td>Errors flagged</td><td class="num">${pc(u.errors_flagged_pct)}</td></tr>
+    <tr><td>Correct predictions flagged</td><td class="num">${pc(u.correct_flagged_pct)}</td></tr>
+    <tr><td>Mean entropy, correct</td><td class="num">${nv(u.mean_entropy_correct)}</td></tr>
+    <tr><td>Mean entropy, wrong</td><td class="num">${nv(u.mean_entropy_wrong)}</td></tr>
+    <tr><td>Entropy AUROC (wrong-prediction detector)</td><td class="num">${nv(u.entropy_auroc_vs_wrong)}</td></tr>
+    <tr><td>Mutual-information AUROC</td><td class="num">${nv(u.mi_auroc_vs_wrong)}</td></tr>
+    <tr><td>Flags: HIGH / MEDIUM / LOW</td><td class="num">${u.flag_counts.HIGH} / ${u.flag_counts.MEDIUM} / ${u.flag_counts.LOW}</td></tr>
+    <tr><td>Review threshold (entropy ≥)</td><td class="num">${nv(u.thresholds.review)}</td></tr>
+    <tr><td>Low-confidence threshold (entropy ≥)</td><td class="num">${nv(u.thresholds.low_confidence)}</td></tr>
+  </tbody>`;
+  setImg($("#unc-hist-img"), r.figures["uncertainty_hist.png"]);
+  setImg($("#unc-rel-img"), r.figures["uncertainty_reliability.png"]);
+  const cav = $("#unc-caveat");
+  cav.hidden = !u.caveat;
+  cav.textContent = u.caveat || "";
+}
+
+// MC Dropout flag. Independent of the backbone-disagreement and OOD warnings: this one asks
+// whether the SAME ensemble answers the same way when dropout keeps resampling it.
+const FLAG_TEXT = {
+  HIGH: ["High confidence", "The passes agree. No review suggested."],
+  MEDIUM: ["Medium confidence", "Review recommended — the passes disagree more than usual."],
+  LOW: ["Low confidence", "Refer to a specialist — the passes scatter widely."],
+};
+
+function showUncertainty(u) {
+  const box = $("#uncertainty");
+  const badge = $("#conf-flag");
+  if (!u) { box.hidden = true; badge.hidden = true; return; }
+  const [label, advice] = FLAG_TEXT[u.flag] || FLAG_TEXT.MEDIUM;
+  badge.hidden = false;
+  badge.textContent = label;
+  badge.className = `badge conf-flag flag-${u.flag.toLowerCase()}`;
+  box.hidden = false;
+  $("#unc-passes").textContent = `agreement across ${u.passes} passes`;
+  $("#unc-advice").textContent = advice;
+  $("#unc-entropy").textContent = num(u.entropy, 3);
+  $("#unc-mi").textContent = num(u.mutual_information, 3);
+  const bars = u.pass_top_probs || [];
+  $("#unc-spark").innerHTML = bars
+    .map((p, i) => `<span class="spark-bar" style="--h:${Math.max(0.04, p)}" title="pass ${i + 1}: ${pct(p)}"></span>`)
+    .join("");
+}
+
 function showResult(r) {
   $("#result-empty").hidden = true;
   $("#result-body").hidden = false;
@@ -528,6 +582,7 @@ function showResult(r) {
   $("#ring-fg").style.strokeDashoffset = RING_C * (1 - r.confidence);
   $("#ring-label").textContent = `${Math.round(100 * r.confidence)}%`;
   $("#mode-badge").textContent = r.mode_label;
+  showUncertainty(r.uncertainty);
   const top = r.class;
   $("#probs").innerHTML = Object.entries(r.probs).map(([c, p]) => `
     <div class="prob ${c === top ? "top" : ""}"><div class="prob-head"><span>${esc(c)}</span><span>${pct(p)}</span></div>

@@ -281,3 +281,27 @@ def test_single_model_toggle_changes_predict_and_evaluate(smoke, ui):
         assert not errors, errors
     finally:
         C.ACTIVE_MODE_FILE.unlink(missing_ok=True)
+
+
+def test_preview_shows_mc_dropout_confidence_flag(smoke, ui):
+    """The badge, the spark-bars and the two metrics must all render on a real prediction."""
+    page, errors = ui
+    go(page, "preview")
+    page.set_input_files("#file-input", str(SAMPLE))
+    page.wait_for_selector("#preview:not([hidden])")
+    page.click("#btn-submit")
+    page.wait_for_selector("#result-body:not([hidden])", timeout=120_000)
+
+    page.wait_for_selector("#conf-flag:not([hidden])", timeout=120_000)
+    flag = page.get_attribute("#conf-flag", "class")
+    assert any(f"flag-{lvl}" in flag for lvl in ("high", "medium", "low")), flag
+    assert page.inner_text("#conf-flag").strip()
+
+    assert page.is_visible("#uncertainty")
+    assert f"{C.MC_PASSES_PREVIEW} passes" in page.inner_text("#unc-passes")
+    # one spark bar per stochastic pass
+    assert page.locator("#unc-spark .spark-bar").count() == C.MC_PASSES_PREVIEW
+    for sel in ("#unc-entropy", "#unc-mi"):
+        assert float(page.inner_text(sel)) >= 0
+    assert float(page.inner_text("#unc-mi")) <= float(page.inner_text("#unc-entropy")) + 1e-6
+    assert not errors, errors

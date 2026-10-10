@@ -242,6 +242,15 @@
             <div class="card"><div class="card-head"><h3>Accuracy and macro-F1</h3></div><div class="chart-box"><canvas id="chart-metrics" role="img" aria-label="Accuracy and macro-F1 per model"></canvas></div></div>
             <div class="card"><div class="card-head"><h3>ROC, one vs rest</h3><span class="muted" id="roc-model"></span></div><img class="figure" id="roc-img" hidden alt="One-vs-rest ROC curves of the selected ensemble"></div>
           </div>
+          <div class="card" id="unc-card" hidden>
+            <div class="card-head"><h3>Uncertainty (MC Dropout)</h3><span class="muted" id="unc-passes-note"></span></div>
+            <div class="table-wrap"><table class="table" id="unc-table"></table></div>
+            <div class="grid-2">
+              <img class="figure" id="unc-hist-img" hidden alt="Entropy histogram, correct versus misclassified, with the threshold lines">
+              <img class="figure" id="unc-rel-img" hidden alt="Reliability diagram: accuracy against predicted confidence">
+            </div>
+            <p class="muted" id="unc-caveat" hidden></p>
+          </div>
           <div class="grid-2">
             <div class="card">
               <div class="card-head"><h3>Per-class metrics</h3>
@@ -305,7 +314,20 @@
                   <p class="eyebrow">Predicted class</p>
                   <p class="result-class" id="result-class"></p>
                   <span class="badge badge-accent" id="mode-badge"></span>
+                  <span class="badge conf-flag" id="conf-flag" hidden></span>
                 </div>
+              </div>
+              <div class="uncertainty" id="uncertainty" hidden>
+                <div class="unc-head">
+                  <span class="unc-title">MC Dropout confidence</span>
+                  <span class="unc-sub" id="unc-passes"></span>
+                </div>
+                <p class="unc-advice" id="unc-advice"></p>
+                <div class="spark" id="unc-spark" role="img" aria-label="Top-class probability on each stochastic pass"></div>
+                <dl class="unc-stats">
+                  <div><dt title="Total spread of the averaged prediction across the passes, 0 = identical every time, 1 = no information.">Entropy</dt><dd id="unc-entropy">–</dd></div>
+                  <div><dt title="The part of that spread caused by the passes disagreeing with each other, rather than the four classes genuinely overlapping.">Mutual information</dt><dd id="unc-mi">–</dd></div>
+                </dl>
               </div>
               <div class="probs" id="probs"></div>
               <div class="compare">

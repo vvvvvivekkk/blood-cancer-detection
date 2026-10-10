@@ -374,3 +374,37 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* ---------- MC Dropout confidence flag ---------- */
+.conf-flag { margin-left: var(--s1); }
+.flag-high   { background: var(--success-soft); color: var(--success);   border-color: transparent; }
+.flag-medium { background: var(--warn-soft);    color: var(--warn-text); border-color: transparent; }
+.flag-low    { background: var(--danger-soft);  color: var(--danger);    border-color: transparent; }
+
+.uncertainty {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  padding: var(--s2);
+  margin-bottom: var(--s3);
+}
+.unc-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s2); }
+.unc-title { font-weight: 600; font-size: 14px; }
+.unc-sub { color: var(--muted); font-size: 12px; }
+.unc-advice { color: var(--muted); font-size: 13px; margin: 4px 0 10px; }
+
+/* one bar per stochastic pass: height = that pass's top-class probability */
+.spark { display: flex; align-items: flex-end; gap: 3px; height: 34px; margin-bottom: 10px; }
+.spark-bar {
+  --h: 0;                       /* per-pass top-class probability, set inline by app.js */
+  flex: 1 1 0;
+  height: calc(var(--h) * 100%);
+  min-height: 2px;
+  background: var(--accent);
+  border-radius: 2px 2px 0 0;
+}
+
+.unc-stats { display: flex; gap: var(--s3); margin: 0; }
+.unc-stats > div { display: flex; flex-direction: column; gap: 2px; }
+.unc-stats dt { font-size: 12px; color: var(--muted); cursor: help; border-bottom: 1px dotted var(--border); }
+.unc-stats dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; }

@@ -380,6 +380,7 @@ def results():
     notes = C.RESULTS_DIR / "NOTES.md"
     return {"available": True, "meta": m["meta"], "best_ensemble": best, "ensemble_mode": status()["ensemble_mode"],
             "active_mode": C.get_active_mode(), "active_key": active_key,
+            "uncertainty": m.get("uncertainty"),
             "rows": rows, "per_class": {k: v["per_class"] for k, v in m["models"].items()},
             "confusion": {k: v["confusion_matrix"] for k, v in m["models"].items()},
             "best_backbone": top["key"] if top else None,
