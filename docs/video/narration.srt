@@ -1,0 +1,68 @@
+1
+00:00:00,000 --> 00:00:06,000
+This is a hybrid ensemble deep learning system that identifies blood cancer
+subtypes from microscope images of blood smears.
+
+2
+00:00:05,400 --> 00:00:14,099
+Acute Lymphoblastic Leukemia is the most common childhood cancer. Diagnosis
+starts with a blood smear under a microscope, which is slow, and the three
+malignant stages look very similar. Our goal is to classify an image into
+Benign, early Pre-B, Pre-B or Pro-B automatically, and to show why.
+
+3
+00:00:13,800 --> 00:00:22,500
+Every image is sent to three separately fine-tuned convolutional networks:
+MobileNetV2, EfficientNetB0 and DenseNet121. Each outputs four probabilities.
+The twelve numbers are combined in two ways, weighted soft voting and a stacked
+logistic-regression meta-classifier. That pair is the hybrid ensemble.
+
+4
+00:00:22,199 --> 00:00:29,899
+On the Preview page the user chooses a blood smear image and presses Submit.
+Within about two seconds the ensemble returns the predicted class and a
+confidence. This image is Benign at 97 percent.
+
+5
+00:00:29,599 --> 00:00:36,299
+The probability bars show how the confidence is shared across all four classes,
+so a close call is visible at a glance. This image is an early Pre-B malignant
+cell.
+
+6
+00:00:35,999 --> 00:00:42,699
+Underneath, each backbone's own vote and confidence are listed. If the three
+networks disagree, the app flags the result for manual review.
+
+7
+00:00:42,399 --> 00:00:50,099
+The Grad-CAM heatmap explains the decision. Red marks the regions that most
+increased the predicted class score: the large nucleated blast cells, not the
+background.
+
+8
+00:00:49,799 --> 00:00:56,499
+Across the test set, correct predictions show focused heat on the cell; the few
+misclassified cases show diffuse heat, which is itself a useful warning sign.
+
+9
+00:00:56,199 --> 00:01:04,899
+On 487 unseen test images, MobileNetV2 reached 96.92 %, EfficientNetB0 91.38 %
+and DenseNet121 98.97 %. The stacked ensemble reached 98.97 % accuracy with a
+macro F1 of 0.988.
+
+10
+00:01:04,599 --> 00:01:11,299
+The confusion matrix shows only five errors in 487 images. Every class is
+recalled above 98 percent, and no benign image was ever called malignant.
+
+11
+00:01:11,000 --> 00:01:16,700
+The ROC curves confirm it: an area under the curve of 1.000, meaning the
+ensemble separates all four classes almost perfectly.
+
+12
+00:01:16,400 --> 00:01:25,100
+In summary: a stacked hybrid ensemble reaching 98.97 % accuracy on held-out
+data, with explanations on every prediction, delivered as a complete web
+application. This is a research project and is not for clinical use. Thank you.
