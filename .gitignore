@@ -3,6 +3,7 @@ data/demo/
 data/splits/
 models/*.keras
 models/*.pkl
+models/active_mode.txt
 results/*.npy
 results/*.npz
 __pycache__/
