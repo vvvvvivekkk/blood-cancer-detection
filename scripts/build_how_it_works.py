@@ -883,8 +883,87 @@ def build_story():
             )
         )
     )
+    # ── 7b. HOW SURE IS IT? (MC Dropout) ──
+    _u = metrics.get("uncertainty")
+    if _u:
+        story.append(h2("How Sure Is It? (Uncertainty)"))
+        story.append(
+            p(
+                f"An accuracy figure describes the system across hundreds of images. It does not tell "
+                f"you whether to trust {bold('this one')}. A network can report 97% on an image it has "
+                f"essentially guessed, because the score only says which class won, not how steady that "
+                f"answer is."
+            )
+        )
+        story.append(
+            p(
+                f"So the system asks the same question repeatedly. Each image is run "
+                f"{bold(str(_u['passes']) + ' times')}, and on every run a different random slice of the "
+                f"network is switched off. If all {_u['passes']} runs land on the same class, the answer "
+                f"is stable. If they scatter across different classes, the model is guessing — and the "
+                f"system says so instead of hiding it behind a single number."
+            )
+        )
+        story.append(
+            p(
+                f"That scatter becomes two numbers. {bold('Entropy')} measures how spread out the "
+                f"averaged answer is, from 0 (identical every time) to 1 (no information). "
+                f"{bold('Mutual information')} isolates the part of that spread caused by the runs "
+                f"disagreeing with each other, as opposed to two cell types genuinely looking alike — "
+                f"the difference between \"the model is unsure\" and \"this image is inherently "
+                f"ambiguous\"."
+            )
+        )
+        story.append(
+            p(
+                f"Each prediction then gets one of three labels: {bold('HIGH')} confidence (accept it), "
+                f"{bold('MEDIUM')} (review recommended) or {bold('LOW')} (refer to a specialist). The "
+                f"cut-points were chosen on the validation images only — never on the test images used "
+                f"to report accuracy — so the thresholds cannot have been tuned to flatter the result."
+            )
+        )
+        _n_ok = _u["n_test"] - _u["n_wrong"]
+        _unc_rows = [
+            [f"Images run through {_u['passes']} passes", str(_u["n_test"])],
+            ["Average entropy when the answer was right", f"{_u['mean_entropy_correct']:.3f}"],
+            ["Average entropy when the answer was wrong", f"{_u['mean_entropy_wrong']:.3f}"],
+            ["Mistakes the system flagged for review",
+             f"{_u['errors_flagged_pct']:.0f}% ({round(_u['errors_flagged_pct']/100*_u['n_wrong'])} of {_u['n_wrong']})"],
+            ["Correct answers it also flagged (the cost)",
+             f"{_u['correct_flagged_pct']:.1f}% ({round(_u['correct_flagged_pct']/100*_n_ok)} of {_n_ok})"],
+            ["Flags across the test set (HIGH / MEDIUM / LOW)",
+             f"{_u['flag_counts']['HIGH']} / {_u['flag_counts']['MEDIUM']} / {_u['flag_counts']['LOW']}"],
+        ]
+        story.append(make_table(["What was measured", "Result"], _unc_rows,
+                                col_widths=[9.5 * cm, 6 * cm]))
+        story.append(
+            p(
+                f"In plain terms: wrong answers were about "
+                f"{_u['mean_entropy_wrong']/_u['mean_entropy_correct']:.0f} times more unsettled than "
+                f"right ones, and screening the flagged cases would have caught "
+                f"{_u['errors_flagged_pct']:.0f}% of the mistakes while sending roughly one image in "
+                f"{round(100/max(_u['correct_flagged_pct'], 0.1))} for a second look."
+            )
+        )
+        story.append(
+            p(
+                f"{bold('Read this with care.')} The test set contained only {_u['n_wrong']} mistakes, so "
+                f"the {_u['errors_flagged_pct']:.0f}% figure rests on {_u['n_wrong']} cases. The direction "
+                f"is clear and consistent, but the precise percentage would move on a larger sample."
+            )
+        )
+        for _fig, _cap in (("uncertainty_hist.png",
+                            "Entropy of correct answers (green) against mistakes (red). The dashed lines "
+                            "are the review and refer thresholds. The two groups sit in different places, "
+                            "which is what makes the flag useful."),
+                           ("uncertainty_reliability.png",
+                            "Stated confidence against how often the system was actually right. Points on "
+                            "the diagonal mean the confidence figure can be taken at face value.")):
+            story.extend(fig(FIGURES / _fig, _cap))
+
     story.append(h2("Honest Limitations"))
     story.append(bullet("The ensemble does not beat the best single backbone (DenseNet121) by a meaningful margin on this dataset."))
+    story.append(bullet(f"The uncertainty flag was validated against only {(metrics.get('uncertainty') or {}).get('n_wrong', 'a handful of')} mistakes in the test set, so its hit rate is indicative rather than precise."))
     story.append(bullet("All images come from a single source. Performance on images from a different hospital, microscope or staining protocol is unknown."))
     story.append(bullet("The dataset is moderately small (3,242 images). Larger datasets could improve and stress-test the model."))
     story.append(bullet("The system has not undergone clinical validation or regulatory review."))
@@ -1491,6 +1570,40 @@ def _get_docx_sections():
     s.append(("table", comp_h, comp_r))
     s.append(("img", str(FIGURES / "cm_stacking.png"), "Figure 2. Confusion matrix for Stacking Ensemble."))
     s.append(("img", str(FIGURES / "roc_ensemble.png"), "Figure 3. ROC curves."))
+    _u = metrics.get("uncertainty")
+    if _u:
+        _n_ok = _u["n_test"] - _u["n_wrong"]
+        s.append(("h2", "How Sure Is It? (Uncertainty)"))
+        s.append(("p", f"An accuracy figure describes the system across hundreds of images; it does not "
+                       f"say whether to trust one particular answer. So each image is run {_u['passes']} "
+                       f"times with a different random slice of the network switched off each time. If "
+                       f"the runs agree the answer is stable; if they scatter, the model is guessing, and "
+                       f"the system says so rather than hiding it behind one number."))
+        s.append(("p", "That scatter becomes two numbers. Entropy measures how spread out the averaged "
+                       "answer is (0 = identical every time, 1 = no information). Mutual information "
+                       "isolates the part caused by the runs disagreeing with each other, as opposed to "
+                       "two cell types genuinely looking alike. Each prediction is then labelled HIGH "
+                       "confidence (accept), MEDIUM (review recommended) or LOW (refer to a specialist). "
+                       "The cut-points were set on the validation images only, never on the test images "
+                       "used to report accuracy."))
+        s.append(("table", ["What was measured", "Result"], [
+            [f"Images run through {_u['passes']} passes", str(_u["n_test"])],
+            ["Average entropy when right", f"{_u['mean_entropy_correct']:.3f}"],
+            ["Average entropy when wrong", f"{_u['mean_entropy_wrong']:.3f}"],
+            ["Mistakes flagged for review",
+             f"{_u['errors_flagged_pct']:.0f}% ({round(_u['errors_flagged_pct']/100*_u['n_wrong'])} of {_u['n_wrong']})"],
+            ["Correct answers also flagged (the cost)",
+             f"{_u['correct_flagged_pct']:.1f}% ({round(_u['correct_flagged_pct']/100*_n_ok)} of {_n_ok})"],
+            ["Flags: HIGH / MEDIUM / LOW",
+             f"{_u['flag_counts']['HIGH']} / {_u['flag_counts']['MEDIUM']} / {_u['flag_counts']['LOW']}"],
+        ]))
+        s.append(("p", f"Read with care: the test set held only {_u['n_wrong']} mistakes, so the "
+                       f"{_u['errors_flagged_pct']:.0f}% figure rests on {_u['n_wrong']} cases. The "
+                       f"direction is consistent, but the exact percentage would move on a larger sample."))
+        s.append(("img", str(FIGURES / "uncertainty_hist.png"),
+                  "Figure 3b. Entropy of correct answers against mistakes, with the two thresholds."))
+        s.append(("img", str(FIGURES / "uncertainty_reliability.png"),
+                  "Figure 3c. Stated confidence against actual accuracy."))
     s.append(("img", str(FIGURES / "training_curves_densenet121.png"), "Figure 4. Training curves for DenseNet121."))
     s.append(("img", str(FIGURES / "model_comparison_bar.png"), "Figure 5. Accuracy comparison."))
 

@@ -220,7 +220,7 @@
 <!-- ===== BODY ===== -->
 <div class="two-column">
 
-<p class="abstract"><span class="lbl">Abstract</span>&mdash;Acute Lymphoblastic Leukemia (ALL) is the most common blood cancer in children, and picking out the right subtype early from a peripheral blood smear gives clinicians a head start on treatment. This paper describes a hybrid ensemble classifier built from three pretrained CNN backbones, MobileNetV2, EfficientNetB0 and DenseNet121, combined in two ways: weighted soft voting and a stacked logistic-regression meta-classifier. We fine-tuned each backbone on the Blood Cells Cancer (ALL) dataset (3,242 images across four classes) using a two-phase transfer-learning schedule. On the held-out test split the weighted voting ensemble reached 96.50% accuracy and a 0.9648 macro-F1. What we add on top is an uncertainty layer. Monte Carlo (MC) Dropout runs 30 stochastic forward passes per image, and the spread across those passes becomes two numbers, predictive entropy and mutual information, that tell apart the predictions the model is sure of from the ones it is not. On the test split this flagged 78% of the misclassified images as uncertain while raising a flag on only 4.3% of the correct ones. Grad-CAM overlays show the network looking at nuclear morphology, the same feature a hematologist examines. The whole pipeline runs as a web application that reports an uncertainty flag with every prediction.</p>
+<p class="abstract"><span class="lbl">Abstract</span>&mdash;Acute Lymphoblastic Leukemia (ALL) is the most common blood cancer in children, and picking out the right subtype early from a peripheral blood smear gives clinicians a head start on treatment. This paper describes a hybrid ensemble classifier built from three pretrained CNN backbones, MobileNetV2, EfficientNetB0 and DenseNet121, combined in two ways: weighted soft voting and a stacked logistic-regression meta-classifier. We fine-tuned each backbone on the Blood Cells Cancer (ALL) dataset (3,242 images across four classes) using a two-phase transfer-learning schedule. On the held-out test split the stacked ensemble reached 98.97% accuracy and a 0.9883 macro-F1, matching the strongest single backbone (DenseNet121). What we add on top is an uncertainty layer. Monte Carlo (MC) Dropout runs T = 30 stochastic forward passes per image, and the spread across those passes becomes two numbers, predictive entropy and mutual information, that tell apart the predictions the model is sure of from the ones it is not. Thresholds are calibrated on the validation split alone. On the test split this flagged 83% of the misclassified images as uncertain while raising a flag on 5.6% of the correct ones, with the entropy acting as a wrong-prediction detector at AUROC 0.965. With only 6 test errors these rates carry wide confidence intervals. Grad-CAM overlays show the network looking at nuclear morphology, the same feature a hematologist examines. The whole pipeline runs as a web application that reports an uncertainty flag with every prediction.</p>
 
 <p class="keywords"><span class="lbl">Index Terms</span>&mdash;Acute lymphoblastic leukemia, blood cancer, ensemble learning, transfer learning, MC Dropout, uncertainty quantification, Grad-CAM, MobileNetV2, EfficientNetB0, DenseNet121.</p>
 
@@ -257,7 +257,7 @@
 
 <!-- Fig. 1: Architecture diagram -->
 <div class="figure">
-  <img src="architecture.png" alt="System Architecture">
+  <img src="../architecture.png" alt="System Architecture">
   <div class="fig-caption"><span class="label">Fig. 1.</span> Overall architecture of the proposed hybrid ensemble system. Three pretrained CNN backbones are fine-tuned independently, combined via weighted voting or stacked meta-classification, and augmented with Grad-CAM visualization and MC Dropout uncertainty estimation.</div>
 </div>
 
@@ -317,14 +317,14 @@
   I[y; &theta; | x] = H[y | x] &minus; E<sub>&theta;</sub>[H[y | x, &theta;]] &nbsp;&nbsp;&nbsp; (3)
 </div>
 
-<p class="no-indent">The predictive entropy is normalized by log(4) and mapped to a three-level confidence flag:</p>
+<p class="no-indent">The predictive entropy is normalized by log(4) and mapped to a three-level confidence flag. Both cut-points are calibrated on the validation split only: the validation set contains a single misclassification, too few to fit a Youden's-J operating point, so the thresholds are taken from the 95th and 99th percentile of entropy over the 485 correct validation predictions. Test images are never used to set them.</p>
 
 <table>
 <caption><span class="label">TABLE II.</span> Confidence Flag Thresholds</caption>
 <tr><th>Normalized Entropy</th><th>Flag</th><th>Clinical Action</th></tr>
-<tr><td>&lt; 0.2</td><td>HIGH</td><td>Accept prediction</td></tr>
-<tr><td>0.2 &ndash; 0.5</td><td>MEDIUM</td><td>Review recommended</td></tr>
-<tr><td>&gt; 0.5</td><td>LOW</td><td>Refer to specialist</td></tr>
+<tr><td>&lt; 0.176</td><td>HIGH</td><td>Accept prediction</td></tr>
+<tr><td>0.176 &ndash; 0.552</td><td>MEDIUM</td><td>Review recommended</td></tr>
+<tr><td>&ge; 0.552</td><td>LOW</td><td>Refer to specialist</td></tr>
 </table>
 
 <p>Anything flagged LOW goes to a human specialist instead of being acted on directly. This selective referral step is what we consider the main contribution of the work.</p>
@@ -342,26 +342,26 @@
 <h2>V. Results and Analysis</h2>
 
 <h3>A. Individual Backbone and Ensemble Performance</h3>
-<p class="no-indent">We ran the whole pipeline on the Kaggle dataset using a Google Colab T4 GPU. Table III reports each backbone and both ensemble heads on the held-out test split.</p>
+<p class="no-indent">We ran the whole pipeline on the Kaggle dataset; all numbers below were measured on CPU. Table III reports each backbone and both ensemble heads on the held-out test split.</p>
 
 <table class="col-table">
 <caption><span class="label">TABLE III.</span> Model Performance on Test Split (15%, Stratified, Seed 42)</caption>
 <tr><th>Model</th><th>Acc.</th><th>P</th><th>R</th><th>F1</th><th>&kappa;</th><th>AUC</th></tr>
-<tr><td>MobileNetV2</td><td>0.9363</td><td>0.9378</td><td>0.9350</td><td>0.9358</td><td>0.9149</td><td>0.9912</td></tr>
-<tr><td>EfficientNetB0</td><td>0.9486</td><td>0.9502</td><td>0.9471</td><td>0.9484</td><td>0.9311</td><td>0.9934</td></tr>
-<tr><td>DenseNet121</td><td>0.9568</td><td>0.9573</td><td>0.9565</td><td>0.9567</td><td>0.9422</td><td>0.9951</td></tr>
-<tr style="font-weight:bold"><td>Weighted Voting</td><td>0.9650</td><td>0.9657</td><td>0.9644</td><td>0.9648</td><td>0.9533</td><td>0.9964</td></tr>
-<tr><td>Stacked Ensemble</td><td>0.9609</td><td>0.9618</td><td>0.9602</td><td>0.9608</td><td>0.9478</td><td>0.9957</td></tr>
+<tr><td>MobileNetV2</td><td>0.9692</td><td>0.9626</td><td>0.9711</td><td>0.9662</td><td>0.9583</td><td>0.9981</td></tr>
+<tr><td>EfficientNetB0</td><td>0.9138</td><td>0.9240</td><td>0.9124</td><td>0.9114</td><td>0.8828</td><td>0.9973</td></tr>
+<tr><td>DenseNet121</td><td>0.9897</td><td>0.9868</td><td>0.9914</td><td>0.9890</td><td>0.9861</td><td>0.9994</td></tr>
+<tr><td>Weighted Voting</td><td>0.9836</td><td>0.9789</td><td>0.9832</td><td>0.9809</td><td>0.9777</td><td>0.9995</td></tr>
+<tr style="font-weight:bold"><td>Stacked Ensemble</td><td>0.9897</td><td>0.9856</td><td>0.9914</td><td>0.9883</td><td>0.9861</td><td>0.9997</td></tr>
 </table>
 
 
-<p>DenseNet121 was the strongest single backbone at 95.68% accuracy. Weighted voting pushed that to 96.50%, a gain of 0.82 percentage points, and both ensembles cleared the 96% accuracy and 0.95 macro-F1 marks.</p>
+<p>DenseNet121 was the strongest single backbone at 98.97% accuracy. The stacked ensemble matched it at 98.97% with a slightly lower macro-F1 (0.9883 against 0.9890), and weighted voting reached 98.36%. Both ensemble heads cleared the 96% accuracy and 0.95 macro-F1 marks, but neither beat the best single backbone — on this dataset the ensemble buys calibration and an uncertainty signal rather than raw accuracy.</p>
 
 <h3>B. Training Curves</h3>
 
 <!-- Fig. 2: Training curves -->
 <div class="figure">
-  <img src="../results/figures/training_curves_densenet121.png" alt="Training Curves DenseNet121">
+  <img src="../../results/figures/training_curves_densenet121.png" alt="Training Curves DenseNet121">
   <div class="fig-caption"><span class="label">Fig. 2.</span> Training and validation accuracy/loss curves for DenseNet121 across the two-phase fine-tuning schedule.</div>
 </div>
 
@@ -370,7 +370,7 @@
 
 <!-- Fig. 3: Confusion matrix -->
 <div class="figure">
-  <img src="../results/figures/cm_voting.png" alt="Confusion Matrix">
+  <img src="../../results/figures/cm_voting.png" alt="Confusion Matrix">
   <div class="fig-caption"><span class="label">Fig. 3.</span> Confusion matrix for the weighted voting ensemble on the test split. Most misclassifications occur between the morphologically similar early Pre-B and Pre-B subtypes.</div>
 </div>
 
@@ -379,7 +379,7 @@
 
 <!-- Fig. 4: ROC curves -->
 <div class="figure">
-  <img src="../results/figures/roc_ensemble.png" alt="ROC Curves">
+  <img src="../../results/figures/roc_ensemble.png" alt="ROC Curves">
   <div class="fig-caption"><span class="label">Fig. 4.</span> Receiver Operating Characteristic (ROC) curves for the weighted voting ensemble (one-vs-rest). Macro-averaged AUC = 0.9964.</div>
 </div>
 
@@ -388,7 +388,7 @@
 
 <!-- Fig. 5: Grad-CAM examples -->
 <div class="figure">
-  <img src="../results/figures/gradcam_examples.png" alt="Grad-CAM Examples">
+  <img src="../../results/figures/gradcam_examples.png" alt="Grad-CAM Examples">
   <div class="fig-caption"><span class="label">Fig. 5.</span> Grad-CAM visualization examples for each class. The heatmap (red = high attention) shows the model focusing on nuclear morphology and chromatin patterns, consistent with clinical diagnostic criteria.</div>
 </div>
 
@@ -397,21 +397,21 @@
 
 <!-- Fig. 6: Model comparison bar chart -->
 <div class="figure">
-  <img src="../results/figures/model_comparison_bar.png" alt="Model Comparison">
+  <img src="../../results/figures/model_comparison_bar.png" alt="Model Comparison">
   <div class="fig-caption"><span class="label">Fig. 6.</span> Bar chart comparing accuracy, macro-F1, and ROC-AUC across all individual backbones and ensemble methods.</div>
 </div>
 
 <h3>G. MC Dropout Uncertainty Results (Novelty)</h3>
-<p class="no-indent">Table IV breaks the MC Dropout results down by whether the prediction was right. Correct images averaged a normalized entropy of 0.08; wrong ones averaged 0.41. That roughly 5&times; gap is what lets the metric tell the two apart.</p>
+<p class="no-indent">Table IV breaks the MC Dropout results down by whether the prediction was right. Correct images averaged a normalized entropy of 0.08; the 6 misclassified ones averaged 0.47. That gap of roughly 5.6&times; is what lets the metric tell the two apart, and it is what the entropy AUROC of 0.965 measures.</p>
 
 <table>
 <caption><span class="label">TABLE IV.</span> MC Dropout Uncertainty by Prediction Correctness</caption>
 <tr><th>Category</th><th>Count</th><th>Avg Norm. Entropy</th><th>Avg Mutual Info</th><th>% Flagged</th></tr>
-<tr><td>Correct</td><td>~469</td><td>0.08</td><td>0.02</td><td>4.3%</td></tr>
-<tr><td>Incorrect</td><td>~17</td><td>0.41</td><td>0.19</td><td>78%</td></tr>
+<tr><td>Correct</td><td>481</td><td>0.084</td><td>0.005</td><td>5.6%</td></tr>
+<tr><td>Incorrect</td><td>6</td><td>0.467</td><td>0.080</td><td>83.3%</td></tr>
 </table>
 
-<p>78% of the misclassified samples drew a MEDIUM or LOW flag. Routing just those cases to a person would catch most of the errors while sending only 4.3% of all predictions on for review.</p>
+<p>83% of the misclassified samples (5 of 6) drew a MEDIUM or LOW flag, against 5.6% of the correct ones. Across the 487 test images the flags split 455 HIGH / 24 MEDIUM / 8 LOW. Routing the flagged cases to a person would catch most errors while sending about one image in eighteen for review. With only 6 errors in the split, the 83% figure rests on 6 positives and should be read as indicative, not precise.</p>
 
 <h3>H. Comparative Evaluation</h3>
 
@@ -422,7 +422,7 @@
 <tr><td>Mondal et al. [8]</td><td>Multi-CNN ensemble</td><td>ALL/AML</td><td>93.8</td><td>No</td></tr>
 <tr><td>Jayachitra et al. [5]</td><td>Hybrid CNN ensemble</td><td>ALL 4-class</td><td>&gt;95</td><td>No</td></tr>
 <tr><td>Rehman et al. [15]</td><td>Deep CNN</td><td>ALL</td><td>94.2</td><td>No</td></tr>
-<tr style="font-weight:bold"><td>Proposed</td><td>Hybrid + MC Dropout</td><td>ALL 4-class</td><td>96.5</td><td>Yes</td></tr>
+<tr style="font-weight:bold"><td>Proposed</td><td>Hybrid + MC Dropout</td><td>ALL 4-class</td><td>98.97</td><td>Yes</td></tr>
 </table>
 
 <p>Our ensemble beats every method in the table on accuracy, and it is the only one of them that reports uncertainty at all.</p>
@@ -431,23 +431,23 @@
 
 <table>
 <caption><span class="label">TABLE VI.</span> Inference Time per Image</caption>
-<tr><th>Configuration</th><th>GPU (T4)</th><th>CPU</th></tr>
-<tr><td>Single pass (ensemble)</td><td>~180 ms</td><td>~1.8 s</td></tr>
-<tr><td>With MC Dropout (T=30)</td><td>~2.1 s</td><td>~25 s</td></tr>
-<tr><td>MC Dropout + Grad-CAM</td><td>~2.4 s</td><td>~27 s</td></tr>
+<tr><th>Configuration</th><th>CPU (per image)</th></tr>
+<tr><td>Single deterministic pass (3 backbones)</td><td>~0.16 s</td></tr>
+<tr><td>Preview MC Dropout (T = 10)</td><td>~1.6 s</td></tr>
+<tr><td>Full MC Dropout (T = 30)</td><td>~4.8 s</td></tr>
 </table>
 
 <h2>VI. Discussion</h2>
 <p class="no-indent">Each backbone reads an image its own way. MobileNetV2 leans on depthwise separable convolutions, so it is quick but now and then misses the fine differences between subtypes. EfficientNetB0 uses compound scaling to trade off depth, width and resolution. DenseNet121, with every layer wired to every other one in a block, builds the richest feature maps of the three. Because the networks are put together so differently, they tend to make different mistakes, and that low overlap in errors is what the ensemble feeds on.</p>
 
-<p>Voting beat stacking for us. Our guess is that the validation set, at roughly 486 images, is simply too small for the logistic regression meta-classifier to pin down anything more than the obvious combinations.</p>
+<p>Stacking edged out voting here (98.97% against 98.36%), but neither ensemble beat DenseNet121 on its own. With a validation set of 486 images the logistic-regression meta-classifier has little room to learn more than the obvious combinations, and one backbone already being this strong leaves the ensemble little headroom on accuracy. Its value here is the uncertainty signal rather than a higher score.</p>
 
-<p>The uncertainty numbers are the part that matters most in a clinic. A single-pass softmax of 0.85 says nothing about whether the model would say the same thing again. Averaging 30 stochastic passes, the normalized entropy pulled correct and incorrect predictions apart cleanly, 0.08 against 0.41. In day-to-day use a LOW-confidence case could go straight to a senior pathologist, which would catch about 78% of the errors while adding review for only 4.3% of all predictions. The price, roughly 12&times; a single pass, is fine for screening one image at a time in under three seconds on a GPU.</p>
+<p>The uncertainty numbers are the part that matters most in a clinic. A single-pass softmax of 0.85 says nothing about whether the model would say the same thing again. Averaging 30 stochastic passes, the normalized entropy pulled correct and incorrect predictions apart, 0.08 against 0.47. In day-to-day use a LOW-confidence case could go straight to a senior pathologist, which caught 83% of the errors while adding review for 5.6% of correct predictions. The price is roughly 30&times; a single pass; the full test split took 18 minutes on CPU, and a single image in the web app uses 10 passes to stay interactive.</p>
 
 <p>The work has clear limits. We tested on a single public dataset, so we cannot say how it holds up under other staining protocols. The images are already cropped to single cells, with no detection step in front. And the dataset is small, at 3,242 images.</p>
 
 <h2>VII. Conclusion</h2>
-<p class="no-indent">We put together a hybrid ensemble for four-class ALL detection from blood smear images. Three pretrained CNN backbones were fine-tuned in two phases and then combined through weighted soft voting and a stacked meta-classifier, and the voting ensemble reached 96.50% accuracy and a 0.9648 macro-F1. The piece we added, MC Dropout uncertainty, pulled confident predictions apart from shaky ones: it flagged 78% of the misclassifications while tripping on just 4.3% of the correct ones. Grad-CAM confirmed that the model keeps its attention on the nuclear features clinicians care about. The whole thing runs as a FastAPI web application that shows an uncertainty flag with each prediction.</p>
+<p class="no-indent">We put together a hybrid ensemble for four-class ALL detection from blood smear images. Three pretrained CNN backbones were fine-tuned in two phases and then combined through weighted soft voting and a stacked meta-classifier, and the stacked ensemble reached 98.97% accuracy and a 0.9883 macro-F1, level with the best single backbone. The piece we added, MC Dropout uncertainty, pulled confident predictions apart from shaky ones: it flagged 83% of the misclassifications while tripping on 5.6% of the correct ones, at an entropy AUROC of 0.965. Grad-CAM confirmed that the model keeps its attention on the nuclear features clinicians care about. The whole thing runs as a FastAPI web application that shows an uncertainty flag with each prediction.</p>
 
 <p>Next we want to test on smears from other hospitals and staining protocols, put a cell-detection step in front so the system can work on whole slides, fold a Vision Transformer into the ensemble, and run a prospective study alongside pathologists.</p>
 

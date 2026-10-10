@@ -79,6 +79,12 @@ by M. Aria et al., licensed [CC BY 4.0](https://creativecommons.org/licenses/by/
 _487 test images, Kaggle data, 2026-10-09. Regenerate with `python -m src.evaluate --write-readme-table`._
 <!-- RESULTS:END -->
 
+### Uncertainty
+
+Every prediction is run 30 times with dropout left on; if the runs disagree the image is flagged. On the test split this caught **83% of the model's mistakes** at a cost of flagging 5.6% of correct predictions (entropy AUROC 0.965). Thresholds are calibrated on validation only. With 6 test errors the rate is indicative, not precise.
+
+![uncertainty](results/figures/uncertainty_hist.png)
+
 ## Architecture
 
 ![architecture](docs/architecture.png)
