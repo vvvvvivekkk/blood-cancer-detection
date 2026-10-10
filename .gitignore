@@ -11,8 +11,9 @@ __pycache__/
 .ipynb_checkpoints/
 .venv/
 *.zip
+# Model bundle: ship the split parts, never the reassembled monolith
 dist/*
-!dist/models.zip
+!dist/models.zip.part*
 logs/
 # Kaggle secrets must never live in the repo
 *.token
@@ -23,6 +24,12 @@ kaggle.json
 test_images/
 .smoke/
 history.db
+models/history.db
 uploads/
-dist/models.zip
-!dist/models.zip.part*
+# Regenerable MC Dropout per-image arrays (results/*.npz already covers these)
+results/uncertainty_*.npz
+# Agent / skill tooling installed locally — not part of the project
+.agents/
+.claude/
+skills-lock.json
+brag-output/
