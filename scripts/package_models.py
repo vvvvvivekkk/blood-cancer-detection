@@ -20,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MODELS = ROOT / "models"
 DIST = ROOT / "dist"
 ZIP = DIST / "models.zip"
+PART_BYTES = 60 * 1024 * 1024  # 60 MiB per part — safely under GitHub's 100 MB per-file limit
 SHA_FILE = MODELS / "MODELS_SHA256.txt"
 
 # Where `python run.py --fetch-models` looks when the client gives no URL.
@@ -29,7 +30,8 @@ RELEASE_URL = ("https://github.com/vvvvvivekkk/blood-cancer-detection/"
 
 # Everything the ensemble needs at inference time (no training history / caches).
 MEMBERS = ["mobilenetv2.keras", "efficientnetb0.keras", "densenet121.keras",
-           "ensemble_weights.json", "meta_clf.pkl", "ensemble_mode.txt", "ood_stats.json"]
+           "ensemble_weights.json", "meta_clf.pkl", "ensemble_mode.txt", "ood_stats.json",
+           "uncertainty_thresholds.json"]
 
 
 def _sha256(path, _buf=1 << 20):
@@ -65,11 +67,33 @@ def package():
         raise FileNotFoundError(f"Cannot package; missing {', '.join(missing)}. "
                                 "Train the backbones and fit + evaluate the ensemble first.")
     DIST.mkdir(exist_ok=True)
+    # Deterministic archive: fixed member order and a fixed mtime, so repackaging identical models
+    # reproduces byte-identical parts and an unchanged git diff.
     with zipfile.ZipFile(ZIP, "w", zipfile.ZIP_DEFLATED) as z:
         for m in MEMBERS:
-            z.write(MODELS / m, arcname=m)
+            info = zipfile.ZipInfo(m, date_time=(1980, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            z.writestr(info, (MODELS / m).read_bytes())
+    split_zip()
     write_sha256()
     return ZIP, ZIP.stat().st_size
+
+
+def split_zip(part_bytes=PART_BYTES):
+    """Split models.zip into dist/models.zip.partNN (each < 100 MB, no Git LFS needed).
+
+    --fetch-models concatenates these back in order. Old parts are cleared first so a smaller
+    archive never leaves a stale trailing part behind.
+    """
+    for old in DIST.glob("models.zip.part*"):
+        old.unlink()
+    data = ZIP.read_bytes()
+    parts = []
+    for i, start in enumerate(range(0, len(data), part_bytes)):
+        p = DIST / f"models.zip.part{i:02d}"
+        p.write_bytes(data[start:start + part_bytes])
+        parts.append(p)
+    return parts
 
 
 def check():
