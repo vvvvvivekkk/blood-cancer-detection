@@ -962,7 +962,7 @@ def build_story():
         ("run.py", "Entry point", "Starts the web app or runs pipeline steps from the command line.", "User"),
         ("app.py", "Alias", "Same as run.py — runs the web app.", "User"),
         ("requirements.txt", "Dependencies", "Lists every Python package and version needed.", "Installer"),
-        ("INSTALL.md", "Setup guide", "Step-by-step installation instructions.", "User"),
+        ("README.md", "Setup guide", "Three-tier installation instructions and a folder map.", "User"),
         ("src/config.py", "Configuration", "Class names, image size, hyperparameters, paths.", "All code"),
         ("src/data.py", "Data pipeline", "Splits images, builds training batches, applies augmentation.", "train.py"),
         ("src/models.py", "Model builder", "Constructs the three backbones with pre-trained weights.", "train.py"),
@@ -1068,48 +1068,119 @@ def build_story():
             "the trained models run on a normal laptop CPU."
         )
     )
-    story.append(h2("Quick Start (5 Commands)"))
+    story.append(
+        p(
+            "Setup comes in three tiers. Tier 1 is the only one most people need: it gets the "
+            "system running with real images in about five minutes and requires no Kaggle "
+            "account. Tiers 2 and 3 are optional."
+        )
+    )
+
+    story.append(h2("Tier 1 — Demo in 5 Minutes (default)"))
     story.append(p("git clone https://github.com/vvvvvivekkk/blood-cancer-detection.git", style_code))
     story.append(p("cd blood-cancer-detection", style_code))
     story.append(p("pip install -r requirements.txt", style_code))
-    story.append(p("python run.py --fetch-models https://github.com/vvvvvivekkk/blood-cancer-detection/releases/download/v1.0.0/models.zip", style_code))
+    story.append(p("python run.py --fetch-models", style_code))
     story.append(p("python app.py", style_code))
     story.append(Spacer(1, 0.3 * cm))
     story.append(
         p(
-            f"The {code('--fetch-models')} command downloads the trained models (~105 MB) from "
-            f"the GitHub release, verifies their integrity using SHA-256 checksums against "
-            f"{code('models/MODELS_SHA256.txt')}, and unpacks them into the {code('models/')} folder. "
+            f"{code('--fetch-models')} downloads the trained models (~105 MB) from the project's "
+            f"release, checks them against the SHA-256 checksums in "
+            f"{code('models/MODELS_SHA256.txt')}, and unpacks them into {code('models/')}. "
+            f"If anything goes wrong it prints a direct download link rather than an error trace. "
             f"You can re-verify at any time with {code('python run.py --check')}."
         )
     )
     story.append(
         p(
-            f"{code('python app.py')} starts the web dashboard at http://localhost:8000 and "
-            f"opens it in your browser. Log in with {bold('admin / admin')} (a fixed demo login "
-            f"for the walkthrough, not hospital-grade security)."
+            f"{code('python app.py')} starts the dashboard at http://localhost:8000 and opens "
+            f"your browser. Log in with {bold('admin / admin')} (a fixed demo login for the "
+            f"walkthrough, not hospital-grade security)."
         )
     )
-    story.append(h2("Alternative: Clone with Models Included"))
     story.append(
         p(
-            f"The file {code('dist/models.zip')} is stored with Git LFS, so if you install "
-            f"Git LFS before cloning, the models come bundled. Then run: "
-            f"{code('python run.py --fetch-models \"file:///path/to/dist/models.zip\"')} "
-            f"to unpack them."
+            f"Nothing else is needed. The Preview page is already stocked with the "
+            f"{bold('40 bundled demo images')} — ten real blood-smear images for each of the four "
+            f"classes — so you can run predictions, view Grad-CAM overlays and read the "
+            f"performance figures straight away."
         )
     )
-    story.append(h2("Running Without Pre-Trained Models"))
+
+    story.append(h2("Tier 2 — Full Test Set (optional, about 6 GB)"))
     story.append(
         p(
-            "You can skip the model download and produce the models yourself. On the web dashboard, "
-            "press \"Use demo data\" then \"Run full pipeline\". Alternatively, from the command line:"
+            "Only needed if you want to run predictions across all 487 held-out test images "
+            "rather than the 40 bundled ones. This step downloads the complete public dataset, "
+            "which requires a free Kaggle account."
         )
     )
-    story.append(p("python run.py --cli all --smoke", style_code))
-    story.append(p("  Runs the entire pipeline on 8 bundled sample images on CPU (~2 minutes). "
-                    "This only checks the plumbing; the resulting numbers are meaningless.", style_body))
+    story.append(bullet("Create a Kaggle API token: Kaggle → Account → Create New API Token."))
+    story.append(bullet(f"Paste the token on the {bold('Data')} page of the dashboard, or save the "
+                        f"downloaded {code('kaggle.json')} into {code('~/.kaggle/')}."))
+    story.append(bullet(f"Press {bold('Download')} on the Data page, then run the command below."))
+    story.append(p("python run.py --cli export-test-images", style_code))
+    story.append(p("  Copies ten test images per class into test_images/, which the dashboard "
+                   "picks up automatically in place of the bundled demo images.", style_body))
+
+    story.append(h2("Tier 3 — Retrain From Scratch (optional)"))
+    story.append(
+        p(
+            "Reproduces the models rather than downloading them. Tier 2 must be completed first, "
+            "because training needs the full dataset. There are two routes:"
+        )
+    )
+    story.append(bullet(f"{bold('Free Colab GPU, about 40 minutes')} — open "
+                        f"{code('notebooks/train_colab.ipynb')}, run all cells, then copy the "
+                        f"resulting {code('models/')} folder back into the project."))
+    story.append(bullet(f"{bold('Local CPU, about 1.5 hours')} — run {code('python run.py --cli all')}."))
+    story.append(p("python run.py --cli evaluate", style_code))
+    story.append(p("  Recomputes every metric and regenerates the figures in results/ "
+                   "from the models you just trained.", style_body))
+    story.append(Spacer(1, 0.3 * cm))
+    story.append(
+        p(
+            f"To check the plumbing without any dataset at all, "
+            f"{code('python run.py --cli all --smoke')} runs the whole pipeline on eight bundled "
+            f"synthetic images in about two minutes. It proves the wiring works; the numbers it "
+            f"produces are meaningless and should never be quoted."
+        )
+    )
+
+    story.append(h2("What Is Where"))
+    story.append(
+        p(
+            "A short map of the folders a user is likely to open, and what each one is for."
+        )
+    )
+    _where_headers = ["Folder", "What it holds"]
+    _where = [
+        [code("models/"),
+         "The three trained networks plus the ensemble weights, meta-classifier and "
+         "calibration files. Not stored in the repository — downloaded by --fetch-models."],
+        [code("data/demo_images/"),
+         "40 real blood-smear images, ten per class, held out from training. Included in "
+         "the project; these are what Tier 1 demonstrates on. CC BY 4.0, Aria et al."],
+        [code("data/sample/"),
+         "8 tiny synthetic images used only by the automated test suite. Not a demo set "
+         "and not real patient data."],
+        [code("results/"),
+         "Every published number and chart: metrics.json, the comparison table, confusion "
+         "matrices, ROC curves and training histories."],
+        [code("docs/"),
+         "The finished documents: this guide, the project report, the paper and the "
+         "technical reference."],
+        [code("docs/src/"),
+         "The HTML and Markdown sources those documents are generated from."],
+    ]
+    story.append(make_table(_where_headers, _where, col_widths=[4.2 * cm, 11.3 * cm]))
+
     story.append(h2("Troubleshooting"))
+    story.append(bullet(f"{bold('Download failed / 404')} — the release may not be published yet, or the "
+                        f"repository may be private. The error message prints a direct link; download "
+                        f"{code('models.zip')} by hand, unzip into {code('models/')}, then run "
+                        f"{code('python run.py --check')}."))
     story.append(bullet(f"{bold('SHA mismatch / CHECK FAIL')} — the download is corrupt; re-run {code('--fetch-models')}."))
     story.append(bullet(f"{bold('Port in use')} — {code('python run.py --port 8010')}; add {code('--no-browser')} to suppress the browser tab."))
     story.append(bullet(f"{bold('Browser tests')} — {code('pip install -r requirements-dev.txt && playwright install chromium')}."))
@@ -1125,9 +1196,17 @@ def build_story():
     story.append(h2("Before You Start"))
     story.append(
         p(
-            f"Run {code('python run.py --cli export-test-images')} once. This copies 10 images "
-            f"per class from the held-out test set into {code('test_images/')}, so you can "
-            f"demonstrate predictions on images the model has never seen during training."
+            f"Nothing. After Tier 1 the Preview page already lists the 40 bundled images in "
+            f"{code('data/demo_images/')} — ten per class, all held out from training — so every "
+            f"step below works on a fresh install."
+        )
+    )
+    story.append(
+        p(
+            f"If you have completed Tier 2 and want to demonstrate on the full held-out set "
+            f"instead, run {code('python run.py --cli export-test-images')} once. That copies ten "
+            f"images per class into {code('test_images/')}, which the dashboard prefers over the "
+            f"bundled set when present."
         )
     )
     walkthrough_steps = [
@@ -1441,14 +1520,30 @@ def _get_docx_sections():
 
     # 11
     s.append(("h1", "11. Installation"))
-    s.append(("p", "Quick start: git clone, pip install -r requirements.txt, "
-              "python run.py --fetch-models <URL>, python app.py. "
-              "The --fetch-models command downloads ~105 MB of trained models and verifies SHA-256 checksums. "
-              "Log in with admin / admin. See the PDF for full installation details and troubleshooting."))
+    s.append(("p", "Setup comes in three tiers; Tier 1 is the only one most people need."))
+    s.append(("p", "Tier 1 — Demo in 5 minutes (no Kaggle account): git clone, "
+              "pip install -r requirements.txt, python run.py --fetch-models, python app.py. "
+              "--fetch-models pulls ~105 MB of trained models from the release and verifies them "
+              "against SHA-256 checksums. Log in with admin / admin. The Preview page is already "
+              "stocked with the 40 bundled demo images, so predictions work immediately."))
+    s.append(("p", "Tier 2 — Full test set (optional, ~6 GB): add a Kaggle API token on the Data "
+              "page or in ~/.kaggle, press Download, then run "
+              "python run.py --cli export-test-images."))
+    s.append(("p", "Tier 3 — Retrain (optional, needs Tier 2): notebooks/train_colab.ipynb on a "
+              "free Colab GPU (~40 min) or python run.py --cli all on CPU (~1.5 h); copy models/ "
+              "back, then python run.py --cli evaluate."))
+    s.append(("p", "What is where — models/: the trained networks, fetched from the release, not "
+              "in git. data/demo_images: 40 real held-out test images (10 per class, CC BY 4.0, "
+              "Aria et al.) that drive the Tier 1 demo. data/sample: 8 synthetic images for the "
+              "automated tests only. results/: metrics and figures. docs/: the finished "
+              "deliverables. docs/src: the sources they are generated from."))
+    s.append(("p", "See the PDF for the full command listing and troubleshooting."))
 
     # 12
     s.append(("h1", "12. Using the App — Step-by-Step Demo"))
-    s.append(("p", "Run python run.py --cli export-test-images first. Then:"))
+    s.append(("p", "No preparation needed — after Tier 1 the Preview page already lists the 40 "
+              "bundled demo images. (If you completed Tier 2, run "
+              "python run.py --cli export-test-images to demo on the full held-out set instead.) Then:"))
     s.append(("bullet", "Step 1: Start the app with python app.py (opens http://localhost:8000)."))
     s.append(("bullet", "Step 2: Log in with admin / admin."))
     s.append(("bullet", "Step 3: Home shows the pipeline status and paper citation."))

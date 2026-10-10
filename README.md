@@ -1,24 +1,69 @@
 # Blood Cancer Identification using Hybrid Ensemble Deep Learning
 
-Replication of the IEEE paper **"Blood Cancer Identification using Hybrid Ensemble Deep Learning Technique"**, J. Jayachitra and N. Umarkathaf, *ICEARS 2023* ([IEEE Xplore 10084996](https://ieeexplore.ieee.org/document/10084996)).
-
 Three transfer-learning CNNs (MobileNetV2, EfficientNetB0, DenseNet121) are combined by a **hybrid ensemble** (weighted soft voting + a stacked logistic-regression meta-classifier) to classify peripheral blood smear images into four Acute Lymphoblastic Leukemia (ALL) classes. The whole pipeline runs from a web dashboard.
 
 > ⚠️ **Research / educational project. Not a medical device. Not for clinical use.**
 
-## Quick start
+## Setup
+
+Three tiers. **Tier 1 is all you need to see the system work** — tiers 2 and 3 are optional.
+
+### Tier 1 — Demo in 5 minutes (default, no Kaggle account)
 
 ```bash
 git clone https://github.com/vvvvvivekkk/blood-cancer-detection.git
 cd blood-cancer-detection
 pip install -r requirements.txt
-python run.py --fetch-models https://github.com/vvvvvivekkk/blood-cancer-detection/releases/download/v1.0.0/models.zip
-python app.py                        # opens http://localhost:8000
+python run.py --fetch-models          # trained models from the pinned release (~105 MB)
+python app.py                         # opens http://localhost:8000
 ```
 
-Log in with **admin / admin**. No Kaggle account? Press *Use demo data*. No GPU? `python run.py --cli all --smoke` runs the pipeline on CPU in ~2 minutes.
+Log in with **admin / admin**. The Preview page is pre-loaded with the 40 bundled
+demo images, so you can predict, see Grad-CAM, and read the metrics immediately.
+Nothing else to download.
 
-40 real sample images (10 per class) are included in `data/demo_images/` for the live demo. They come from the held-out test split and were never used in training. The images are from the [Blood Cells Cancer (ALL) dataset](https://www.kaggle.com/datasets/mohammadamireshraghi/blood-cell-cancer-all-4class) by M. Aria et al., licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+### Tier 2 — Full test set (optional, ~6 GB)
+
+Only needed to run predictions across all 487 held-out test images.
+
+1. Get a Kaggle API token (Kaggle → Account → *Create New API Token*).
+2. Paste it on the **Data** page, or drop `kaggle.json` in `~/.kaggle/`.
+3. Press **Download** on the Data page, then:
+
+```bash
+python run.py --cli export-test-images   # 10 per class into test_images/
+```
+
+### Tier 3 — Retrain from scratch (optional)
+
+Needs Tier 2 first.
+
+```bash
+# Option A — free Colab GPU, ~40 min
+#   open notebooks/train_colab.ipynb, run all, copy models/ back into the repo
+
+# Option B — local CPU, ~1.5 h
+python run.py --cli all
+
+python run.py --cli evaluate             # refresh results/ + figures
+```
+
+## What is where
+
+| Path | What it holds |
+|---|---|
+| `models/` | 3 `.keras` backbones + ensemble weights, meta-classifier, mode, OOD stats. Not in git — fetched from the release. |
+| `data/demo_images/` | 40 real test-split images (10 per class). Committed. Drives the Tier 1 demo. CC BY 4.0, Aria et al. |
+| `data/sample/` | 8 tiny synthetic images. Committed. Used by the automated tests only — not a demo. |
+| `data/raw/`, `data/splits/` | The Kaggle dataset and generated splits. Gitignored, created by Tier 2. |
+| `results/` | `metrics.json` (source of truth), comparison table, `figures/`, training history. |
+| `docs/` | Client deliverables: `HOW_IT_WORKS.pdf`, `project_report.pdf`, `ieee_paper.pdf`, `DOCUMENTATION.pdf`. |
+| `docs/src/` | The HTML/Markdown sources those PDFs are generated from. |
+| `scripts/` | Packaging, export, doc-build and screenshot tooling. |
+
+The 40 demo images come from the held-out test split and were **never used in training or
+validation**. Source: [Blood Cells Cancer (ALL)](https://www.kaggle.com/datasets/mohammadamireshraghi/blood-cell-cancer-all-4class)
+by M. Aria et al., licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 ## Results
 
@@ -74,7 +119,7 @@ tests/      pytest suite (no network, no GPU)
 python run.py                                # web app at http://localhost:8000
 python run.py --cli all --smoke              # full pipeline on CPU (~2 min)
 python run.py --cli export-test-images       # 10 test images per class for demo
-python run.py --fetch-models <URL>           # download + verify pre-trained models
+python run.py --fetch-models                 # download + verify models from the release
 python run.py --check                        # verify model SHA-256 checksums
 python -m pytest -q                          # run test suite
 ```
@@ -98,7 +143,6 @@ python -m pytest -q                          # run test suite
 
 ## References
 
-- J. Jayachitra, N. Umarkathaf, "Blood Cancer Identification using Hybrid Ensemble Deep Learning Technique," *ICEARS*, IEEE, 2023.
 - M. Aria et al., "Acute Lymphoblastic Leukemia (ALL) image dataset," Kaggle, 2021. [Dataset](https://www.kaggle.com/datasets/mohammadamireshraghi/blood-cell-cancer-all-4class)
 - R. R. Selvaraju et al., "Grad-CAM: Visual Explanations from Deep Networks," ICCV 2017.
 
