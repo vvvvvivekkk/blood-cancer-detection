@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Blood Cancer Identification using Hybrid Ensemble Deep Learning with MC Dropout Uncertainty Quantification</title>
+<title>Uncertainty-Aware Hybrid CNN Ensemble for Four-Class Acute Lymphoblastic Leukemia Subtyping with MC Dropout</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 <style>
   @page { size: letter; margin: 0.75in; }
@@ -183,7 +183,7 @@
 <body>
 
 <!-- ===== TITLE ===== -->
-<div class="title">Blood Cancer Identification using Hybrid Ensemble Deep Learning with MC Dropout Uncertainty Quantification</div>
+<div class="title">Uncertainty-Aware Hybrid CNN Ensemble for Four-Class Acute Lymphoblastic Leukemia Subtyping with MC Dropout</div>
 
 <!-- ===== AUTHORS ===== -->
 <div class="author-grid">
@@ -225,11 +225,11 @@
 <p class="keywords"><span class="lbl">Index Terms</span>&mdash;Acute lymphoblastic leukemia, blood cancer, ensemble learning, transfer learning, MC Dropout, uncertainty quantification, Grad-CAM, MobileNetV2, EfficientNetB0, DenseNet121.</p>
 
 <h2>I. Introduction</h2>
-<p class="no-indent">Blood cancer, or hematological malignancy, arises when the bone marrow stops producing blood cells normally. In children the most common form is Acute Lymphoblastic Leukemia (ALL), which accounts for about 25 percent of pediatric cancer diagnoses worldwide [1]. The marrow overproduces immature lymphocytes, called lymphoblasts, that crowd out healthy cells and spill into the bloodstream. The subtypes behave differently and respond to different drugs, so identifying the subtype at the first examination shapes the rest of the treatment.</p>
+<p class="no-indent">Blood cancer, or hematological malignancy, arises when the bone marrow stops producing blood cells normally. In children the most common form is Acute Lymphoblastic Leukemia (ALL), which represents roughly one in four childhood cancer diagnoses worldwide [1]. The marrow produces excess immature lymphocytes (lymphoblasts) that displace normal blood cells and enter the circulation. The subtypes behave differently and respond to different drugs, so identifying the subtype at the first examination shapes the rest of the treatment.</p>
 
 <p>That first read still depends on a hematologist examining a stained blood smear under a microscope, with flow cytometry and molecular tests following later. The process is slow and expensive, and the microscopy step in particular leans heavily on the examiner's experience [2]. Where experienced pathologists are scarce, two readers can disagree on the same slide.</p>
 
-<p>Convolutional neural networks (CNNs) have performed well on medical images over the past decade [3], and transfer learning from ImageNet-pretrained networks is a practical starting point when labeled data is limited. Combining several models through voting, rather than trusting one, tends to reduce variance and recover errors a single network would make on its own. Jayachitra and Umarkathaf [5] followed this idea, assembling several deep-learning backbones into a hybrid ensemble for blood cancer identification and reporting accuracy above 95 percent.</p>
+<p>Over the past decade, convolutional neural networks (CNNs) have become a standard approach to medical-image classification [3], and fine-tuning ImageNet-pretrained backbones is an effective way to train them when annotated data is scarce. Combining several models through voting, rather than trusting one, tends to reduce variance and recover errors a single network would make on its own. Jayachitra and Umarkathaf [5] followed this idea, assembling several deep-learning backbones into a hybrid ensemble for blood cancer identification and reporting accuracy above 95 percent.</p>
 
 <p>Most ALL detection systems return only a softmax score, which says nothing about how stable that answer is. A network can report 0.92 for a cell sitting right on a decision boundary. MC Dropout [16] offers a principled alternative: keep dropout active at inference and run several stochastic forward passes to estimate how much the model actually wavers.</p>
 
@@ -251,7 +251,7 @@
 
 <p>Grad-CAM, introduced by Selvaraju et al. [6], reads the gradients flowing into the last convolutional layer and turns them into a heatmap over the regions that mattered. It is now a standard tool for explaining CNN decisions in medical imaging [10].</p>
 
-<p>Gal and Ghahramani [16] showed that leaving dropout active at inference approximates Bayesian inference. Leibig et al. [17] applied this to diabetic retinopathy screening and found that referring the uncertain cases to a specialist made the system more reliable. Even so, uncertainty estimation is still absent from most ALL detection work.</p>
+<p>Gal and Ghahramani [16] showed that keeping dropout enabled at test time yields an approximate Bayesian posterior. Leibig et al. [17] applied this to diabetic retinopathy screening and found that referring the uncertain cases to a specialist made the system more reliable. Even so, uncertainty estimation is still absent from most ALL detection work.</p>
 
 <h2>III. Proposed Methodology</h2>
 
@@ -281,7 +281,7 @@
 <h3>C. CNN Backbone Architectures</h3>
 <p class="no-indent">We selected three pretrained architectures different enough in design that each tends to capture a different aspect of cell morphology:</p>
 
-<p><b>MobileNetV2</b> [11] uses inverted residual blocks with depthwise separable convolutions (3.4M parameters). <b>EfficientNetB0</b> [12] uses compound scaling to balance width, depth and resolution (5.3M parameters). <b>DenseNet121</b> [13] connects every layer to every other layer within dense blocks, promoting feature reuse (8.0M parameters).</p>
+<p><b>MobileNetV2</b> [11] is built from inverted-residual blocks whose spatial filtering uses depthwise separable convolutions (3.4M parameters). <b>EfficientNetB0</b> [12] jointly scales depth, width and input resolution through a single compound coefficient (5.3M parameters). <b>DenseNet121</b> [13] adds a direct connection from each layer to all later layers in a block, so early features are reused downstream (8.0M parameters).</p>
 
 <p>For all three, we removed the original classification head and attached: Global Average Pooling, Dropout (rate 0.3) and a Dense layer with four units and softmax activation.</p>
 
@@ -302,7 +302,7 @@
 <p><b>Stacked Meta-Classifier:</b> Softmax outputs of all three models were concatenated into a 12-dimensional vector (4 classes &times; 3 models). A logistic regression classifier (C=1.0, max 1000 iterations) was trained on these vectors using the validation split.</p>
 
 <h3>F. Grad-CAM Visualization</h3>
-<p class="no-indent">To see which parts of a smear drove a prediction, we added Grad-CAM [6]. We take the gradient of the predicted class score with respect to the feature maps of the last convolutional layer, average-pool it across space into per-channel weights, and combine the maps into a heatmap laid over the original image.</p>
+<p class="no-indent">To see which parts of a smear drove a prediction, we added Grad-CAM [6]. For the predicted class, we compute its score's gradients over the last convolutional layer's feature maps, spatially average them to weight each channel, and sum the weighted maps into a heatmap laid over the original image.</p>
 
 <h3>G. MC Dropout Uncertainty Quantification (Novelty)</h3>
 <p class="no-indent">A softmax score on its own is a poor stand-in for confidence [16]. For a better estimate, we run MC Dropout at inference: for each image, every backbone makes T = 30 stochastic forward passes with its dropout layers left active. Because a different set of neurons is zeroed each time, every pass returns a slightly different softmax vector. From that spread we compute two metrics:</p>
