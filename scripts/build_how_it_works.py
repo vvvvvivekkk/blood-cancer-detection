@@ -291,7 +291,7 @@ def build_story():
 
     # ── Cover ──
     story.append(Spacer(1, 6 * cm))
-    story.append(p("Blood Cancer Identification using<br/>Hybrid Ensemble Deep Learning", style_title))
+    story.append(p("Uncertainty-Aware Hybrid CNN Ensemble for Four-Class<br/>Acute Lymphoblastic Leukemia Subtyping with MC Dropout", style_title))
     story.append(Spacer(1, 1 * cm))
     story.append(p("How It Works — A Non-Technical Guide", style_subtitle))
     story.append(Spacer(1, 0.5 * cm))
@@ -1447,7 +1447,7 @@ def build_docx():
     # Cover
     doc.add_paragraph("")
     doc.add_paragraph("")
-    t = doc.add_paragraph("Blood Cancer Identification using Hybrid Ensemble Deep Learning")
+    t = doc.add_paragraph("Uncertainty-Aware Hybrid CNN Ensemble for Four-Class Acute Lymphoblastic Leukemia Subtyping with MC Dropout")
     t.alignment = WD_ALIGN_PARAGRAPH.CENTER
     for run in t.runs:
         run.font.size = Pt(24)
