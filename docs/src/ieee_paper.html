@@ -11,7 +11,7 @@
   body {
     font-family: 'Noto Serif', 'Times New Roman', Times, serif;
     font-size: 10pt;
-    line-height: 1.18;
+    line-height: 1.14;
     color: #000;
     background: #fff;
     max-width: 8.5in;
@@ -74,18 +74,18 @@
     font-weight: bold;
     text-transform: uppercase;
     text-align: center;
-    margin: 12pt 0 5pt 0;
+    margin: 8pt 0 4pt 0;
   }
   h3 {
     font-size: 10pt;
     font-weight: bold;
     font-style: italic;
-    margin: 8pt 0 3pt 0;
+    margin: 6pt 0 2pt 0;
   }
   p {
     text-indent: 0.2in;
-    margin-bottom: 4pt;
-    line-height: 1.18;
+    margin-bottom: 3pt;
+    line-height: 1.14;
   }
   p.no-indent { text-indent: 0; }
 
@@ -93,7 +93,7 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 8.5pt;
-    margin: 8pt 0;
+    margin: 6pt 0;
     break-inside: avoid;
   }
   table caption {
@@ -127,7 +127,7 @@
   table.col-table td:first-child { text-align: left; }
   .figure {
     text-align: center;
-    margin: 10pt 0;
+    margin: 6pt 0;
     break-inside: avoid;
   }
   .figure img {
@@ -135,6 +135,7 @@
     height: auto;
     border: 0.5pt solid #ccc;
   }
+  .figure.sm img { max-width: 84%; }
   .figure.full-width {
     column-span: all;
     margin: 14pt auto;
@@ -145,14 +146,14 @@
   .fig-caption {
     font-size: 9pt;
     text-align: center;
-    margin: 5pt 0 8pt 0;
-    line-height: 1.2;
+    margin: 3pt 0 5pt 0;
+    line-height: 1.15;
   }
   .fig-caption .label { font-style: italic; }
 
   .equation {
     text-align: center;
-    margin: 8pt 0;
+    margin: 6pt 0;
     font-style: italic;
     font-size: 10pt;
   }
@@ -161,13 +162,13 @@
   .references h2 { column-span: none; }
   .ref-list {
     font-size: 8pt;
-    line-height: 1.25;
+    line-height: 1.15;
     padding-left: 0.2in;
     column-count: 2;
     column-gap: 0.25in;
   }
   .ref-list li {
-    margin-bottom: 3pt;
+    margin-bottom: 2pt;
     text-indent: -0.2in;
     padding-left: 0.2in;
     list-style: none;
@@ -360,7 +361,7 @@
 <h3>B. Training Curves</h3>
 
 <!-- Fig. 2: Training curves -->
-<div class="figure">
+<div class="figure sm">
   <img src="../../results/figures/training_curves_densenet121.png" alt="Training Curves DenseNet121">
   <div class="fig-caption"><span class="label">Fig. 2.</span> Training and validation accuracy/loss curves for DenseNet121 across the two-phase fine-tuning schedule.</div>
 </div>
@@ -387,7 +388,7 @@
 <p class="no-indent">Fig. 5 shows Grad-CAM overlays for a sample from each class. The hot regions fall on the nucleus and its chromatin texture, the same places a hematologist examines. On the misclassified cases, the heatmap tended to drift onto the cell boundary or a background staining artifact.</p>
 
 <!-- Fig. 5: Grad-CAM examples -->
-<div class="figure">
+<div class="figure sm">
   <img src="../../results/figures/gradcam_examples.png" alt="Grad-CAM Examples">
   <div class="fig-caption"><span class="label">Fig. 5.</span> Grad-CAM visualization examples for each class. The heatmap (red = high attention) shows the model focusing on nuclear morphology and chromatin patterns, consistent with clinical diagnostic criteria.</div>
 </div>
@@ -396,7 +397,7 @@
 <p class="no-indent">Fig. 6 places accuracy, macro-F1 and ROC-AUC side by side for every model. Weighted voting ranks highest on all three.</p>
 
 <!-- Fig. 6: Model comparison bar chart -->
-<div class="figure">
+<div class="figure sm">
   <img src="../../results/figures/model_comparison_bar.png" alt="Model Comparison">
   <div class="fig-caption"><span class="label">Fig. 6.</span> Bar chart comparing accuracy, macro-F1, and ROC-AUC across all individual backbones and ensemble methods.</div>
 </div>
